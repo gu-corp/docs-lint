@@ -3,10 +3,56 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
+import readline from 'readline';
 import { createLinter } from './linter.js';
 import { generateAIPrompt, generateJSONSummary } from './ai-prompt.js';
 import { defaultConfig, type DocsLintConfig } from './types.js';
 import { glob } from 'glob';
+
+/**
+ * Interactive prompt helper
+ */
+function prompt(question: string, defaultValue?: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const displayQuestion = defaultValue
+    ? `${question} [${defaultValue}]: `
+    : `${question}: `;
+
+  return new Promise((resolve) => {
+    rl.question(displayQuestion, (answer) => {
+      rl.close();
+      resolve(answer.trim() || defaultValue || '');
+    });
+  });
+}
+
+/**
+ * Select from options
+ */
+function selectOption(question: string, options: string[], defaultIndex = 0): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  console.log(`\n${question}`);
+  options.forEach((opt, i) => {
+    const marker = i === defaultIndex ? chalk.green('→') : ' ';
+    console.log(`  ${marker} ${i + 1}) ${opt}`);
+  });
+
+  return new Promise((resolve) => {
+    rl.question(`Select [${defaultIndex + 1}]: `, (answer) => {
+      rl.close();
+      const idx = answer.trim() ? parseInt(answer, 10) - 1 : defaultIndex;
+      resolve(options[idx] || options[defaultIndex]);
+    });
+  });
+}
 
 const program = new Command();
 
@@ -59,19 +105,73 @@ program
 
 program
   .command('init')
-  .description('Initialize docs-lint configuration')
+  .description('Initialize docs-lint configuration with interactive wizard')
   .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
-  .action((options) => {
+  .option('-y, --yes', 'Skip wizard, use defaults', false)
+  .action(async (options) => {
     const configPath = path.join(process.cwd(), 'docs-lint.config.json');
-    if (fs.existsSync(configPath)) {
+    const docsConfigPath = path.join(options.docsDir, 'docs.config.json');
+
+    if (fs.existsSync(configPath) && !options.yes) {
       console.error(chalk.yellow('Configuration file already exists:', configPath));
+      console.log(chalk.gray('Use --yes to overwrite with defaults'));
       process.exit(1);
     }
 
+    console.log(chalk.bold('\n📚 docs-lint Setup Wizard\n'));
+
+    let commonLang = 'en';
+    let draftLangs: string[] = [];
+    let teams: Record<string, string> = {};
+    let isMultiTeam = false;
+
+    if (!options.yes) {
+      // Step 1: Common language
+      const langChoice = await selectOption(
+        'What is the common language for cross-team documentation?',
+        ['English (en)', 'Japanese (ja)', 'Other'],
+        0
+      );
+      commonLang = langChoice.includes('en') ? 'en' : langChoice.includes('ja') ? 'ja' : await prompt('Enter language code');
+
+      // Step 2: Team structure
+      const teamChoice = await selectOption(
+        'Is this a multi-team project?',
+        ['Single team', 'Multi-team (different languages)'],
+        0
+      );
+      isMultiTeam = teamChoice.includes('Multi');
+
+      if (isMultiTeam) {
+        // Step 3: Draft languages
+        const drafts = await prompt('Draft languages (comma-separated, e.g., ja,vi,en)', 'ja,en');
+        draftLangs = drafts.split(',').map(s => s.trim());
+
+        // Step 4: Team configuration
+        console.log(chalk.gray('\nConfigure teams (leave empty when done):'));
+        let teamName = await prompt('Team name (e.g., tokyo)');
+        while (teamName) {
+          const teamLang = await prompt(`Language for ${teamName}`, draftLangs[0]);
+          teams[teamName] = teamLang;
+          teamName = await prompt('Team name (empty to finish)');
+        }
+      } else {
+        const singleLang = await prompt('Project language', commonLang);
+        commonLang = singleLang;
+        draftLangs = [singleLang];
+      }
+    }
+
+    // Ensure docs directory exists
+    if (!fs.existsSync(options.docsDir)) {
+      fs.mkdirSync(options.docsDir, { recursive: true });
+    }
+
+    // Create docs-lint.config.json
     const config: Partial<DocsLintConfig> = {
       docsDir: options.docsDir,
       include: ['**/*.md'],
-      exclude: ['node_modules/**'],
+      exclude: ['node_modules/**', 'drafts/**'],
       rules: defaultConfig.rules,
       terminology: [
         {
@@ -84,7 +184,34 @@ program
     };
 
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-    console.log(chalk.green('Created configuration file:'), configPath);
+    console.log(chalk.green('\n✓ Created:'), configPath);
+
+    // Create docs.config.json (language settings)
+    const docsConfig = {
+      commonLanguage: commonLang,
+      draftLanguages: draftLangs.length > 0 ? draftLangs : [commonLang],
+      ...(Object.keys(teams).length > 0 && { teams }),
+    };
+
+    fs.writeFileSync(docsConfigPath, JSON.stringify(docsConfig, null, 2));
+    console.log(chalk.green('✓ Created:'), docsConfigPath);
+
+    // Summary
+    console.log(chalk.bold('\n📋 Configuration Summary:\n'));
+    console.log(`  Common language: ${chalk.cyan(commonLang)}`);
+    if (isMultiTeam) {
+      console.log(`  Draft languages: ${chalk.cyan(draftLangs.join(', '))}`);
+      if (Object.keys(teams).length > 0) {
+        console.log('  Teams:');
+        for (const [name, lang] of Object.entries(teams)) {
+          console.log(`    - ${name}: ${chalk.cyan(lang)}`);
+        }
+      }
+    }
+
+    console.log(chalk.gray('\nNext steps:'));
+    console.log(chalk.gray('  1. Run "docs-lint init-standards" to create DOCUMENT_STANDARDS.md'));
+    console.log(chalk.gray('  2. Run "docs-lint lint" to check your documentation'));
   });
 
 program

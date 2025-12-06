@@ -10,6 +10,27 @@ export const STANDARDS_FILES = [
   'STANDARDS.md',
 ];
 
+interface DocsLanguageConfig {
+  commonLanguage: string;
+  draftLanguages?: string[];
+  teams?: Record<string, string>;
+}
+
+/**
+ * Read docs.config.json for language settings
+ */
+export function readDocsConfig(docsDir: string): DocsLanguageConfig | null {
+  const configPath = path.join(docsDir, 'docs.config.json');
+  if (fs.existsSync(configPath)) {
+    try {
+      return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 /**
  * Find and read the document standards file
  * Falls back to default G.U.Corp standards if not found
@@ -41,6 +62,16 @@ export function generateAIPrompt(
   const sections: string[] = [];
   const standards = readStandardsFile(docsDir);
 
+  // Read language config
+  const langConfig = readDocsConfig(docsDir);
+  const langInfo = langConfig
+    ? `
+**言語設定:**
+- 共通語: ${langConfig.commonLanguage}
+${langConfig.draftLanguages ? `- ドラフト言語: ${langConfig.draftLanguages.join(', ')}` : ''}
+${langConfig.teams ? `- チーム: ${Object.entries(langConfig.teams).map(([k, v]) => `${k}(${v})`).join(', ')}` : ''}`
+    : '';
+
   // Header with AI instructions
   sections.push(`# ドキュメント品質評価レポート
 
@@ -51,12 +82,16 @@ export function generateAIPrompt(
 
 **評価手順:**
 1. **まず「0. ドキュメント標準規約」を熟読してください** - これが評価の基準となります
-2. 検出された問題を確認してください
-3. フォルダ構成と品質メトリクスを確認してください
-4. 標準規約に基づいて総合評価を行ってください
+2. **言語設定を確認してください** - 共通語とドラフト言語の使い分けが適切か評価します
+3. 検出された問題を確認してください
+4. フォルダ構成と品質メトリクスを確認してください
+5. 標準規約に基づいて総合評価を行ってください
 
-**重要:** 標準規約を理解せずに評価を行わないでください。
-規約を読んだ後、その基準に基づいて各ドキュメントを評価してください。
+**重要:**
+- 標準規約を理解せずに評価を行わないでください
+- docs/直下は共通語、drafts/は各チームの作業言語です
+- 翻訳版は共通語版と同期されている必要があります
+${langInfo}
 </ai-instructions>
 
 ---`);
