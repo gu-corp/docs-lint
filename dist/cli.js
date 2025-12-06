@@ -4,6 +4,9 @@ import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { createLinter } from './linter.js';
 import { generateAIPrompt, generateJSONSummary, readStandardsFile } from './ai-prompt.js';
 import { getDefaultStandards } from './templates/standards.js';
@@ -257,6 +260,107 @@ program
         process.exit(1);
     }
 });
+program
+    .command('sync')
+    .description('Sync development standards templates to project docs')
+    .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+    .option('-f, --force', 'Overwrite existing files', false)
+    .option('--check', 'Check for differences without syncing', false)
+    .option('--category <name>', 'Sync specific category (e.g., 04-development)', '04-development')
+    .action(async (options) => {
+    const templatesDir = getTemplatesDir();
+    const categoryPath = path.join(templatesDir, options.category);
+    const targetDir = path.join(options.docsDir, options.category);
+    if (!fs.existsSync(categoryPath)) {
+        console.error(chalk.red(`Template category not found: ${options.category}`));
+        console.log(chalk.gray('Available categories:'));
+        const categories = fs.readdirSync(templatesDir).filter(f => fs.statSync(path.join(templatesDir, f)).isDirectory());
+        categories.forEach(c => console.log(chalk.gray(`  - ${c}`)));
+        process.exit(1);
+    }
+    const templateFiles = fs.readdirSync(categoryPath).filter(f => f.endsWith('.md'));
+    if (templateFiles.length === 0) {
+        console.log(chalk.yellow('No templates found in category:', options.category));
+        process.exit(0);
+    }
+    console.log(chalk.bold(`\n📋 Syncing ${options.category} templates\n`));
+    let synced = 0;
+    let skipped = 0;
+    let different = 0;
+    for (const file of templateFiles) {
+        const sourcePath = path.join(categoryPath, file);
+        const targetPath = path.join(targetDir, file);
+        const sourceContent = fs.readFileSync(sourcePath, 'utf-8');
+        if (fs.existsSync(targetPath)) {
+            const targetContent = fs.readFileSync(targetPath, 'utf-8');
+            const isDifferent = sourceContent !== targetContent;
+            if (options.check) {
+                if (isDifferent) {
+                    console.log(`${chalk.yellow('⚠')} ${file} - differs from template`);
+                    different++;
+                }
+                else {
+                    console.log(`${chalk.green('✓')} ${file} - up to date`);
+                }
+            }
+            else if (options.force) {
+                if (isDifferent) {
+                    fs.writeFileSync(targetPath, sourceContent);
+                    console.log(`${chalk.green('✓')} ${file} - updated`);
+                    synced++;
+                }
+                else {
+                    console.log(`${chalk.gray('○')} ${file} - already up to date`);
+                    skipped++;
+                }
+            }
+            else {
+                console.log(`${chalk.yellow('⚠')} ${file} - exists (use --force to overwrite)`);
+                skipped++;
+            }
+        }
+        else {
+            if (options.check) {
+                console.log(`${chalk.red('✗')} ${file} - missing`);
+                different++;
+            }
+            else {
+                // Ensure target directory exists
+                if (!fs.existsSync(targetDir)) {
+                    fs.mkdirSync(targetDir, { recursive: true });
+                }
+                fs.writeFileSync(targetPath, sourceContent);
+                console.log(`${chalk.green('✓')} ${file} - created`);
+                synced++;
+            }
+        }
+    }
+    console.log('');
+    if (options.check) {
+        if (different > 0) {
+            console.log(chalk.yellow(`${different} file(s) need syncing`));
+            console.log(chalk.gray('Run without --check to sync'));
+            process.exit(1);
+        }
+        else {
+            console.log(chalk.green('All files are up to date'));
+        }
+    }
+    else {
+        console.log(chalk.green(`Synced: ${synced}`), chalk.gray(`Skipped: ${skipped}`));
+    }
+});
+/**
+ * Get the templates directory path
+ */
+function getTemplatesDir() {
+    // Templates are in ../templates relative to dist/cli.js
+    const templatesPath = path.join(__dirname, '..', 'templates');
+    if (fs.existsSync(templatesPath)) {
+        return templatesPath;
+    }
+    throw new Error(`Templates directory not found at: ${templatesPath}`);
+}
 /**
  * Load configuration from file or defaults
  */
