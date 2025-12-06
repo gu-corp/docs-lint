@@ -22,22 +22,39 @@ AIやレビュアーがドキュメントの品質を評価する際の基準と
 
 \`\`\`
 docs/
-├── 01-plan/          # 企画・提案
+├── 01-plan/          # 企画・提案（PROPOSAL, MVP, ROADMAP）
 ├── 02-spec/          # 仕様書
 │   ├── 01-requirements/  # 要件定義
 │   ├── 02-design/        # 設計
-│   ├── 03-infrastructure/# インフラ
+│   ├── 03-infrastructure/# インフラ仕様・SLA
 │   └── 04-testing/       # テスト
-├── 03-guide/         # ガイド・マニュアル
-├── 04-development/   # 開発者向け
+├── 03-guide/         # ガイド・マニュアル・運用ガイド（SysOps）
+├── 04-development/   # 開発・DevOps（CI/CD, IaC, 自動化）
+├── 05-business/      # ビジネス戦略（オプション）
+├── 06-reference/     # リサーチ・参考資料（オプション）
 └── README.md         # ドキュメント全体の目次
 \`\`\`
 
-### 1.2 番号付け規則
+### 1.2 オプションフォルダ
+
+| フォルダ | 用途 | ドキュメント例 |
+|----------|------|----------------|
+| 05-business/ | ビジネス戦略・事業計画 | GTM-STRATEGY.md, PARTNERSHIP.md, REVENUE-MODEL.md |
+| 06-reference/ | リサーチ・分析・参考資料 | COMPETITIVE-ANALYSIS.md, MARKET-RESEARCH.md, BENCHMARK.md |
+
+### 1.3 運用ドキュメントの配置
+
+| ドキュメント | 配置先 | 理由 |
+|-------------|--------|------|
+| SLA定義 | 02-spec/03-infrastructure/ | 仕様として定義 |
+| DR手順、インシデント対応 | 03-guide/ | 運用ガイド（SysOps） |
+| CI/CD、デプロイ自動化 | 04-development/ | DevOps |
+
+### 1.4 番号付け規則
 
 - 第1レベルフォルダ: \`XX-name/\` 形式（例: \`01-plan/\`, \`02-spec/\`）
 - 第2レベルフォルダ: \`XX-name/\` 形式（例: \`01-requirements/\`）
-- 番号は連番で欠番なし
+- 番号は連番で欠番なし（オプションフォルダ 05, 06 は使用時のみ）
 
 ---
 
