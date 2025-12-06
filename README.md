@@ -259,12 +259,57 @@ Add to your `package.json`:
 }
 ```
 
-GitHub Actions example:
+### GitHub Actions
+
+Create `.github/workflows/docs-lint.yml`:
 
 ```yaml
-- name: Lint documentation
-  run: npm run lint:docs
+name: Docs Lint
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+      - 'docs-lint.config.json'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'docs-lint.config.json'
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install docs-lint
+        run: npm install github:gu-corp/docs-lint
+
+      - name: Run docs-lint
+        run: npx docs-lint lint -v
+
+      - name: Generate AI prompt (on failure)
+        if: failure()
+        run: npx docs-lint lint --ai-prompt > docs-lint-report.md
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-lint-report
+          path: docs-lint-report.md
 ```
+
+This workflow:
+- Runs on docs changes only
+- Generates AI-friendly report on failure
+- Uploads report as artifact for debugging
 
 ## License
 
