@@ -21,7 +21,13 @@ A comprehensive documentation linting tool for validating structure, quality, an
 ## Installation
 
 ```bash
-npm install @gu-corp/docs-lint
+# GitHubから直接インストール
+npm install github:gu-corp/docs-lint
+
+# または package.json に追加
+# "devDependencies": {
+#   "@gu-corp/docs-lint": "github:gu-corp/docs-lint"
+# }
 ```
 
 ## CLI Usage
