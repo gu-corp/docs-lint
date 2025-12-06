@@ -1,5 +1,7 @@
 {
-  "commonLanguage": "en",
-  "draftLanguages": ["en", "ja"],
-  "teams": {}
+  "i18n": {
+    "sourceLanguage": "en",
+    "targetLanguages": [],
+    "checkSync": false
+  }
 }

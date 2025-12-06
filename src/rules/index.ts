@@ -458,6 +458,7 @@ export async function checkRequiredFiles(
 
 // Re-export structure functions
 export {
+  checkI18nStructure,
   checkDraftStructure,
   checkFolderStructure,
   checkFolderNumbering,

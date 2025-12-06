@@ -1,4 +1,4 @@
-import type { LintIssue } from '../types.js';
+import type { LintIssue, I18nConfig } from '../types.js';
 export interface DocsLanguageConfig {
     commonLanguage: string;
     draftLanguages?: string[];
@@ -46,18 +46,33 @@ export declare function checkDuplicateContent(docsDir: string, files: string[]):
  */
 export declare function readDocsLanguageConfig(docsDir: string): DocsLanguageConfig | null;
 /**
- * Check drafts folder structure and translation sync
+ * Check i18n file structure using translations folder convention
  *
- * Expected structure:
+ * Expected folder structure:
  * docs/
- * ├── README.md              # Common language (Single Source of Truth)
  * ├── 01-plan/
- * │   └── PROPOSAL.md        # Common language
- * └── drafts/
- *     ├── ja/                # Japanese team drafts
- *     │   └── PROPOSAL.md
- *     └── vi/                # Vietnamese team drafts
- *         └── PROPOSAL.md
+ * │   └── PROPOSAL.md              # Source (main location)
+ * └── translations/
+ *     ├── ja/                       # Source language copy
+ *     │   └── 01-plan/
+ *     │       └── PROPOSAL.md
+ *     └── en/                       # Translation
+ *         └── 01-plan/
+ *             └── PROPOSAL.md
+ *
+ * Configuration:
+ * {
+ *   "i18n": {
+ *     "sourceLanguage": "ja",
+ *     "targetLanguages": ["en"],
+ *     "translationsFolder": "translations"
+ *   }
+ * }
+ */
+export declare function checkI18nStructure(docsDir: string, files: string[], i18nConfig: I18nConfig | undefined): Promise<LintIssue[]>;
+/**
+ * Legacy: Check drafts folder structure
+ * @deprecated Use checkI18nStructure with language suffix convention instead
  */
 export declare function checkDraftStructure(docsDir: string, langConfig: DocsLanguageConfig | null): Promise<LintIssue[]>;
 //# sourceMappingURL=structure.d.ts.map

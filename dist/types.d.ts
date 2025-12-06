@@ -16,6 +16,8 @@ export interface DocsLintConfig {
     requiredFiles: string[];
     /** Requirement ID patterns for coverage tracking */
     requirementPatterns: RequirementPattern[];
+    /** i18n configuration for multilingual documents */
+    i18n?: I18nConfig;
 }
 export interface RulesConfig {
     /** Check for broken markdown links */
@@ -40,8 +42,8 @@ export interface RulesConfig {
     bidirectionalRefs: RuleSeverity;
     /** Check requirements coverage */
     requirementsCoverage: RuleSeverity;
-    /** Check drafts folder structure (multilingual support) */
-    draftStructure: RuleSeverity;
+    /** Check i18n file structure (language suffix convention) */
+    i18nStructure: RuleSeverity;
 }
 export type RuleSeverity = 'off' | 'warn' | 'error';
 export interface LegacyFileNamesConfig {
@@ -70,6 +72,16 @@ export interface TerminologyMapping {
     preferred: string;
     /** Variants that should be replaced */
     variants: string[];
+}
+export interface I18nConfig {
+    /** Source language code (e.g., "ja", "en") - the authoritative version */
+    sourceLanguage: string;
+    /** Target languages for translations */
+    targetLanguages?: string[];
+    /** Translations folder name (default: "translations") */
+    translationsFolder?: string;
+    /** Whether to check translation sync (default: false) */
+    checkSync?: boolean;
 }
 export interface RequirementPattern {
     /** Name of the requirement category */

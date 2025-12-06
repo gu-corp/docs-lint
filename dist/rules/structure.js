@@ -168,18 +168,194 @@ export function readDocsLanguageConfig(docsDir) {
     return null;
 }
 /**
- * Check drafts folder structure and translation sync
+ * Check i18n file structure using translations folder convention
  *
- * Expected structure:
+ * Expected folder structure:
  * docs/
- * ├── README.md              # Common language (Single Source of Truth)
  * ├── 01-plan/
- * │   └── PROPOSAL.md        # Common language
- * └── drafts/
- *     ├── ja/                # Japanese team drafts
- *     │   └── PROPOSAL.md
- *     └── vi/                # Vietnamese team drafts
- *         └── PROPOSAL.md
+ * │   └── PROPOSAL.md              # Source (main location)
+ * └── translations/
+ *     ├── ja/                       # Source language copy
+ *     │   └── 01-plan/
+ *     │       └── PROPOSAL.md
+ *     └── en/                       # Translation
+ *         └── 01-plan/
+ *             └── PROPOSAL.md
+ *
+ * Configuration:
+ * {
+ *   "i18n": {
+ *     "sourceLanguage": "ja",
+ *     "targetLanguages": ["en"],
+ *     "translationsFolder": "translations"
+ *   }
+ * }
+ */
+export async function checkI18nStructure(docsDir, files, i18nConfig) {
+    const issues = [];
+    // If no i18n config, skip this check
+    if (!i18nConfig) {
+        return issues;
+    }
+    const { sourceLanguage, targetLanguages = [], translationsFolder = 'translations', checkSync = false, } = i18nConfig;
+    const translationsDir = path.join(docsDir, translationsFolder);
+    // If no translations folder, skip
+    if (!fs.existsSync(translationsDir)) {
+        return issues;
+    }
+    // Get language folders
+    const entries = fs.readdirSync(translationsDir, { withFileTypes: true });
+    const langFolders = entries
+        .filter((e) => e.isDirectory())
+        .map((e) => e.name)
+        .filter((name) => !name.startsWith('.'));
+    // Validate language folder names
+    const validLangPattern = /^[a-z]{2}(-[A-Z]{2})?$/;
+    for (const folder of langFolders) {
+        if (!validLangPattern.test(folder)) {
+            issues.push({
+                file: `${translationsFolder}/${folder}`,
+                message: `Invalid language folder name: ${folder}`,
+                suggestion: `Use ISO language code (e.g., en, ja, vi, en-US)`,
+            });
+        }
+    }
+    // Check source language folder exists
+    if (!langFolders.includes(sourceLanguage)) {
+        issues.push({
+            file: translationsFolder,
+            message: `Source language folder missing: ${sourceLanguage}`,
+            suggestion: `Create ${translationsFolder}/${sourceLanguage}/ and copy source files`,
+        });
+        return issues;
+    }
+    // Get files in source language folder
+    const sourceLangDir = path.join(translationsDir, sourceLanguage);
+    const sourceFiles = getAllMarkdownFiles(sourceLangDir).map((f) => path.relative(sourceLangDir, f));
+    // Check translation coverage for each target language
+    if (checkSync) {
+        for (const targetLang of targetLanguages) {
+            if (!langFolders.includes(targetLang)) {
+                issues.push({
+                    file: translationsFolder,
+                    message: `Target language folder missing: ${targetLang}`,
+                    suggestion: `Create ${translationsFolder}/${targetLang}/`,
+                });
+                continue;
+            }
+            const targetLangDir = path.join(translationsDir, targetLang);
+            const targetFiles = getAllMarkdownFiles(targetLangDir).map((f) => path.relative(targetLangDir, f));
+            // Find missing translations
+            for (const sourceFile of sourceFiles) {
+                if (!targetFiles.includes(sourceFile)) {
+                    issues.push({
+                        file: `${translationsFolder}/${sourceLanguage}/${sourceFile}`,
+                        message: `Missing ${targetLang} translation`,
+                        suggestion: `Create ${translationsFolder}/${targetLang}/${sourceFile}`,
+                    });
+                }
+            }
+            // Find orphan translations (translations without source)
+            for (const targetFile of targetFiles) {
+                if (!sourceFiles.includes(targetFile)) {
+                    issues.push({
+                        file: `${translationsFolder}/${targetLang}/${targetFile}`,
+                        message: `Translation without source file`,
+                        suggestion: `Add source file at ${translationsFolder}/${sourceLanguage}/${targetFile}`,
+                    });
+                }
+            }
+        }
+    }
+    // Check source files are synced with main docs
+    for (const sourceFile of sourceFiles) {
+        const mainFile = path.join(docsDir, sourceFile);
+        const translationSourceFile = path.join(sourceLangDir, sourceFile);
+        if (fs.existsSync(mainFile)) {
+            // Compare if files are in sync (basic check: file size)
+            const mainStat = fs.statSync(mainFile);
+            const transStat = fs.statSync(translationSourceFile);
+            if (mainStat.size !== transStat.size) {
+                issues.push({
+                    file: `${translationsFolder}/${sourceLanguage}/${sourceFile}`,
+                    message: `Source language copy may be out of sync with main docs`,
+                    suggestion: `Update from ${sourceFile}`,
+                });
+            }
+        }
+    }
+    // Check translation integrity (version/structure sync)
+    if (checkSync) {
+        for (const targetLang of targetLanguages) {
+            if (!langFolders.includes(targetLang))
+                continue;
+            const targetLangDir = path.join(translationsDir, targetLang);
+            for (const sourceFile of sourceFiles) {
+                const sourceFilePath = path.join(sourceLangDir, sourceFile);
+                const targetFilePath = path.join(targetLangDir, sourceFile);
+                if (!fs.existsSync(targetFilePath))
+                    continue;
+                const sourceContent = fs.readFileSync(sourceFilePath, 'utf-8');
+                const targetContent = fs.readFileSync(targetFilePath, 'utf-8');
+                // Check version info sync
+                const sourceVersion = extractVersion(sourceContent);
+                const targetVersion = extractVersion(targetContent);
+                if (sourceVersion && targetVersion && sourceVersion !== targetVersion) {
+                    issues.push({
+                        file: `${translationsFolder}/${targetLang}/${sourceFile}`,
+                        message: `Version mismatch: source=${sourceVersion}, translation=${targetVersion}`,
+                        suggestion: `Update translation to match source version ${sourceVersion}`,
+                    });
+                }
+                // Check heading structure sync (count of H1, H2 headings)
+                const sourceHeadings = countHeadings(sourceContent);
+                const targetHeadings = countHeadings(targetContent);
+                if (sourceHeadings.h1 !== targetHeadings.h1 || sourceHeadings.h2 !== targetHeadings.h2) {
+                    issues.push({
+                        file: `${translationsFolder}/${targetLang}/${sourceFile}`,
+                        message: `Structure mismatch: source has ${sourceHeadings.h1}xH1/${sourceHeadings.h2}xH2, translation has ${targetHeadings.h1}xH1/${targetHeadings.h2}xH2`,
+                        suggestion: `Review translation structure to match source`,
+                    });
+                }
+            }
+        }
+    }
+    return issues;
+}
+/**
+ * Extract version info from document content
+ */
+function extractVersion(content) {
+    // Match patterns like **バージョン**: 1.0 or **Version**: 1.0
+    const versionPattern = /\*\*(?:バージョン|Version)\*\*:\s*(\d+(?:\.\d+)*)/i;
+    const match = content.match(versionPattern);
+    return match ? match[1] : null;
+}
+/**
+ * Count headings in document
+ */
+function countHeadings(content) {
+    const lines = content.split('\n');
+    let h1 = 0;
+    let h2 = 0;
+    let inCodeBlock = false;
+    for (const line of lines) {
+        if (line.trim().startsWith('```')) {
+            inCodeBlock = !inCodeBlock;
+            continue;
+        }
+        if (inCodeBlock)
+            continue;
+        if (line.match(/^#\s/))
+            h1++;
+        if (line.match(/^##\s/))
+            h2++;
+    }
+    return { h1, h2 };
+}
+/**
+ * Legacy: Check drafts folder structure
+ * @deprecated Use checkI18nStructure with language suffix convention instead
  */
 export async function checkDraftStructure(docsDir, langConfig) {
     const issues = [];

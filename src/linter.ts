@@ -27,6 +27,7 @@ import {
   checkFolderNumbering,
   checkFileNaming,
   checkDuplicateContent,
+  checkI18nStructure,
   checkDraftStructure,
   readDocsLanguageConfig,
   type FolderStructureConfig,
@@ -160,12 +161,11 @@ export class DocsLinter {
       );
     }
 
-    // Draft Structure (multilingual support)
-    if (this.shouldRun('draftStructure')) {
-      const langConfig = readDocsLanguageConfig(docsDir);
+    // i18n Structure (language suffix convention)
+    if (this.shouldRun('i18nStructure')) {
       ruleResults.push(
-        await this.runRule('draftStructure', () =>
-          checkDraftStructure(docsDir, langConfig)
+        await this.runRule('i18nStructure', () =>
+          checkI18nStructure(docsDir, files, this.config.i18n)
         )
       );
     }
