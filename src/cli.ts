@@ -88,6 +88,52 @@ program
   });
 
 program
+  .command('init-standards')
+  .description('Generate DOCUMENT_STANDARDS.md from G.U.Corp default template')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('-f, --force', 'Overwrite existing file', false)
+  .action((options) => {
+    const { getDefaultStandards } = require('./templates/standards.js');
+    const standardsPath = path.join(options.docsDir, 'DOCUMENT_STANDARDS.md');
+
+    if (fs.existsSync(standardsPath) && !options.force) {
+      console.error(chalk.yellow('Standards file already exists:', standardsPath));
+      console.log(chalk.gray('Use --force to overwrite'));
+      process.exit(1);
+    }
+
+    // Ensure docs directory exists
+    if (!fs.existsSync(options.docsDir)) {
+      fs.mkdirSync(options.docsDir, { recursive: true });
+    }
+
+    fs.writeFileSync(standardsPath, getDefaultStandards());
+    console.log(chalk.green('Created standards file:'), standardsPath);
+    console.log(chalk.gray('\nThis file defines document quality standards for your project.'));
+    console.log(chalk.gray('Customize it to match your project requirements.'));
+    console.log(chalk.gray('\nWhen running "docs-lint lint --ai-prompt", this file will be'));
+    console.log(chalk.gray('included in the output to guide AI evaluation.'));
+  });
+
+program
+  .command('show-standards')
+  .description('Show current document standards (project-specific or G.U.Corp default)')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .action((options) => {
+    const { readStandardsFile } = require('./ai-prompt.js');
+    const standards = readStandardsFile(options.docsDir);
+
+    if (standards.isDefault) {
+      console.log(chalk.yellow('Using G.U.Corp default standards'));
+      console.log(chalk.gray('Run "docs-lint init-standards" to create a project-specific standards file.\n'));
+    } else {
+      console.log(chalk.green('Using project-specific standards\n'));
+    }
+
+    console.log(standards.content);
+  });
+
+program
   .command('check-structure')
   .description('Check folder structure and naming conventions')
   .option('-d, --docs-dir <path>', 'Documentation directory', './docs')

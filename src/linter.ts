@@ -1,12 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { glob } from 'glob';
-import type {
-  DocsLintConfig,
-  LintResult,
-  RuleResult,
-  LintIssue,
-  RuleSeverity,
+import {
+  defaultConfig,
+  type DocsLintConfig,
+  type LintResult,
+  type RuleResult,
+  type LintIssue,
+  type RuleSeverity,
 } from './types.js';
 import {
   checkBrokenLinks,
@@ -314,7 +315,6 @@ export function createLinter(
   config: Partial<DocsLintConfig>,
   options?: LinterOptions
 ): DocsLinter {
-  const { defaultConfig } = require('./types.js');
   const mergedConfig: DocsLintConfig = {
     ...defaultConfig,
     ...config,

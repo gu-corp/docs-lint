@@ -1,6 +1,33 @@
 import fs from 'fs';
 import path from 'path';
 import type { LintResult, DocsLintConfig } from './types.js';
+import { getDefaultStandards } from './templates/standards.js';
+
+export const STANDARDS_FILES = [
+  'DOCUMENT_STANDARDS.md',
+  'DOCUMENT-STANDARDS.md',
+  'DOC_STANDARDS.md',
+  'STANDARDS.md',
+];
+
+/**
+ * Find and read the document standards file
+ * Falls back to default G.U.Corp standards if not found
+ */
+export function readStandardsFile(docsDir: string, useDefault = true): { content: string; isDefault: boolean } {
+  for (const fileName of STANDARDS_FILES) {
+    const filePath = path.join(docsDir, fileName);
+    if (fs.existsSync(filePath)) {
+      return { content: fs.readFileSync(filePath, 'utf-8'), isDefault: false };
+    }
+  }
+
+  if (useDefault) {
+    return { content: getDefaultStandards(), isDefault: true };
+  }
+
+  return { content: '', isDefault: true };
+}
 
 /**
  * Generate an AI-friendly prompt for document quality assessment
@@ -12,12 +39,40 @@ export function generateAIPrompt(
   config: DocsLintConfig
 ): string {
   const sections: string[] = [];
+  const standards = readStandardsFile(docsDir);
 
-  // Header
+  // Header with AI instructions
   sections.push(`# ドキュメント品質評価レポート
 
-このレポートは、AIによるドキュメント品質評価を支援するために生成されました。
-以下の情報を元に、ドキュメントの品質と改善点を評価してください。
+<ai-instructions>
+## AIへの指示
+
+このレポートは、ドキュメント品質評価を支援するために自動生成されました。
+
+**評価手順:**
+1. **まず「0. ドキュメント標準規約」を熟読してください** - これが評価の基準となります
+2. 検出された問題を確認してください
+3. フォルダ構成と品質メトリクスを確認してください
+4. 標準規約に基づいて総合評価を行ってください
+
+**重要:** 標準規約を理解せずに評価を行わないでください。
+規約を読んだ後、その基準に基づいて各ドキュメントを評価してください。
+</ai-instructions>
+
+---`);
+
+  // Standards section (always included - uses default if project-specific not found)
+  const standardsNote = standards.isDefault
+    ? '（※ G.U.Corp 標準規約を使用。プロジェクト固有の規約は docs/DOCUMENT_STANDARDS.md で定義可能）'
+    : '';
+  sections.push(`## 0. ドキュメント標準規約 ${standardsNote}
+
+以下は、ドキュメント作成基準です。
+評価はこの基準に基づいて行ってください。
+
+<document-standards>
+${standards.content}
+</document-standards>
 
 ---`);
 

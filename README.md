@@ -16,6 +16,7 @@ A comprehensive documentation linting tool for validating structure, quality, an
 - **Bidirectional References**: Check for missing back-references
 - **Folder Structure Validation**: Verify expected folder organization
 - **AI-Friendly Reports**: Generate prompts for AI quality assessment
+- **Document Standards**: Built-in G.U.Corp document standards with project-level customization
 
 ## Installation
 
@@ -156,6 +157,39 @@ Some rules support advanced configuration:
 }
 ```
 
+## Document Standards
+
+docs-lint includes built-in G.U.Corp document standards. If your project has a `DOCUMENT_STANDARDS.md` file, it will be used instead.
+
+### View Current Standards
+
+```bash
+# Show which standards are being used
+npx docs-lint show-standards
+```
+
+### Create Project-Specific Standards
+
+```bash
+# Generate DOCUMENT_STANDARDS.md from default template
+npx docs-lint init-standards
+
+# Overwrite existing file
+npx docs-lint init-standards --force
+```
+
+### How Standards Work
+
+1. **Project-specific**: If `docs/DOCUMENT_STANDARDS.md` exists, it's used
+2. **Default fallback**: Otherwise, G.U.Corp default standards are applied
+3. **AI Prompt**: When using `--ai-prompt`, standards are included with instructions for AI to read them first
+
+Supported file names:
+- `DOCUMENT_STANDARDS.md`
+- `DOCUMENT-STANDARDS.md`
+- `DOC_STANDARDS.md`
+- `STANDARDS.md`
+
 ## AI-Friendly Output
 
 Generate prompts suitable for AI-based document quality assessment:
@@ -164,7 +198,13 @@ Generate prompts suitable for AI-based document quality assessment:
 npx docs-lint lint --ai-prompt > quality-report.md
 ```
 
-This generates a structured markdown report that can be fed to Claude or other AI assistants for detailed quality evaluation.
+This generates a structured markdown report that includes:
+1. **AI Instructions**: Guidance for the AI on how to evaluate
+2. **Document Standards**: The evaluation criteria (project-specific or G.U.Corp default)
+3. **Lint Results**: Automated check results
+4. **Quality Metrics**: Checklist for manual evaluation
+
+The report can be fed to Claude or other AI assistants for detailed quality evaluation.
 
 ## Folder Structure Validation
 
