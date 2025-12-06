@@ -39,6 +39,11 @@ export declare class DocsLinter {
      * Get severity for a rule
      */
     private getRuleSeverity;
+    /**
+     * Get the templates directory path
+     * Returns null if templates are not available (e.g., when used as library)
+     */
+    private getTemplatesDir;
 }
 /**
  * Create a linter with configuration

@@ -54,6 +54,17 @@ export interface RulesConfig {
     fileNaming: RuleSeverity;
     /** Check for duplicate content/titles */
     duplicateContent: RuleSeverity;
+    /** Check if development standards files match templates */
+    standardsDrift: RuleSeverity | StandardsDriftConfig;
+}
+export interface StandardsDriftConfig {
+    severity: RuleSeverity;
+    /** Template categories to check (default: ["04-development"]) */
+    categories: string[];
+    /** Whether to report missing files */
+    reportMissing: boolean;
+    /** Whether to report different files */
+    reportDifferent: boolean;
 }
 export type RuleSeverity = 'off' | 'warn' | 'error';
 export interface LegacyFileNamesConfig {

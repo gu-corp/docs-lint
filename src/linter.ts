@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { glob } from 'glob';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import {
   defaultConfig,
   type DocsLintConfig,
@@ -21,6 +25,7 @@ import {
   checkTerminology,
   checkBidirectionalRefs,
   checkRequiredFiles,
+  checkStandardsDrift,
 } from './rules/index.js';
 import {
   checkFolderStructure,
@@ -168,6 +173,18 @@ export class DocsLinter {
           checkI18nStructure(docsDir, files, this.config.i18n)
         )
       );
+    }
+
+    // Standards Drift (check if dev standards match templates)
+    if (this.shouldRun('standardsDrift')) {
+      const templatesDir = this.getTemplatesDir();
+      if (templatesDir) {
+        ruleResults.push(
+          await this.runRule('standardsDrift', () =>
+            checkStandardsDrift(docsDir, templatesDir, this.config.rules.standardsDrift)
+          )
+        );
+      }
     }
 
     // Required Files
@@ -319,6 +336,21 @@ export class DocsLinter {
       return config.severity;
     }
     return (config as RuleSeverity) || 'warn';
+  }
+
+  /**
+   * Get the templates directory path
+   * Returns null if templates are not available (e.g., when used as library)
+   */
+  private getTemplatesDir(): string | null {
+    // Templates are in ../templates relative to dist/linter.js
+    const templatesPath = path.join(__dirname, '..', 'templates');
+
+    if (fs.existsSync(templatesPath)) {
+      return templatesPath;
+    }
+
+    return null;
   }
 }
 

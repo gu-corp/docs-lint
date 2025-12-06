@@ -1,4 +1,4 @@
-import type { LintIssue, RuleSeverity, LegacyFileNamesConfig, VersionInfoConfig, RelatedDocumentsConfig } from '../types.js';
+import type { LintIssue, RuleSeverity, LegacyFileNamesConfig, VersionInfoConfig, RelatedDocumentsConfig, StandardsDriftConfig } from '../types.js';
 /**
  * Check for broken markdown links
  */
@@ -46,5 +46,9 @@ export declare function checkBidirectionalRefs(docsDir: string, files: string[])
  * Check required files exist
  */
 export declare function checkRequiredFiles(docsDir: string, requiredFiles: string[]): Promise<LintIssue[]>;
+/**
+ * Check if development standards files match templates
+ */
+export declare function checkStandardsDrift(docsDir: string, templatesDir: string, config: StandardsDriftConfig | RuleSeverity): Promise<LintIssue[]>;
 export { checkI18nStructure, checkDraftStructure, checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, readDocsLanguageConfig, type DocsLanguageConfig, type FolderStructureConfig, type FolderDefinition, } from './structure.js';
 //# sourceMappingURL=index.d.ts.map

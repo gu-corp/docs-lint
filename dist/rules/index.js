@@ -338,6 +338,55 @@ export async function checkRequiredFiles(docsDir, requiredFiles) {
     }
     return issues;
 }
+/**
+ * Check if development standards files match templates
+ */
+export async function checkStandardsDrift(docsDir, templatesDir, config) {
+    const issues = [];
+    const categories = typeof config === 'object' ? config.categories : ['04-development'];
+    const reportMissing = typeof config === 'object' ? config.reportMissing : true;
+    const reportDifferent = typeof config === 'object' ? config.reportDifferent : true;
+    for (const category of categories) {
+        const templateCategoryPath = path.join(templatesDir, category);
+        const docsCategoryPath = path.join(docsDir, category);
+        // Skip if template category doesn't exist
+        if (!fs.existsSync(templateCategoryPath)) {
+            continue;
+        }
+        // Get template files
+        const templateFiles = fs.readdirSync(templateCategoryPath).filter(f => f.endsWith('.md'));
+        for (const file of templateFiles) {
+            const templatePath = path.join(templateCategoryPath, file);
+            const docsPath = path.join(docsCategoryPath, file);
+            const relativePath = path.join(category, file);
+            if (!fs.existsSync(docsPath)) {
+                // Missing file
+                if (reportMissing) {
+                    issues.push({
+                        file: relativePath,
+                        message: `Missing standards file from template`,
+                        suggestion: `Run "docs-lint sync" to add this file`,
+                    });
+                }
+            }
+            else {
+                // File exists - check if different
+                if (reportDifferent) {
+                    const templateContent = fs.readFileSync(templatePath, 'utf-8');
+                    const docsContent = fs.readFileSync(docsPath, 'utf-8');
+                    if (templateContent !== docsContent) {
+                        issues.push({
+                            file: relativePath,
+                            message: `File differs from template`,
+                            suggestion: `Run "docs-lint sync --check" to see differences or "docs-lint sync --force" to update`,
+                        });
+                    }
+                }
+            }
+        }
+    }
+    return issues;
+}
 // Re-export structure functions
 export { checkI18nStructure, checkDraftStructure, checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, readDocsLanguageConfig, } from './structure.js';
 //# sourceMappingURL=index.js.map

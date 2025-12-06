@@ -78,6 +78,19 @@ export interface RulesConfig {
 
   /** Check for duplicate content/titles */
   duplicateContent: RuleSeverity;
+
+  /** Check if development standards files match templates */
+  standardsDrift: RuleSeverity | StandardsDriftConfig;
+}
+
+export interface StandardsDriftConfig {
+  severity: RuleSeverity;
+  /** Template categories to check (default: ["04-development"]) */
+  categories: string[];
+  /** Whether to report missing files */
+  reportMissing: boolean;
+  /** Whether to report different files */
+  reportDifferent: boolean;
 }
 
 export type RuleSeverity = 'off' | 'warn' | 'error';
@@ -223,6 +236,12 @@ export const defaultConfig: DocsLintConfig = {
     },
     fileNaming: 'warn',
     duplicateContent: 'warn',
+    standardsDrift: {
+      severity: 'warn',
+      categories: ['04-development'],
+      reportMissing: true,
+      reportDifferent: true,
+    },
   },
   terminology: [],
   requiredFiles: [],

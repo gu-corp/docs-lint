@@ -27,6 +27,12 @@ export const defaultConfig = {
         },
         fileNaming: 'warn',
         duplicateContent: 'warn',
+        standardsDrift: {
+            severity: 'warn',
+            categories: ['04-development'],
+            reportMissing: true,
+            reportDifferent: true,
+        },
     },
     terminology: [],
     requiredFiles: [],
