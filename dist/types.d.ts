@@ -44,6 +44,16 @@ export interface RulesConfig {
     requirementsCoverage: RuleSeverity;
     /** Check i18n file structure (language suffix convention) */
     i18nStructure: RuleSeverity;
+    /** Check required files exist */
+    requiredFiles: RuleSeverity;
+    /** Check folder structure matches expected configuration */
+    folderStructure: RuleSeverity;
+    /** Check folder numbering consistency */
+    folderNumbering: RuleSeverity;
+    /** Check file naming conventions */
+    fileNaming: RuleSeverity;
+    /** Check for duplicate content/titles */
+    duplicateContent: RuleSeverity;
 }
 export type RuleSeverity = 'off' | 'warn' | 'error';
 export interface LegacyFileNamesConfig {

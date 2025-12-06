@@ -63,6 +63,21 @@ export interface RulesConfig {
 
   /** Check i18n file structure (language suffix convention) */
   i18nStructure: RuleSeverity;
+
+  /** Check required files exist */
+  requiredFiles: RuleSeverity;
+
+  /** Check folder structure matches expected configuration */
+  folderStructure: RuleSeverity;
+
+  /** Check folder numbering consistency */
+  folderNumbering: RuleSeverity;
+
+  /** Check file naming conventions */
+  fileNaming: RuleSeverity;
+
+  /** Check for duplicate content/titles */
+  duplicateContent: RuleSeverity;
 }
 
 export type RuleSeverity = 'off' | 'warn' | 'error';
@@ -191,6 +206,11 @@ export const defaultConfig: DocsLintConfig = {
     bidirectionalRefs: 'off',
     requirementsCoverage: 'warn',
     i18nStructure: 'off',
+    requiredFiles: 'warn',
+    folderStructure: 'warn',
+    folderNumbering: 'off',
+    fileNaming: 'off',
+    duplicateContent: 'warn',
   },
   terminology: [],
   requiredFiles: [],
