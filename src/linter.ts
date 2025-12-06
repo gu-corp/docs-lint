@@ -27,6 +27,8 @@ import {
   checkFolderNumbering,
   checkFileNaming,
   checkDuplicateContent,
+  checkDraftStructure,
+  readDocsLanguageConfig,
   type FolderStructureConfig,
 } from './rules/structure.js';
 
@@ -154,6 +156,16 @@ export class DocsLinter {
       ruleResults.push(
         await this.runRule('bidirectionalRefs', () =>
           checkBidirectionalRefs(docsDir, files)
+        )
+      );
+    }
+
+    // Draft Structure (multilingual support)
+    if (this.shouldRun('draftStructure')) {
+      const langConfig = readDocsLanguageConfig(docsDir);
+      ruleResults.push(
+        await this.runRule('draftStructure', () =>
+          checkDraftStructure(docsDir, langConfig)
         )
       );
     }

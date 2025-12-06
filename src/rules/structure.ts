@@ -2,6 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import type { LintIssue } from '../types.js';
 
+export interface DocsLanguageConfig {
+  commonLanguage: string;
+  draftLanguages?: string[];
+  teams?: Record<string, string>;
+}
+
 export interface FolderStructureConfig {
   /** Expected folder structure with optional descriptions */
   folders: FolderDefinition[];
@@ -205,4 +211,175 @@ export async function checkDuplicateContent(
   }
 
   return issues;
+}
+
+/**
+ * Read docs.config.json for language settings
+ */
+export function readDocsLanguageConfig(docsDir: string): DocsLanguageConfig | null {
+  const configPath = path.join(docsDir, 'docs.config.json');
+  if (fs.existsSync(configPath)) {
+    try {
+      return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Check drafts folder structure and translation sync
+ *
+ * Expected structure:
+ * docs/
+ * ├── README.md              # Common language (Single Source of Truth)
+ * ├── 01-plan/
+ * │   └── PROPOSAL.md        # Common language
+ * └── drafts/
+ *     ├── ja/                # Japanese team drafts
+ *     │   └── PROPOSAL.md
+ *     └── vi/                # Vietnamese team drafts
+ *         └── PROPOSAL.md
+ */
+export async function checkDraftStructure(
+  docsDir: string,
+  langConfig: DocsLanguageConfig | null
+): Promise<LintIssue[]> {
+  const issues: LintIssue[] = [];
+  const draftsDir = path.join(docsDir, 'drafts');
+
+  // If no drafts folder, skip this check
+  if (!fs.existsSync(draftsDir)) {
+    return issues;
+  }
+
+  // Get draft language folders
+  const entries = fs.readdirSync(draftsDir, { withFileTypes: true });
+  const langFolders = entries
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)
+    .filter((name) => !name.startsWith('.'));
+
+  // Validate language folder names (should be ISO language codes)
+  const validLangPattern = /^[a-z]{2}(-[A-Z]{2})?$/; // e.g., en, ja, en-US
+  for (const folder of langFolders) {
+    if (!validLangPattern.test(folder)) {
+      issues.push({
+        file: `drafts/${folder}`,
+        message: `Invalid language folder name: ${folder}`,
+        suggestion: `Use ISO language code (e.g., en, ja, vi, en-US)`,
+      });
+    }
+  }
+
+  // If langConfig exists, check configured languages have folders
+  if (langConfig?.draftLanguages) {
+    for (const lang of langConfig.draftLanguages) {
+      if (lang !== langConfig.commonLanguage && !langFolders.includes(lang)) {
+        issues.push({
+          file: 'drafts',
+          message: `Missing draft folder for configured language: ${lang}`,
+          suggestion: `Create drafts/${lang}/ folder`,
+        });
+      }
+    }
+  }
+
+  // Check for orphan drafts (drafts without corresponding common language doc)
+  for (const langFolder of langFolders) {
+    const langDraftsDir = path.join(draftsDir, langFolder);
+    const draftFiles = getAllMarkdownFiles(langDraftsDir);
+
+    for (const draftFile of draftFiles) {
+      // Convert draft path to common language path
+      // drafts/ja/PROPOSAL.md -> PROPOSAL.md (or 01-plan/PROPOSAL.md)
+      const relativePath = path.relative(langDraftsDir, draftFile);
+      const commonPath = path.join(docsDir, relativePath);
+
+      // Also check in numbered folders
+      if (!fs.existsSync(commonPath)) {
+        // Try to find in any numbered folder
+        const fileName = path.basename(relativePath);
+        const found = findFileInDocsDir(docsDir, fileName);
+
+        if (!found) {
+          issues.push({
+            file: `drafts/${langFolder}/${relativePath}`,
+            message: `Draft without corresponding common language document`,
+            suggestion: `Create ${relativePath} in docs/ root or publish from draft`,
+          });
+        }
+      }
+    }
+  }
+
+  // Check for translation sync markers
+  for (const langFolder of langFolders) {
+    const langDraftsDir = path.join(draftsDir, langFolder);
+    const draftFiles = getAllMarkdownFiles(langDraftsDir);
+
+    for (const draftFile of draftFiles) {
+      const content = fs.readFileSync(draftFile, 'utf-8');
+
+      // Check for [Translation pending] markers
+      if (content.includes('[Translation pending]') || content.includes('[翻訳保留]')) {
+        issues.push({
+          file: path.relative(docsDir, draftFile),
+          message: `Translation pending marker found`,
+          suggestion: `Complete translation and remove marker`,
+        });
+      }
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Helper: Get all markdown files recursively
+ */
+function getAllMarkdownFiles(dir: string): string[] {
+  const files: string[] = [];
+
+  if (!fs.existsSync(dir)) return files;
+
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory() && !entry.name.startsWith('.')) {
+      files.push(...getAllMarkdownFiles(fullPath));
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+/**
+ * Helper: Find a file by name anywhere in docs dir (excluding drafts)
+ */
+function findFileInDocsDir(docsDir: string, fileName: string): string | null {
+  const search = (dir: string): string | null => {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+
+      // Skip drafts folder
+      if (entry.name === 'drafts') continue;
+
+      if (entry.isDirectory() && !entry.name.startsWith('.')) {
+        const found = search(fullPath);
+        if (found) return found;
+      } else if (entry.isFile() && entry.name === fileName) {
+        return fullPath;
+      }
+    }
+
+    return null;
+  };
+
+  return search(docsDir);
 }

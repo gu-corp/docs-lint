@@ -46,4 +46,5 @@ export declare function checkBidirectionalRefs(docsDir: string, files: string[])
  * Check required files exist
  */
 export declare function checkRequiredFiles(docsDir: string, requiredFiles: string[]): Promise<LintIssue[]>;
+export { checkDraftStructure, checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, readDocsLanguageConfig, type DocsLanguageConfig, type FolderStructureConfig, type FolderDefinition, } from './structure.js';
 //# sourceMappingURL=index.d.ts.map

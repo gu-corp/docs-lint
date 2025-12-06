@@ -338,4 +338,6 @@ export async function checkRequiredFiles(docsDir, requiredFiles) {
     }
     return issues;
 }
+// Re-export structure functions
+export { checkDraftStructure, checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, readDocsLanguageConfig, } from './structure.js';
 //# sourceMappingURL=index.js.map

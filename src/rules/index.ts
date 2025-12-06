@@ -455,3 +455,16 @@ export async function checkRequiredFiles(
 
   return issues;
 }
+
+// Re-export structure functions
+export {
+  checkDraftStructure,
+  checkFolderStructure,
+  checkFolderNumbering,
+  checkFileNaming,
+  checkDuplicateContent,
+  readDocsLanguageConfig,
+  type DocsLanguageConfig,
+  type FolderStructureConfig,
+  type FolderDefinition,
+} from './structure.js';

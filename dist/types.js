@@ -17,6 +17,7 @@ export const defaultConfig = {
         terminology: 'warn',
         bidirectionalRefs: 'off',
         requirementsCoverage: 'warn',
+        draftStructure: 'warn',
     },
     terminology: [],
     requiredFiles: [],

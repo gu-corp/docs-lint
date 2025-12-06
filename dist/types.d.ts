@@ -40,6 +40,8 @@ export interface RulesConfig {
     bidirectionalRefs: RuleSeverity;
     /** Check requirements coverage */
     requirementsCoverage: RuleSeverity;
+    /** Check drafts folder structure (multilingual support) */
+    draftStructure: RuleSeverity;
 }
 export type RuleSeverity = 'off' | 'warn' | 'error';
 export interface LegacyFileNamesConfig {

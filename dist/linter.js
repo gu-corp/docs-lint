@@ -3,7 +3,7 @@ import path from 'path';
 import { glob } from 'glob';
 import { defaultConfig, } from './types.js';
 import { checkBrokenLinks, checkLegacyFileNames, checkVersionInfo, checkRelatedDocuments, checkHeadingHierarchy, checkTodoComments, checkCodeBlockLanguage, checkOrphanDocuments, checkTerminology, checkBidirectionalRefs, checkRequiredFiles, } from './rules/index.js';
-import { checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, } from './rules/structure.js';
+import { checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, checkDraftStructure, readDocsLanguageConfig, } from './rules/structure.js';
 /**
  * Main linter class
  */
@@ -69,6 +69,11 @@ export class DocsLinter {
         // Bidirectional References
         if (this.shouldRun('bidirectionalRefs')) {
             ruleResults.push(await this.runRule('bidirectionalRefs', () => checkBidirectionalRefs(docsDir, files)));
+        }
+        // Draft Structure (multilingual support)
+        if (this.shouldRun('draftStructure')) {
+            const langConfig = readDocsLanguageConfig(docsDir);
+            ruleResults.push(await this.runRule('draftStructure', () => checkDraftStructure(docsDir, langConfig)));
         }
         // Required Files
         if (this.config.requiredFiles.length > 0) {

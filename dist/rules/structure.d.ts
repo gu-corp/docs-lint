@@ -1,4 +1,9 @@
 import type { LintIssue } from '../types.js';
+export interface DocsLanguageConfig {
+    commonLanguage: string;
+    draftLanguages?: string[];
+    teams?: Record<string, string>;
+}
 export interface FolderStructureConfig {
     /** Expected folder structure with optional descriptions */
     folders: FolderDefinition[];
@@ -36,4 +41,23 @@ export declare function checkFileNaming(docsDir: string, files: string[], config
  * Check for duplicate content/titles across documents
  */
 export declare function checkDuplicateContent(docsDir: string, files: string[]): Promise<LintIssue[]>;
+/**
+ * Read docs.config.json for language settings
+ */
+export declare function readDocsLanguageConfig(docsDir: string): DocsLanguageConfig | null;
+/**
+ * Check drafts folder structure and translation sync
+ *
+ * Expected structure:
+ * docs/
+ * ├── README.md              # Common language (Single Source of Truth)
+ * ├── 01-plan/
+ * │   └── PROPOSAL.md        # Common language
+ * └── drafts/
+ *     ├── ja/                # Japanese team drafts
+ *     │   └── PROPOSAL.md
+ *     └── vi/                # Vietnamese team drafts
+ *         └── PROPOSAL.md
+ */
+export declare function checkDraftStructure(docsDir: string, langConfig: DocsLanguageConfig | null): Promise<LintIssue[]>;
 //# sourceMappingURL=structure.d.ts.map

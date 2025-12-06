@@ -57,6 +57,9 @@ export interface RulesConfig {
 
   /** Check requirements coverage */
   requirementsCoverage: RuleSeverity;
+
+  /** Check drafts folder structure (multilingual support) */
+  draftStructure: RuleSeverity;
 }
 
 export type RuleSeverity = 'off' | 'warn' | 'error';
@@ -173,6 +176,7 @@ export const defaultConfig: DocsLintConfig = {
     terminology: 'warn',
     bidirectionalRefs: 'off',
     requirementsCoverage: 'warn',
+    draftStructure: 'warn',
   },
   terminology: [],
   requiredFiles: [],
