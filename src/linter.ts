@@ -220,7 +220,9 @@ export class DocsLinter {
     // Folder numbering
     if (structureConfig.numberedFolders) {
       results.push(
-        await this.runRule('folderNumbering', () => checkFolderNumbering(docsDir))
+        await this.runRule('folderNumbering', () =>
+          checkFolderNumbering(docsDir, this.config.rules.folderNumbering)
+        )
       );
     }
 

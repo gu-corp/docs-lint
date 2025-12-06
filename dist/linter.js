@@ -109,7 +109,7 @@ export class DocsLinter {
         results.push(await this.runRule('folderStructure', () => checkFolderStructure(docsDir, structureConfig)));
         // Folder numbering
         if (structureConfig.numberedFolders) {
-            results.push(await this.runRule('folderNumbering', () => checkFolderNumbering(docsDir)));
+            results.push(await this.runRule('folderNumbering', () => checkFolderNumbering(docsDir, this.config.rules.folderNumbering)));
         }
         // File naming
         results.push(await this.runRule('fileNaming', () => checkFileNaming(docsDir, files, { upperCase: structureConfig.upperCaseFiles })));

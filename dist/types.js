@@ -20,7 +20,11 @@ export const defaultConfig = {
         i18nStructure: 'off',
         requiredFiles: 'warn',
         folderStructure: 'warn',
-        folderNumbering: 'warn',
+        folderNumbering: {
+            severity: 'warn',
+            strictPaths: ['', '02-spec'],
+            checkSequence: true,
+        },
         fileNaming: 'warn',
         duplicateContent: 'warn',
     },

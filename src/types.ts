@@ -71,7 +71,7 @@ export interface RulesConfig {
   folderStructure: RuleSeverity;
 
   /** Check folder numbering consistency */
-  folderNumbering: RuleSeverity;
+  folderNumbering: RuleSeverity | FolderNumberingConfig;
 
   /** Check file naming conventions */
   fileNaming: RuleSeverity;
@@ -104,6 +104,14 @@ export interface RelatedDocumentsConfig {
   patterns: string[];
   /** Only check files matching these globs */
   include: string[];
+}
+
+export interface FolderNumberingConfig {
+  severity: RuleSeverity;
+  /** Paths that require strict numbering (e.g., ["", "02-spec"]) */
+  strictPaths: string[];
+  /** Whether to check for gaps in numbering sequence */
+  checkSequence: boolean;
 }
 
 export interface TerminologyMapping {
@@ -208,7 +216,11 @@ export const defaultConfig: DocsLintConfig = {
     i18nStructure: 'off',
     requiredFiles: 'warn',
     folderStructure: 'warn',
-    folderNumbering: 'warn',
+    folderNumbering: {
+      severity: 'warn',
+      strictPaths: ['', '02-spec'],
+      checkSequence: true,
+    },
     fileNaming: 'warn',
     duplicateContent: 'warn',
   },

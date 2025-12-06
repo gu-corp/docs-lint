@@ -1,4 +1,4 @@
-import type { LintIssue, I18nConfig } from '../types.js';
+import type { LintIssue, I18nConfig, FolderNumberingConfig, RuleSeverity } from '../types.js';
 export interface DocsLanguageConfig {
     commonLanguage: string;
     draftLanguages?: string[];
@@ -28,8 +28,17 @@ export interface FolderDefinition {
 export declare function checkFolderStructure(docsDir: string, config: FolderStructureConfig): Promise<LintIssue[]>;
 /**
  * Check folder numbering consistency (01-, 02-, etc.)
+ *
+ * Config example:
+ * {
+ *   severity: 'warn',
+ *   strictPaths: ['', '02-spec'],  // '' = top-level, '02-spec' = 02-spec subfolders
+ *   checkSequence: true
+ * }
+ *
+ * Default: Check top-level and 02-spec subfolders (G.U.Corp standard)
  */
-export declare function checkFolderNumbering(docsDir: string): Promise<LintIssue[]>;
+export declare function checkFolderNumbering(docsDir: string, config?: FolderNumberingConfig | RuleSeverity): Promise<LintIssue[]>;
 /**
  * Check file naming conventions
  */

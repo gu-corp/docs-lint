@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import type { LintIssue, I18nConfig } from '../types.js';
+import type { LintIssue, I18nConfig, FolderNumberingConfig, RuleSeverity } from '../types.js';
 
 export interface DocsLanguageConfig {
   commonLanguage: string;
@@ -72,37 +72,80 @@ export async function checkFolderStructure(
 
 /**
  * Check folder numbering consistency (01-, 02-, etc.)
+ *
+ * Config example:
+ * {
+ *   severity: 'warn',
+ *   strictPaths: ['', '02-spec'],  // '' = top-level, '02-spec' = 02-spec subfolders
+ *   checkSequence: true
+ * }
+ *
+ * Default: Check top-level and 02-spec subfolders (G.U.Corp standard)
  */
 export async function checkFolderNumbering(
-  docsDir: string
+  docsDir: string,
+  config?: FolderNumberingConfig | RuleSeverity
 ): Promise<LintIssue[]> {
   const issues: LintIssue[] = [];
 
-  // Get top-level folders
-  const entries = fs.readdirSync(docsDir, { withFileTypes: true });
+  // Parse config
+  const strictPaths =
+    config && typeof config === 'object' ? config.strictPaths : ['', '02-spec'];
+  const checkSequence =
+    config && typeof config === 'object' ? config.checkSequence : true;
+
+  // Check each strict path
+  for (const strictPath of strictPaths) {
+    const targetDir = strictPath ? path.join(docsDir, strictPath) : docsDir;
+
+    if (!fs.existsSync(targetDir)) {
+      continue;
+    }
+
+    const pathLabel = strictPath || '(top-level)';
+    const folderIssues = checkFolderNumberingAt(targetDir, pathLabel, checkSequence);
+    issues.push(...folderIssues);
+  }
+
+  return issues;
+}
+
+/**
+ * Check folder numbering at a specific path
+ */
+function checkFolderNumberingAt(
+  targetDir: string,
+  pathLabel: string,
+  checkSequence: boolean
+): LintIssue[] {
+  const issues: LintIssue[] = [];
+
+  // Get folders in target directory
+  const entries = fs.readdirSync(targetDir, { withFileTypes: true });
   const folders = entries
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
-    .filter((name) => !name.startsWith('.'));
+    .filter((name) => !name.startsWith('.') && name !== 'translations');
 
   // Check if folders follow numbered pattern
   const numberedPattern = /^(\d{2})-(.+)$/;
   const numberedFolders = folders.filter((f) => numberedPattern.test(f));
-  const unnumberedFolders = folders.filter((f) => !numberedPattern.test(f));
+  const unnumberedFolders = folders.filter(
+    (f) => !numberedPattern.test(f) && f !== 'README.md'
+  );
 
-  // If most folders are numbered, flag unnumbered ones
-  if (numberedFolders.length > 0 && unnumberedFolders.length > 0) {
-    for (const folder of unnumberedFolders) {
-      issues.push({
-        file: folder,
-        message: `Folder not numbered: ${folder}`,
-        suggestion: `Rename to follow pattern: XX-${folder}`,
-      });
-    }
+  // Flag unnumbered folders in strict paths
+  for (const folder of unnumberedFolders) {
+    const relativePath = pathLabel === '(top-level)' ? folder : `${pathLabel}/${folder}`;
+    issues.push({
+      file: relativePath,
+      message: `Folder not numbered in ${pathLabel}: ${folder}`,
+      suggestion: `Rename to follow pattern: XX-${folder}`,
+    });
   }
 
   // Check numbering sequence
-  if (numberedFolders.length > 0) {
+  if (checkSequence && numberedFolders.length > 0) {
     const numbers = numberedFolders
       .map((f) => parseInt(f.match(numberedPattern)![1]))
       .sort((a, b) => a - b);
@@ -111,8 +154,8 @@ export async function checkFolderNumbering(
       const expected = numbers[0] + i;
       if (numbers[i] !== expected) {
         issues.push({
-          file: docsDir,
-          message: `Gap in folder numbering: missing ${String(expected).padStart(2, '0')}-*`,
+          file: pathLabel === '(top-level)' ? '.' : pathLabel,
+          message: `Gap in folder numbering at ${pathLabel}: missing ${String(expected).padStart(2, '0')}-*`,
           suggestion: `Renumber folders to be sequential`,
         });
         break;

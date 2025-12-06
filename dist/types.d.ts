@@ -49,7 +49,7 @@ export interface RulesConfig {
     /** Check folder structure matches expected configuration */
     folderStructure: RuleSeverity;
     /** Check folder numbering consistency */
-    folderNumbering: RuleSeverity;
+    folderNumbering: RuleSeverity | FolderNumberingConfig;
     /** Check file naming conventions */
     fileNaming: RuleSeverity;
     /** Check for duplicate content/titles */
@@ -76,6 +76,13 @@ export interface RelatedDocumentsConfig {
     patterns: string[];
     /** Only check files matching these globs */
     include: string[];
+}
+export interface FolderNumberingConfig {
+    severity: RuleSeverity;
+    /** Paths that require strict numbering (e.g., ["", "02-spec"]) */
+    strictPaths: string[];
+    /** Whether to check for gaps in numbering sequence */
+    checkSequence: boolean;
 }
 export interface TerminologyMapping {
     /** Preferred term */
