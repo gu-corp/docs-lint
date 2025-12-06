@@ -5,7 +5,8 @@ import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 import { createLinter } from './linter.js';
-import { generateAIPrompt, generateJSONSummary } from './ai-prompt.js';
+import { generateAIPrompt, generateJSONSummary, readStandardsFile } from './ai-prompt.js';
+import { getDefaultStandards } from './templates/standards.js';
 import { defaultConfig } from './types.js';
 import { glob } from 'glob';
 /**
@@ -64,7 +65,7 @@ program
     .option('--ai-prompt', 'Generate AI-friendly assessment prompt')
     .action(async (options) => {
     try {
-        const config = loadConfig(options.config, options.docsDir);
+        const config = await loadConfig(options.config, options.docsDir);
         const linter = createLinter(config, {
             verbose: options.verbose,
             only: options.only?.split(','),
@@ -185,7 +186,6 @@ program
     .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
     .option('-f, --force', 'Overwrite existing file', false)
     .action((options) => {
-    const { getDefaultStandards } = require('./templates/standards.js');
     const standardsPath = path.join(options.docsDir, 'DOCUMENT_STANDARDS.md');
     if (fs.existsSync(standardsPath) && !options.force) {
         console.error(chalk.yellow('Standards file already exists:', standardsPath));
@@ -208,7 +208,6 @@ program
     .description('Show current document standards (project-specific or G.U.Corp default)')
     .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
     .action((options) => {
-    const { readStandardsFile } = require('./ai-prompt.js');
     const standards = readStandardsFile(options.docsDir);
     if (standards.isDefault) {
         console.log(chalk.yellow('Using G.U.Corp default standards'));
@@ -227,7 +226,7 @@ program
     .option('--upper-case', 'Expect UPPER_CASE.md file names', false)
     .action(async (options) => {
     try {
-        const config = loadConfig(undefined, options.docsDir);
+        const config = await loadConfig(undefined, options.docsDir);
         const linter = createLinter(config);
         const results = await linter.lintStructure({
             folders: [],
@@ -261,7 +260,7 @@ program
 /**
  * Load configuration from file or defaults
  */
-function loadConfig(configPath, docsDir) {
+async function loadConfig(configPath, docsDir) {
     let config = {};
     // Try to load from specified path or default locations
     const paths = configPath
@@ -271,7 +270,8 @@ function loadConfig(configPath, docsDir) {
         const fullPath = path.resolve(process.cwd(), p);
         if (fs.existsSync(fullPath)) {
             if (p.endsWith('.js')) {
-                config = require(fullPath);
+                const module = await import(`file://${fullPath}`);
+                config = module.default || module;
             }
             else {
                 config = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
