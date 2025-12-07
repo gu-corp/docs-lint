@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import type { LintResult, DocsLintConfig } from './types.js';
-import { getDefaultStandards } from './templates/standards.js';
+import type { LintResult, DocsLintConfig } from '../types.js';
+import { getDefaultStandards } from '../templates/standards.js';
 
 export const STANDARDS_FILES = [
   'DOCUMENT_STANDARDS.md',

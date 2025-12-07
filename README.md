@@ -4,6 +4,7 @@ A comprehensive documentation linting tool for validating structure, quality, an
 
 ## Features
 
+### Documentation Linting
 - **Broken Link Detection**: Find and report broken internal links
 - **Legacy File Name Detection**: Flag deprecated file naming patterns
 - **Version Info Validation**: Ensure documents have version information
@@ -15,8 +16,14 @@ A comprehensive documentation linting tool for validating structure, quality, an
 - **Terminology Consistency**: Enforce consistent terminology usage
 - **Bidirectional References**: Check for missing back-references
 - **Folder Structure Validation**: Verify expected folder organization
-- **AI-Friendly Reports**: Generate prompts for AI quality assessment
 - **Document Standards**: Built-in G.U.Corp document standards with project-level customization
+
+### Code Review (v1.2.0+)
+- **Test File Existence**: Check if source files have corresponding test files
+- **Test Coverage Analysis**: Analyze unit/integration/E2E test coverage
+- **Critical Path E2E**: Ensure critical paths have E2E tests
+- **AI Requirement Coverage**: AI-powered analysis of requirement implementation
+- **AI Spec Review**: AI-powered specification consistency and terminology check
 
 ## Installation
 
@@ -34,22 +41,45 @@ npm install github:gu-corp/docs-lint
 
 ```bash
 # Basic linting
-npx docs-lint lint
+docs-lint lint
 
 # Specify docs directory
-npx docs-lint lint -d ./documentation
+docs-lint lint -d ./documentation
 
 # Output as JSON
-npx docs-lint lint --json
+docs-lint lint --json
 
 # Generate AI assessment prompt
-npx docs-lint lint --ai-prompt
+docs-lint lint --ai-prompt
 
 # Check folder structure
-npx docs-lint check-structure --numbered --upper-case
+docs-lint check-structure --numbered --upper-case
 
 # Initialize configuration
-npx docs-lint init
+docs-lint init
+```
+
+### Code Review Commands (v1.2.0+)
+
+```bash
+# Static code checks (test file existence, coverage)
+docs-lint check:code -s ./src
+
+# Static specification checks (structure, references)
+docs-lint check:spec -d ./docs
+
+# AI-powered requirement coverage analysis (requires ANTHROPIC_API_KEY)
+docs-lint review:code -d ./docs -s ./src
+
+# AI-powered spec review (requires ANTHROPIC_API_KEY)
+docs-lint review:spec -d ./docs
+```
+
+#### Environment Variables for AI Commands
+
+```bash
+# Set in .env file or export
+ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
 
 ### CLI Options
@@ -57,6 +87,7 @@ npx docs-lint init
 | Option | Description |
 |--------|-------------|
 | `-d, --docs-dir <path>` | Documentation directory (default: `./docs`) |
+| `-s, --src-dir <path>` | Source directory (default: `./src`) |
 | `-c, --config <path>` | Configuration file path |
 | `--only <rules>` | Only run specific rules (comma-separated) |
 | `--skip <rules>` | Skip specific rules (comma-separated) |

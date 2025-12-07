@@ -4,57 +4,21 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import { createLinter } from './linter.js';
-import { generateAIPrompt, generateJSONSummary, readStandardsFile } from './ai-prompt.js';
+import { generateAIPrompt, generateJSONSummary, readStandardsFile } from './ai/prompt.js';
 import { getDefaultStandards } from './templates/standards.js';
 import { defaultConfig } from './types.js';
 import { glob } from 'glob';
 import { createChecker } from './code/checker.js';
 import { createAnalyzer } from './ai/analyzer.js';
 import { defaultConfig as codeDefaultConfig } from './code/types.js';
-/**
- * Interactive prompt helper
- */
-function prompt(question, defaultValue) {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-    });
-    const displayQuestion = defaultValue
-        ? `${question} [${defaultValue}]: `
-        : `${question}: `;
-    return new Promise((resolve) => {
-        rl.question(displayQuestion, (answer) => {
-            rl.close();
-            resolve(answer.trim() || defaultValue || '');
-        });
-    });
-}
-/**
- * Select from options
- */
-function selectOption(question, options, defaultIndex = 0) {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-    });
-    console.log(`\n${question}`);
-    options.forEach((opt, i) => {
-        const marker = i === defaultIndex ? chalk.green('→') : ' ';
-        console.log(`  ${marker} ${i + 1}) ${opt}`);
-    });
-    return new Promise((resolve) => {
-        rl.question(`Select [${defaultIndex + 1}]: `, (answer) => {
-            rl.close();
-            const idx = answer.trim() ? parseInt(answer, 10) - 1 : defaultIndex;
-            resolve(options[idx] || options[defaultIndex]);
-        });
-    });
-}
+// CLI utilities
+import { loadConfig } from './cli/config.js';
+import { prompt, selectOption, getTemplatesDir } from './cli/utils.js';
+import { printResults, printCodeCheckResults, printCoverageReport } from './cli/formatters.js';
 const program = new Command();
 program
     .name('docs-lint')
@@ -272,7 +236,7 @@ program
     .option('--check', 'Check for differences without syncing', false)
     .option('--category <name>', 'Sync specific category (e.g., 04-development)', '04-development')
     .action(async (options) => {
-    const templatesDir = getTemplatesDir();
+    const templatesDir = getTemplatesDir(__dirname);
     const categoryPath = path.join(templatesDir, options.category);
     const targetDir = path.join(options.docsDir, options.category);
     if (!fs.existsSync(categoryPath)) {
@@ -354,98 +318,6 @@ program
         console.log(chalk.green(`Synced: ${synced}`), chalk.gray(`Skipped: ${skipped}`));
     }
 });
-/**
- * Get the templates directory path
- */
-function getTemplatesDir() {
-    // Templates are in ../templates relative to dist/cli.js
-    const templatesPath = path.join(__dirname, '..', 'templates');
-    if (fs.existsSync(templatesPath)) {
-        return templatesPath;
-    }
-    throw new Error(`Templates directory not found at: ${templatesPath}`);
-}
-/**
- * Load configuration from file or defaults
- */
-async function loadConfig(configPath, docsDir) {
-    let config = {};
-    // Try to load from specified path or default locations
-    const paths = configPath
-        ? [configPath]
-        : ['docs-lint.config.json', 'docs-lint.config.js', '.docs-lintrc.json'];
-    for (const p of paths) {
-        const fullPath = path.resolve(process.cwd(), p);
-        if (fs.existsSync(fullPath)) {
-            if (p.endsWith('.js')) {
-                const module = await import(`file://${fullPath}`);
-                config = module.default || module;
-            }
-            else {
-                config = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
-            }
-            break;
-        }
-    }
-    // Override docsDir if specified
-    if (docsDir) {
-        config.docsDir = docsDir;
-    }
-    return {
-        ...defaultConfig,
-        ...config,
-        rules: {
-            ...defaultConfig.rules,
-            ...config.rules,
-        },
-    };
-}
-/**
- * Print results in human-readable format
- */
-function printResults(result, verbose) {
-    console.log(chalk.bold('\n📄 Documentation Lint Results\n'));
-    console.log(`Files checked: ${result.filesChecked}`);
-    console.log(`Status: ${result.passed ? chalk.green('PASSED') : chalk.red('FAILED')}\n`);
-    // Summary
-    console.log(chalk.bold('Summary:'));
-    console.log(`  ${chalk.red('Errors:')} ${result.summary.errors}`);
-    console.log(`  ${chalk.yellow('Warnings:')} ${result.summary.warnings}`);
-    console.log(`  ${chalk.green('Passed:')} ${result.summary.passed}\n`);
-    // Rule details
-    for (const rule of result.ruleResults) {
-        const icon = rule.passed ? chalk.green('✓') : rule.severity === 'error' ? chalk.red('✗') : chalk.yellow('⚠');
-        const label = rule.severity === 'error' ? chalk.red(rule.rule) : rule.severity === 'warn' ? chalk.yellow(rule.rule) : rule.rule;
-        if (rule.issues.length === 0) {
-            if (verbose) {
-                console.log(`${icon} ${label}`);
-            }
-        }
-        else {
-            console.log(`${icon} ${label} (${rule.issues.length} issues)`);
-            if (verbose) {
-                for (const issue of rule.issues) {
-                    const location = issue.line ? `${issue.file}:${issue.line}` : issue.file;
-                    console.log(`    ${chalk.gray(location)} ${issue.message}`);
-                    if (issue.suggestion) {
-                        console.log(`      ${chalk.blue('→')} ${issue.suggestion}`);
-                    }
-                }
-            }
-            else {
-                // Show first 3 issues
-                for (const issue of rule.issues.slice(0, 3)) {
-                    const location = issue.line ? `${issue.file}:${issue.line}` : issue.file;
-                    console.log(`    ${chalk.gray(location)} ${issue.message}`);
-                }
-                if (rule.issues.length > 3) {
-                    console.log(`    ${chalk.gray(`... and ${rule.issues.length - 3} more`)}`);
-                }
-            }
-        }
-    }
-    console.log('');
-}
 // ============================================
 // Code & Spec Check/Review Commands
 // ============================================
@@ -568,120 +440,5 @@ program
         process.exit(1);
     }
 });
-/**
- * Print code check results
- */
-function printCodeCheckResults(result, verbose) {
-    console.log(chalk.bold('\n🔍 Code Check Results\n'));
-    console.log(`Source files: ${result.sourceFilesChecked}`);
-    console.log(`Test files: ${result.testFilesFound}`);
-    console.log(`Test coverage: ${chalk.cyan(result.summary.coverage.percentage + '%')} (${result.summary.coverage.testedFiles}/${result.summary.coverage.sourceFiles})`);
-    console.log(`Status: ${result.passed ? chalk.green('PASSED') : chalk.red('FAILED')}\n`);
-    console.log(chalk.bold('Summary:'));
-    console.log(`  ${chalk.red('Errors:')} ${result.summary.errors}`);
-    console.log(`  ${chalk.yellow('Warnings:')} ${result.summary.warnings}`);
-    console.log(`  ${chalk.green('Passed:')} ${result.summary.passed}\n`);
-    for (const rule of result.ruleResults) {
-        const icon = rule.passed
-            ? chalk.green('✓')
-            : rule.severity === 'error'
-                ? chalk.red('✗')
-                : chalk.yellow('⚠');
-        const label = rule.severity === 'error'
-            ? chalk.red(rule.rule)
-            : rule.severity === 'warn'
-                ? chalk.yellow(rule.rule)
-                : rule.rule;
-        if (rule.issues.length === 0) {
-            if (verbose) {
-                console.log(`${icon} ${label}`);
-            }
-        }
-        else {
-            console.log(`${icon} ${label} (${rule.issues.length} issues)`);
-            if (verbose) {
-                for (const issue of rule.issues) {
-                    console.log(`    ${chalk.gray(issue.file)} ${issue.message}`);
-                    if (issue.suggestion) {
-                        console.log(`      ${chalk.blue('→')} ${issue.suggestion}`);
-                    }
-                }
-            }
-            else {
-                for (const issue of rule.issues.slice(0, 3)) {
-                    console.log(`    ${chalk.gray(issue.file)} ${issue.message}`);
-                }
-                if (rule.issues.length > 3) {
-                    console.log(`    ${chalk.gray(`... and ${rule.issues.length - 3} more`)}`);
-                }
-            }
-        }
-    }
-    console.log('');
-}
-/**
- * Print AI coverage report
- */
-function printCoverageReport(report, verbose) {
-    console.log(chalk.bold('📊 Requirement Coverage Report\n'));
-    console.log(`Total requirements: ${report.totalRequirements}`);
-    console.log(`Coverage: ${chalk.cyan(report.percentage + '%')}`);
-    console.log(chalk.bold('\nStatus breakdown:'));
-    console.log(`  ${chalk.green('✓ Implemented:')} ${report.coverage.implemented}`);
-    console.log(`  ${chalk.yellow('◐ Partial:')} ${report.coverage.partial}`);
-    console.log(`  ${chalk.red('✗ Not implemented:')} ${report.coverage.notImplemented}`);
-    console.log(`  ${chalk.gray('? Unknown:')} ${report.coverage.unknown}`);
-    if (Object.keys(report.byCategory).length > 0) {
-        console.log(chalk.bold('\nBy category:'));
-        for (const [cat, stats] of Object.entries(report.byCategory)) {
-            const bar = getProgressBar(stats.percentage);
-            console.log(`  ${cat}: ${bar} ${stats.percentage}% (${stats.implemented}/${stats.total})`);
-        }
-    }
-    if (verbose) {
-        console.log(chalk.bold('\nDetails:'));
-        for (const cov of report.details) {
-            const icon = cov.status === 'implemented'
-                ? chalk.green('✓')
-                : cov.status === 'partial'
-                    ? chalk.yellow('◐')
-                    : cov.status === 'not_implemented'
-                        ? chalk.red('✗')
-                        : chalk.gray('?');
-            console.log(`\n${icon} [${cov.requirement.id}] ${cov.requirement.description}`);
-            console.log(`   ${chalk.gray(`Source: ${cov.requirement.sourceFile} | Category: ${cov.requirement.category} | Priority: ${cov.requirement.priority}`)}`);
-            console.log(`   ${chalk.gray(`Confidence: ${cov.confidence}%`)}`);
-            if (cov.implementedIn.length > 0) {
-                console.log(`   ${chalk.blue('Tested in:')} ${cov.implementedIn.join(', ')}`);
-            }
-            console.log(`   ${chalk.gray(cov.evidence)}`);
-            if (cov.suggestion) {
-                console.log(`   ${chalk.yellow('Missing:')} ${cov.suggestion}`);
-            }
-        }
-    }
-    else {
-        const notImplemented = report.details.filter(d => d.status === 'not_implemented');
-        if (notImplemented.length > 0) {
-            console.log(chalk.bold('\nNot implemented:'));
-            for (const cov of notImplemented.slice(0, 5)) {
-                console.log(`  ${chalk.red('✗')} [${cov.requirement.id}] ${cov.requirement.description.substring(0, 60)}...`);
-            }
-            if (notImplemented.length > 5) {
-                console.log(`  ${chalk.gray(`... and ${notImplemented.length - 5} more`)}`);
-            }
-        }
-    }
-    console.log('');
-}
-/**
- * Generate progress bar
- */
-function getProgressBar(percentage) {
-    const width = 20;
-    const filled = Math.round((percentage / 100) * width);
-    const empty = width - filled;
-    return chalk.green('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
-}
 program.parse();
 //# sourceMappingURL=cli.js.map

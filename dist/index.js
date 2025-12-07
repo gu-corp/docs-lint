@@ -6,5 +6,10 @@ export { checkBrokenLinks, checkLegacyFileNames, checkVersionInfo, checkRelatedD
 // Structure rule exports
 export { checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, } from './rules/structure.js';
 // AI prompt exports
-export { generateAIPrompt, generateJSONSummary } from './ai-prompt.js';
+export { generateAIPrompt, generateJSONSummary, readStandardsFile } from './ai/prompt.js';
+// AI analyzer exports
+export { createAnalyzer } from './ai/analyzer.js';
+// Code checker exports
+export { createChecker } from './code/checker.js';
+export { defaultConfig as codeDefaultConfig } from './code/types.js';
 //# sourceMappingURL=index.js.map

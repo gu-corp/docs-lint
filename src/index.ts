@@ -45,4 +45,13 @@ export {
 } from './rules/structure.js';
 
 // AI prompt exports
-export { generateAIPrompt, generateJSONSummary } from './ai-prompt.js';
+export { generateAIPrompt, generateJSONSummary, readStandardsFile } from './ai/prompt.js';
+
+// AI analyzer exports
+export { createAnalyzer } from './ai/analyzer.js';
+export type { AnalyzerOptions, CoverageReport, Requirement, RequirementCoverage } from './ai/types.js';
+
+// Code checker exports
+export { createChecker } from './code/checker.js';
+export type { SpecCheckerConfig, CheckResult, RuleResult as CodeRuleResult } from './code/types.js';
+export { defaultConfig as codeDefaultConfig } from './code/types.js';
