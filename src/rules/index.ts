@@ -9,6 +9,7 @@ import type {
   VersionInfoConfig,
   RelatedDocumentsConfig,
   StandardsDriftConfig,
+  RequirementTestMappingConfig,
 } from '../types.js';
 
 /**
@@ -513,6 +514,136 @@ export async function checkStandardsDrift(
         }
       }
     }
+  }
+
+  return issues;
+}
+
+/**
+ * Check requirement to test case mapping
+ * Ensures all functional requirements have corresponding test cases
+ */
+export async function checkRequirementTestMapping(
+  docsDir: string,
+  files: string[],
+  config: RequirementTestMappingConfig | RuleSeverity
+): Promise<LintIssue[]> {
+  const issues: LintIssue[] = [];
+
+  // Parse config
+  const defaultConfig: RequirementTestMappingConfig = {
+    severity: 'error',
+    requirementPattern: 'FR-\\d{3}',
+    testCasePattern: 'TC-\\d{3}',
+    requirementFiles: ['**/REQUIREMENTS.md', '**/01-requirements/**/*.md'],
+    testCaseFiles: ['**/TEST-CASES.md', '**/TEST.md', '**/05-testing/**/*.md'],
+    requiredCoverage: 100,
+    requireTestFile: true,
+  };
+
+  const cfg: RequirementTestMappingConfig =
+    config && typeof config === 'object' ? config : defaultConfig;
+
+  const requirementRegex = new RegExp(cfg.requirementPattern, 'g');
+  const testCaseRegex = new RegExp(`(${cfg.testCasePattern}).*?\\[?(${cfg.requirementPattern})\\]?`, 'g');
+  const testCaseMentionRegex = new RegExp(`\\[?(${cfg.requirementPattern})\\]?`, 'g');
+
+  // Find requirement files
+  const reqFiles: string[] = [];
+  for (const pattern of cfg.requirementFiles) {
+    const matches = files.filter(f => {
+      const globPattern = pattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*');
+      return new RegExp(globPattern).test(f);
+    });
+    reqFiles.push(...matches);
+  }
+
+  // Find test case files
+  const testFiles: string[] = [];
+  for (const pattern of cfg.testCaseFiles) {
+    const matches = files.filter(f => {
+      const globPattern = pattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*');
+      return new RegExp(globPattern).test(f);
+    });
+    testFiles.push(...matches);
+  }
+
+  // Check if test files exist
+  if (cfg.requireTestFile && testFiles.length === 0 && reqFiles.length > 0) {
+    issues.push({
+      file: 'docs',
+      message: 'テストケースファイルが見つかりません',
+      suggestion: 'TEST-CASES.md または 05-testing/ フォルダにテストケースを作成してください',
+    });
+    return issues;
+  }
+
+  // Extract all requirements
+  const requirements = new Map<string, { file: string; line: number; description: string }>();
+  for (const file of reqFiles) {
+    const content = fs.readFileSync(path.join(docsDir, file), 'utf-8');
+    const lines = content.split('\n');
+
+    lines.forEach((line, lineNum) => {
+      let match;
+      while ((match = requirementRegex.exec(line)) !== null) {
+        const reqId = match[0];
+        if (!requirements.has(reqId)) {
+          requirements.set(reqId, {
+            file,
+            line: lineNum + 1,
+            description: line.substring(0, 100),
+          });
+        }
+      }
+    });
+  }
+
+  // Extract test case mappings
+  const coveredRequirements = new Set<string>();
+  for (const file of testFiles) {
+    const content = fs.readFileSync(path.join(docsDir, file), 'utf-8');
+    const lines = content.split('\n');
+
+    lines.forEach((line) => {
+      // Look for explicit test case to requirement mapping (TC-001 [FR-001])
+      let match;
+      while ((match = testCaseRegex.exec(line)) !== null) {
+        coveredRequirements.add(match[2]);
+      }
+      // Also look for any requirement mentions
+      while ((match = testCaseMentionRegex.exec(line)) !== null) {
+        coveredRequirements.add(match[1]);
+      }
+    });
+  }
+
+  // Find uncovered requirements
+  const uncoveredRequirements: string[] = [];
+  for (const [reqId, info] of requirements) {
+    if (!coveredRequirements.has(reqId)) {
+      uncoveredRequirements.push(reqId);
+      issues.push({
+        file: info.file,
+        line: info.line,
+        message: `要件 ${reqId} に対応するテストケースがありません`,
+        suggestion: `TEST-CASES.md に ${reqId} をカバーするテストケースを追加してください`,
+      });
+    }
+  }
+
+  // Calculate coverage
+  const totalRequirements = requirements.size;
+  const coveredCount = totalRequirements - uncoveredRequirements.length;
+  const coveragePercent = totalRequirements > 0 ? (coveredCount / totalRequirements) * 100 : 100;
+
+  // Check if coverage meets requirement
+  if (totalRequirements > 0 && coveragePercent < cfg.requiredCoverage) {
+    issues.push({
+      file: 'docs',
+      message: `要件カバレッジが ${coveragePercent.toFixed(1)}% です（必要: ${cfg.requiredCoverage}%）`,
+      suggestion: `未カバーの要件: ${uncoveredRequirements.join(', ')}`,
+    });
   }
 
   return issues;

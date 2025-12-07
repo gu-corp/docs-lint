@@ -26,6 +26,7 @@ import {
   checkBidirectionalRefs,
   checkRequiredFiles,
   checkStandardsDrift,
+  checkRequirementTestMapping,
 } from './rules/index.js';
 import {
   checkFolderStructure,
@@ -220,6 +221,15 @@ export class DocsLinter {
       ruleResults.push(
         await this.runRule('standardFileNames', () =>
           checkStandardFileNames(docsDir, files, this.config.rules.standardFileNames)
+        )
+      );
+    }
+
+    // Requirement Test Mapping
+    if (this.shouldRun('requirementTestMapping')) {
+      ruleResults.push(
+        await this.runRule('requirementTestMapping', () =>
+          checkRequirementTestMapping(docsDir, files, this.config.rules.requirementTestMapping)
         )
       );
     }

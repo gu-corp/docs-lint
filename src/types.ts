@@ -84,6 +84,9 @@ export interface RulesConfig {
 
   /** Check standard file naming patterns */
   standardFileNames: RuleSeverity | StandardFileNamesConfig;
+
+  /** Check requirement to test case mapping (100% coverage required) */
+  requirementTestMapping: RuleSeverity | RequirementTestMappingConfig;
 }
 
 export interface StandardsDriftConfig {
@@ -115,6 +118,22 @@ export interface FileConflict {
   preferred: string;
   /** Warning message */
   message: string;
+}
+
+export interface RequirementTestMappingConfig {
+  severity: RuleSeverity;
+  /** Requirement ID pattern (regex) - default: FR-\d+ */
+  requirementPattern: string;
+  /** Test case ID pattern (regex) - default: TC-\d+ */
+  testCasePattern: string;
+  /** Requirement files to scan */
+  requirementFiles: string[];
+  /** Test case files to scan */
+  testCaseFiles: string[];
+  /** Required coverage percentage (default: 100) */
+  requiredCoverage: number;
+  /** Whether missing test file is an error */
+  requireTestFile: boolean;
 }
 
 export type RuleSeverity = 'off' | 'warn' | 'error';
@@ -278,6 +297,15 @@ export const defaultConfig: DocsLintConfig = {
         },
       ],
       detailPatterns: ['-DETAIL.md', '-DETAILS.md'],
+    },
+    requirementTestMapping: {
+      severity: 'error',
+      requirementPattern: 'FR-\\d{3}',
+      testCasePattern: 'TC-\\d{3}',
+      requirementFiles: ['**/REQUIREMENTS.md', '**/01-requirements/**/*.md'],
+      testCaseFiles: ['**/TEST-CASES.md', '**/TEST.md', '**/05-testing/**/*.md'],
+      requiredCoverage: 100,
+      requireTestFile: true,
     },
   },
   terminology: [],

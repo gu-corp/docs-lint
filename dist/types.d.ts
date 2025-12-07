@@ -58,6 +58,8 @@ export interface RulesConfig {
     standardsDrift: RuleSeverity | StandardsDriftConfig;
     /** Check standard file naming patterns */
     standardFileNames: RuleSeverity | StandardFileNamesConfig;
+    /** Check requirement to test case mapping (100% coverage required) */
+    requirementTestMapping: RuleSeverity | RequirementTestMappingConfig;
 }
 export interface StandardsDriftConfig {
     severity: RuleSeverity;
@@ -86,6 +88,21 @@ export interface FileConflict {
     preferred: string;
     /** Warning message */
     message: string;
+}
+export interface RequirementTestMappingConfig {
+    severity: RuleSeverity;
+    /** Requirement ID pattern (regex) - default: FR-\d+ */
+    requirementPattern: string;
+    /** Test case ID pattern (regex) - default: TC-\d+ */
+    testCasePattern: string;
+    /** Requirement files to scan */
+    requirementFiles: string[];
+    /** Test case files to scan */
+    testCaseFiles: string[];
+    /** Required coverage percentage (default: 100) */
+    requiredCoverage: number;
+    /** Whether missing test file is an error */
+    requireTestFile: boolean;
 }
 export type RuleSeverity = 'off' | 'warn' | 'error';
 export interface LegacyFileNamesConfig {
