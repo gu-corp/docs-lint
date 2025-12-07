@@ -305,9 +305,9 @@ export const defaultConfig: DocsLintConfig = {
     requirementTestMapping: {
       severity: 'error',
       requirementPattern: 'FR-([A-Z]+-)*\\d{3}',
-      testCasePattern: 'TC-[UIEPS]\\d{3}',
+      testCasePattern: 'TC-[UIEPSDX]\\d{3}',
       requirementFiles: ['**/REQUIREMENTS.md', '**/01-requirements/**/*.md'],
-      testCaseFiles: ['**/TEST-CASES.md', '**/TEST.md', '**/05-testing/**/*.md', '**/*-TESTS.md'],
+      testCaseFiles: ['**/TEST-CASES.md', '**/TEST.md', '**/05-testing/**/*.md', '**/*-TESTS.md', '**/DEFERRED-TESTS.md'],
       requiredCoverage: 100,
       requireTestFile: true,
       requireRequirementIds: true,
