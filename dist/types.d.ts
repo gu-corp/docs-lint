@@ -103,6 +103,10 @@ export interface RequirementTestMappingConfig {
     requiredCoverage: number;
     /** Whether missing test file is an error */
     requireTestFile: boolean;
+    /** Whether requirement IDs are required in requirement files */
+    requireRequirementIds: boolean;
+    /** Whether test case IDs are required in test files */
+    requireTestCaseIds: boolean;
 }
 export type RuleSeverity = 'off' | 'warn' | 'error';
 export interface LegacyFileNamesConfig {

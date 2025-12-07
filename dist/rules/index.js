@@ -397,11 +397,13 @@ export async function checkRequirementTestMapping(docsDir, files, config) {
     const defaultConfig = {
         severity: 'error',
         requirementPattern: 'FR-\\d{3}',
-        testCasePattern: 'TC-\\d{3}',
+        testCasePattern: 'TC-[UIEPS]\\d{3}',
         requirementFiles: ['**/REQUIREMENTS.md', '**/01-requirements/**/*.md'],
-        testCaseFiles: ['**/TEST-CASES.md', '**/TEST.md', '**/05-testing/**/*.md'],
+        testCaseFiles: ['**/TEST-CASES.md', '**/TEST.md', '**/05-testing/**/*.md', '**/*-TESTS.md'],
         requiredCoverage: 100,
         requireTestFile: true,
+        requireRequirementIds: true,
+        requireTestCaseIds: true,
     };
     const cfg = config && typeof config === 'object' ? config : defaultConfig;
     const requirementRegex = new RegExp(cfg.requirementPattern, 'g');
@@ -432,7 +434,47 @@ export async function checkRequirementTestMapping(docsDir, files, config) {
             message: 'テストケースファイルが見つかりません',
             suggestion: 'TEST-CASES.md または 05-testing/ フォルダにテストケースを作成してください',
         });
-        return issues;
+    }
+    // Check if requirement IDs exist in requirement files
+    if (cfg.requireRequirementIds && reqFiles.length > 0) {
+        let hasRequirementIds = false;
+        for (const file of reqFiles) {
+            const content = fs.readFileSync(path.join(docsDir, file), 'utf-8');
+            if (requirementRegex.test(content)) {
+                hasRequirementIds = true;
+                break;
+            }
+            // Reset regex lastIndex
+            requirementRegex.lastIndex = 0;
+        }
+        if (!hasRequirementIds) {
+            issues.push({
+                file: reqFiles[0],
+                message: '要件ID（FR-XXX形式）が見つかりません',
+                suggestion: '機能要件には FR-001, FR-002 などのIDを付与してください',
+            });
+        }
+    }
+    // Check if test case IDs exist in test files
+    const testCaseIdRegex = new RegExp(cfg.testCasePattern, 'g');
+    if (cfg.requireTestCaseIds && testFiles.length > 0) {
+        let hasTestCaseIds = false;
+        for (const file of testFiles) {
+            const content = fs.readFileSync(path.join(docsDir, file), 'utf-8');
+            if (testCaseIdRegex.test(content)) {
+                hasTestCaseIds = true;
+                break;
+            }
+            // Reset regex lastIndex
+            testCaseIdRegex.lastIndex = 0;
+        }
+        if (!hasTestCaseIds) {
+            issues.push({
+                file: testFiles[0],
+                message: 'テストケースID（TC-XNNN形式）が見つかりません',
+                suggestion: 'テストケースには TC-U001（Unit）, TC-I001（Integration）, TC-E001（E2E）などのIDを付与してください',
+            });
+        }
     }
     // Extract all requirements
     const requirements = new Map();

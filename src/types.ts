@@ -134,6 +134,10 @@ export interface RequirementTestMappingConfig {
   requiredCoverage: number;
   /** Whether missing test file is an error */
   requireTestFile: boolean;
+  /** Whether requirement IDs are required in requirement files */
+  requireRequirementIds: boolean;
+  /** Whether test case IDs are required in test files */
+  requireTestCaseIds: boolean;
 }
 
 export type RuleSeverity = 'off' | 'warn' | 'error';
@@ -301,11 +305,13 @@ export const defaultConfig: DocsLintConfig = {
     requirementTestMapping: {
       severity: 'error',
       requirementPattern: 'FR-\\d{3}',
-      testCasePattern: 'TC-\\d{3}',
+      testCasePattern: 'TC-[UIEPS]\\d{3}',
       requirementFiles: ['**/REQUIREMENTS.md', '**/01-requirements/**/*.md'],
-      testCaseFiles: ['**/TEST-CASES.md', '**/TEST.md', '**/05-testing/**/*.md'],
+      testCaseFiles: ['**/TEST-CASES.md', '**/TEST.md', '**/05-testing/**/*.md', '**/*-TESTS.md'],
       requiredCoverage: 100,
       requireTestFile: true,
+      requireRequirementIds: true,
+      requireTestCaseIds: true,
     },
   },
   terminology: [],
