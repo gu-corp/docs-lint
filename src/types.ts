@@ -304,7 +304,7 @@ export const defaultConfig: DocsLintConfig = {
     },
     requirementTestMapping: {
       severity: 'error',
-      requirementPattern: 'FR-\\d{3}',
+      requirementPattern: 'FR-([A-Z]+-)?\\d{3}',
       testCasePattern: 'TC-[UIEPS]\\d{3}',
       requirementFiles: ['**/REQUIREMENTS.md', '**/01-requirements/**/*.md'],
       testCaseFiles: ['**/TEST-CASES.md', '**/TEST.md', '**/05-testing/**/*.md', '**/*-TESTS.md'],
