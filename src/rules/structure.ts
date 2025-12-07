@@ -2,6 +2,26 @@ import fs from 'fs';
 import path from 'path';
 import type { LintIssue, I18nConfig, FolderNumberingConfig, RuleSeverity, StandardFileNamesConfig } from '../types.js';
 
+/**
+ * G.U.Corp standard folder structure definition
+ */
+export const STANDARD_FOLDER_STRUCTURE: FolderDefinition[] = [
+  // Top-level required folders
+  { path: '01-plan', required: true, description: '企画・提案（PROPOSAL, MVP, ROADMAP）' },
+  { path: '02-spec', required: true, description: '仕様書' },
+  { path: '03-guide', required: true, description: 'ガイド・マニュアル・運用ガイド（SysOps）' },
+  { path: '04-development', required: true, description: '開発・DevOps（CI/CD, IaC, 自動化）' },
+  // Optional folders
+  { path: '05-business', required: false, description: 'ビジネス戦略（オプション）' },
+  { path: '06-reference', required: false, description: 'リサーチ・参考資料（オプション）' },
+  // 02-spec subfolders
+  { path: '02-spec/01-requirements', required: true, description: '要件定義', files: ['REQUIREMENTS.md'] },
+  { path: '02-spec/02-architecture', required: false, description: '全体設計' },
+  { path: '02-spec/03-detail-design', required: false, description: '詳細設計（機能別）' },
+  { path: '02-spec/04-infrastructure', required: false, description: 'インフラ仕様・SLA' },
+  { path: '02-spec/05-testing', required: true, description: 'テスト仕様' },
+];
+
 export interface DocsLanguageConfig {
   commonLanguage: string;
   draftLanguages?: string[];
@@ -63,6 +83,70 @@ export async function checkFolderStructure(
             suggestion: `Create ${file} in ${folder.path}`,
           });
         }
+      }
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Check G.U.Corp standard folder structure
+ * This enforces the recommended structure for all projects
+ */
+export async function checkStandardFolderStructure(
+  docsDir: string
+): Promise<LintIssue[]> {
+  const issues: LintIssue[] = [];
+
+  // Check required folders exist
+  for (const folder of STANDARD_FOLDER_STRUCTURE) {
+    const folderPath = path.join(docsDir, folder.path);
+
+    if (folder.required) {
+      if (!fs.existsSync(folderPath)) {
+        issues.push({
+          file: folder.path,
+          message: `Required folder missing: ${folder.path}`,
+          suggestion: `mkdir -p ${folder.path}  # ${folder.description}`,
+        });
+      }
+    }
+
+    // Check expected files in folder (only if folder exists)
+    if (folder.files && fs.existsSync(folderPath)) {
+      for (const file of folder.files) {
+        const filePath = path.join(folderPath, file);
+        if (!fs.existsSync(filePath)) {
+          issues.push({
+            file: `${folder.path}/${file}`,
+            message: `Required file missing: ${file}`,
+            suggestion: `Create ${file} in ${folder.path}`,
+          });
+        }
+      }
+    }
+  }
+
+  // Check for non-standard top-level folders
+  if (fs.existsSync(docsDir)) {
+    const entries = fs.readdirSync(docsDir, { withFileTypes: true });
+    const folders = entries
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name)
+      .filter((name) => !name.startsWith('.') && name !== 'translations' && name !== 'drafts');
+
+    const standardFolderNames = STANDARD_FOLDER_STRUCTURE
+      .map((f) => f.path.split('/')[0])
+      .filter((v, i, a) => a.indexOf(v) === i); // unique
+
+    for (const folder of folders) {
+      if (!standardFolderNames.includes(folder)) {
+        issues.push({
+          file: folder,
+          message: `Non-standard folder: ${folder}`,
+          suggestion: `Expected: ${standardFolderNames.join(', ')}`,
+        });
       }
     }
   }

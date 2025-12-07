@@ -1,4 +1,8 @@
 import type { LintIssue, I18nConfig, FolderNumberingConfig, RuleSeverity, StandardFileNamesConfig } from '../types.js';
+/**
+ * G.U.Corp standard folder structure definition
+ */
+export declare const STANDARD_FOLDER_STRUCTURE: FolderDefinition[];
 export interface DocsLanguageConfig {
     commonLanguage: string;
     draftLanguages?: string[];
@@ -26,6 +30,11 @@ export interface FolderDefinition {
  * Check folder structure matches expected configuration
  */
 export declare function checkFolderStructure(docsDir: string, config: FolderStructureConfig): Promise<LintIssue[]>;
+/**
+ * Check G.U.Corp standard folder structure
+ * This enforces the recommended structure for all projects
+ */
+export declare function checkStandardFolderStructure(docsDir: string): Promise<LintIssue[]>;
 /**
  * Check folder numbering consistency (01-, 02-, etc.)
  *

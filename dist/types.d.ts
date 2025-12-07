@@ -48,6 +48,8 @@ export interface RulesConfig {
     requiredFiles: RuleSeverity;
     /** Check folder structure matches expected configuration */
     folderStructure: RuleSeverity;
+    /** Check G.U.Corp standard folder structure (01-plan, 02-spec, etc.) */
+    standardFolderStructure: RuleSeverity;
     /** Check folder numbering consistency */
     folderNumbering: RuleSeverity | FolderNumberingConfig;
     /** Check file naming conventions */

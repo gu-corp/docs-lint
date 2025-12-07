@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import { defaultConfig, } from './types.js';
 import { checkBrokenLinks, checkLegacyFileNames, checkVersionInfo, checkRelatedDocuments, checkHeadingHierarchy, checkTodoComments, checkCodeBlockLanguage, checkOrphanDocuments, checkTerminology, checkBidirectionalRefs, checkRequiredFiles, checkStandardsDrift, checkRequirementTestMapping, } from './rules/index.js';
-import { checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, checkI18nStructure, checkStandardFileNames, } from './rules/structure.js';
+import { checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, checkI18nStructure, checkStandardFileNames, checkStandardFolderStructure, } from './rules/structure.js';
 /**
  * Main linter class
  */
@@ -87,6 +87,10 @@ export class DocsLinter {
         // Required Files
         if (this.config.requiredFiles.length > 0) {
             ruleResults.push(await this.runRule('requiredFiles', () => checkRequiredFiles(docsDir, this.config.requiredFiles)));
+        }
+        // Standard Folder Structure (G.U.Corp standard)
+        if (this.shouldRun('standardFolderStructure')) {
+            ruleResults.push(await this.runRule('standardFolderStructure', () => checkStandardFolderStructure(docsDir)));
         }
         // Folder Numbering
         if (this.shouldRun('folderNumbering')) {

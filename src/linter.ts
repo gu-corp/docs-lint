@@ -36,6 +36,7 @@ import {
   checkI18nStructure,
   checkDraftStructure,
   checkStandardFileNames,
+  checkStandardFolderStructure,
   readDocsLanguageConfig,
   type FolderStructureConfig,
 } from './rules/structure.js';
@@ -194,6 +195,15 @@ export class DocsLinter {
       ruleResults.push(
         await this.runRule('requiredFiles', () =>
           checkRequiredFiles(docsDir, this.config.requiredFiles)
+        )
+      );
+    }
+
+    // Standard Folder Structure (G.U.Corp standard)
+    if (this.shouldRun('standardFolderStructure')) {
+      ruleResults.push(
+        await this.runRule('standardFolderStructure', () =>
+          checkStandardFolderStructure(docsDir)
         )
       );
     }

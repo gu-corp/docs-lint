@@ -70,6 +70,9 @@ export interface RulesConfig {
   /** Check folder structure matches expected configuration */
   folderStructure: RuleSeverity;
 
+  /** Check G.U.Corp standard folder structure (01-plan, 02-spec, etc.) */
+  standardFolderStructure: RuleSeverity;
+
   /** Check folder numbering consistency */
   folderNumbering: RuleSeverity | FolderNumberingConfig;
 
@@ -276,6 +279,7 @@ export const defaultConfig: DocsLintConfig = {
     i18nStructure: 'off',
     requiredFiles: 'warn',
     folderStructure: 'warn',
+    standardFolderStructure: 'error',
     folderNumbering: {
       severity: 'warn',
       strictPaths: ['', '02-spec'],
