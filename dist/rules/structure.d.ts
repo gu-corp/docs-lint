@@ -1,4 +1,4 @@
-import type { LintIssue, I18nConfig, FolderNumberingConfig, RuleSeverity } from '../types.js';
+import type { LintIssue, I18nConfig, FolderNumberingConfig, RuleSeverity, StandardFileNamesConfig } from '../types.js';
 export interface DocsLanguageConfig {
     commonLanguage: string;
     draftLanguages?: string[];
@@ -84,4 +84,10 @@ export declare function checkI18nStructure(docsDir: string, files: string[], i18
  * @deprecated Use checkI18nStructure with language suffix convention instead
  */
 export declare function checkDraftStructure(docsDir: string, langConfig: DocsLanguageConfig | null): Promise<LintIssue[]>;
+/**
+ * Check for standard file naming patterns
+ * - Warn when *-DETAIL.md files exist (should be split into folders)
+ * - Warn when conflicting files exist (e.g., UI.md + SCREEN.md)
+ */
+export declare function checkStandardFileNames(docsDir: string, files: string[], config?: StandardFileNamesConfig | RuleSeverity): Promise<LintIssue[]>;
 //# sourceMappingURL=structure.d.ts.map

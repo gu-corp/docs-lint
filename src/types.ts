@@ -81,6 +81,9 @@ export interface RulesConfig {
 
   /** Check if development standards files match templates */
   standardsDrift: RuleSeverity | StandardsDriftConfig;
+
+  /** Check standard file naming patterns */
+  standardFileNames: RuleSeverity | StandardFileNamesConfig;
 }
 
 export interface StandardsDriftConfig {
@@ -91,6 +94,27 @@ export interface StandardsDriftConfig {
   reportMissing: boolean;
   /** Whether to report different files */
   reportDifferent: boolean;
+}
+
+export interface StandardFileNamesConfig {
+  severity: RuleSeverity;
+  /** Warn when *-DETAIL.md files exist (should be split into folders) */
+  warnDetailFiles: boolean;
+  /** Warn when conflicting files exist (e.g., UI.md + SCREEN.md) */
+  warnConflicts: boolean;
+  /** File conflicts to detect */
+  conflicts: FileConflict[];
+  /** Patterns that suggest folder splitting */
+  detailPatterns: string[];
+}
+
+export interface FileConflict {
+  /** Files that conflict with each other */
+  files: string[];
+  /** Recommended file to use */
+  preferred: string;
+  /** Warning message */
+  message: string;
 }
 
 export type RuleSeverity = 'off' | 'warn' | 'error';
@@ -241,6 +265,19 @@ export const defaultConfig: DocsLintConfig = {
       categories: ['04-development'],
       reportMissing: true,
       reportDifferent: true,
+    },
+    standardFileNames: {
+      severity: 'warn',
+      warnDetailFiles: true,
+      warnConflicts: true,
+      conflicts: [
+        {
+          files: ['UI.md', 'SCREEN.md'],
+          preferred: 'SCREEN.md',
+          message: 'UI.md と SCREEN.md が両方存在します。SCREEN.md に統合してください',
+        },
+      ],
+      detailPatterns: ['-DETAIL.md', '-DETAILS.md'],
     },
   },
   terminology: [],

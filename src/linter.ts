@@ -34,6 +34,7 @@ import {
   checkDuplicateContent,
   checkI18nStructure,
   checkDraftStructure,
+  checkStandardFileNames,
   readDocsLanguageConfig,
   type FolderStructureConfig,
 } from './rules/structure.js';
@@ -192,6 +193,33 @@ export class DocsLinter {
       ruleResults.push(
         await this.runRule('requiredFiles', () =>
           checkRequiredFiles(docsDir, this.config.requiredFiles)
+        )
+      );
+    }
+
+    // Folder Numbering
+    if (this.shouldRun('folderNumbering')) {
+      ruleResults.push(
+        await this.runRule('folderNumbering', () =>
+          checkFolderNumbering(docsDir, this.config.rules.folderNumbering)
+        )
+      );
+    }
+
+    // File Naming
+    if (this.shouldRun('fileNaming')) {
+      ruleResults.push(
+        await this.runRule('fileNaming', () =>
+          checkFileNaming(docsDir, files, { upperCase: false })
+        )
+      );
+    }
+
+    // Standard File Names
+    if (this.shouldRun('standardFileNames')) {
+      ruleResults.push(
+        await this.runRule('standardFileNames', () =>
+          checkStandardFileNames(docsDir, files, this.config.rules.standardFileNames)
         )
       );
     }

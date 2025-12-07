@@ -506,4 +506,74 @@ function findFileInDocsDir(docsDir, fileName) {
     };
     return search(docsDir);
 }
+/**
+ * Check for standard file naming patterns
+ * - Warn when *-DETAIL.md files exist (should be split into folders)
+ * - Warn when conflicting files exist (e.g., UI.md + SCREEN.md)
+ */
+export async function checkStandardFileNames(docsDir, files, config) {
+    const issues = [];
+    // Parse config
+    const defaultConfig = {
+        severity: 'warn',
+        warnDetailFiles: true,
+        warnConflicts: true,
+        conflicts: [
+            {
+                files: ['UI.md', 'SCREEN.md'],
+                preferred: 'SCREEN.md',
+                message: 'UI.md と SCREEN.md が両方存在します。SCREEN.md に統合してください',
+            },
+        ],
+        detailPatterns: ['-DETAIL.md', '-DETAILS.md'],
+    };
+    const cfg = config && typeof config === 'object' ? config : defaultConfig;
+    // Group files by directory
+    const filesByDir = new Map();
+    for (const file of files) {
+        const dir = path.dirname(file);
+        if (!filesByDir.has(dir)) {
+            filesByDir.set(dir, []);
+        }
+        filesByDir.get(dir).push(path.basename(file));
+    }
+    // Check for *-DETAIL.md patterns
+    if (cfg.warnDetailFiles) {
+        for (const file of files) {
+            const fileName = path.basename(file);
+            for (const pattern of cfg.detailPatterns) {
+                if (fileName.endsWith(pattern)) {
+                    const baseName = fileName.replace(pattern, '');
+                    const suggestedFolder = baseName.toLowerCase() + 's';
+                    issues.push({
+                        file,
+                        message: `${fileName} はフォルダに分割することを推奨します`,
+                        suggestion: `${path.dirname(file)}/${suggestedFolder}/ フォルダを作成し、個別ファイルに分割してください`,
+                    });
+                }
+            }
+        }
+    }
+    // Check for conflicting files in the same directory
+    if (cfg.warnConflicts) {
+        for (const [dir, dirFiles] of filesByDir) {
+            for (const conflict of cfg.conflicts) {
+                const foundFiles = conflict.files.filter((f) => dirFiles.includes(f));
+                if (foundFiles.length > 1) {
+                    // Multiple conflicting files found
+                    for (const foundFile of foundFiles) {
+                        if (foundFile !== conflict.preferred) {
+                            issues.push({
+                                file: path.join(dir, foundFile),
+                                message: conflict.message,
+                                suggestion: `${foundFile} の内容を ${conflict.preferred} に統合してください`,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return issues;
+}
 //# sourceMappingURL=structure.js.map

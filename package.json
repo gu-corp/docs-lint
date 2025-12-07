@@ -25,9 +25,11 @@
   "author": "G.U.Corp",
   "license": "MIT",
   "dependencies": {
-    "glob": "^11.0.0",
+    "@anthropic-ai/sdk": "^0.71.2",
     "chalk": "^5.3.0",
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "dotenv": "^17.2.3",
+    "glob": "^11.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

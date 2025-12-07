@@ -33,6 +33,19 @@ export const defaultConfig = {
             reportMissing: true,
             reportDifferent: true,
         },
+        standardFileNames: {
+            severity: 'warn',
+            warnDetailFiles: true,
+            warnConflicts: true,
+            conflicts: [
+                {
+                    files: ['UI.md', 'SCREEN.md'],
+                    preferred: 'SCREEN.md',
+                    message: 'UI.md と SCREEN.md が両方存在します。SCREEN.md に統合してください',
+                },
+            ],
+            detailPatterns: ['-DETAIL.md', '-DETAILS.md'],
+        },
     },
     terminology: [],
     requiredFiles: [],

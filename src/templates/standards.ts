@@ -24,10 +24,11 @@ AIやレビュアーがドキュメントの品質を評価する際の基準と
 docs/
 ├── 01-plan/          # 企画・提案（PROPOSAL, MVP, ROADMAP）
 ├── 02-spec/          # 仕様書
-│   ├── 01-requirements/  # 要件定義
-│   ├── 02-design/        # 設計
-│   ├── 03-infrastructure/# インフラ仕様・SLA
-│   └── 04-testing/       # テスト
+│   ├── 01-requirements/     # 要件定義
+│   ├── 02-architecture/     # 全体設計
+│   ├── 03-detail-design/    # 詳細設計（機能別）
+│   ├── 04-infrastructure/   # インフラ仕様・SLA
+│   └── 05-testing/          # テスト仕様
 ├── 03-guide/         # ガイド・マニュアル・運用ガイド（SysOps）
 ├── 04-development/   # 開発・DevOps（CI/CD, IaC, 自動化）
 ├── 05-business/      # ビジネス戦略（オプション）
@@ -35,25 +36,68 @@ docs/
 └── README.md         # ドキュメント全体の目次
 \`\`\`
 
-### 1.2 オプションフォルダ
+### 1.2 仕様書（02-spec）の詳細構成
+
+\`\`\`
+02-spec/
+├── 01-requirements/
+│   ├── REQUIREMENTS.md          # 全体要件
+│   └── 01-feature-xxx/          # 機能別要件（大規模時）
+├── 02-architecture/             # 全体設計
+│   ├── ARCHITECTURE.md          # システム全体構成
+│   ├── DATA-MODEL.md            # データモデル
+│   └── API-DESIGN.md            # API設計
+├── 03-detail-design/            # 詳細設計（機能別）
+│   ├── 01-auth/
+│   │   ├── DESIGN.md
+│   │   └── SEQUENCE.md
+│   ├── 02-payment/
+│   │   └── DESIGN.md
+│   └── 03-notification/
+│       └── DESIGN.md
+├── 04-infrastructure/
+│   ├── INFRASTRUCTURE.md        # インフラ構成
+│   └── SLA.md                   # SLA定義
+└── 05-testing/
+    └── TEST-PLAN.md             # テスト計画
+\`\`\`
+
+### 1.3 規模別ガイドライン
+
+| 規模 | 基準 | 02-spec 構成 |
+|------|------|--------------|
+| 小規模 | 機能5個以下 | 02-design/ にフラット配置 |
+| 中規模 | 機能6-15個 | 02-architecture/ + 03-detail-design/ 分離 |
+| 大規模 | 機能16個以上 | 詳細設計を機能別フォルダで管理 |
+
+### 1.4 ファイル分割ルール
+
+| 基準 | 説明 |
+|------|------|
+| ✅ 機能/要件単位 | 1機能 = 1ファイル（または1フォルダ） |
+| ✅ 独立性 | 単独で読んで理解できる単位 |
+| ❌ 行数で機械的に分割 | 同じ機能が細切れになるのは避ける |
+
+### 1.5 オプションフォルダ
 
 | フォルダ | 用途 | ドキュメント例 |
 |----------|------|----------------|
 | 05-business/ | ビジネス戦略・事業計画 | GTM-STRATEGY.md, PARTNERSHIP.md, REVENUE-MODEL.md |
 | 06-reference/ | リサーチ・分析・参考資料 | COMPETITIVE-ANALYSIS.md, MARKET-RESEARCH.md, BENCHMARK.md |
 
-### 1.3 運用ドキュメントの配置
+### 1.6 運用ドキュメントの配置
 
 | ドキュメント | 配置先 | 理由 |
 |-------------|--------|------|
-| SLA定義 | 02-spec/03-infrastructure/ | 仕様として定義 |
+| SLA定義 | 02-spec/04-infrastructure/ | 仕様として定義 |
 | DR手順、インシデント対応 | 03-guide/ | 運用ガイド（SysOps） |
 | CI/CD、デプロイ自動化 | 04-development/ | DevOps |
 
-### 1.4 番号付け規則
+### 1.7 番号付け規則
 
 - 第1レベルフォルダ: \`XX-name/\` 形式（例: \`01-plan/\`, \`02-spec/\`）
 - 第2レベルフォルダ: \`XX-name/\` 形式（例: \`01-requirements/\`）
+- 第3レベルフォルダ（機能別）: \`XX-name/\` 形式（例: \`01-auth/\`）
 - 番号は連番で欠番なし（オプションフォルダ 05, 06 は使用時のみ）
 
 ---

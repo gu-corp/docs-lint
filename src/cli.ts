@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import fs from 'fs';
@@ -13,6 +14,10 @@ import { generateAIPrompt, generateJSONSummary, readStandardsFile } from './ai-p
 import { getDefaultStandards } from './templates/standards.js';
 import { defaultConfig, type DocsLintConfig } from './types.js';
 import { glob } from 'glob';
+import { createChecker } from './code/checker.js';
+import { createAnalyzer } from './ai/analyzer.js';
+import { defaultConfig as codeDefaultConfig } from './code/types.js';
+import type { CoverageReport } from './ai/types.js';
 
 /**
  * Interactive prompt helper
@@ -504,6 +509,274 @@ function printResults(
   }
 
   console.log('');
+}
+
+// ============================================
+// Code & Spec Check/Review Commands
+// ============================================
+
+program
+  .command('check:code')
+  .description('Static code checks (test file existence, coverage)')
+  .option('-s, --src-dir <path>', 'Source directory', './src')
+  .option('-v, --verbose', 'Verbose output')
+  .option('--json', 'Output as JSON')
+  .action(async (options) => {
+    try {
+      const config = {
+        ...codeDefaultConfig,
+        srcDir: options.srcDir,
+      };
+
+      const checker = createChecker(config, {
+        verbose: options.verbose,
+      });
+
+      const result = await checker.check();
+
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        process.exit(result.passed ? 0 : 1);
+      }
+
+      printCodeCheckResults(result, options.verbose);
+      process.exit(result.passed ? 0 : 1);
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('check:spec')
+  .description('Static specification checks (structure, references)')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('-v, --verbose', 'Verbose output')
+  .option('--json', 'Output as JSON')
+  .action(async (options) => {
+    try {
+      const config = await loadConfig(undefined, options.docsDir);
+      const linter = createLinter(config, {
+        verbose: options.verbose,
+        only: ['structureCheck', 'crossReferences', 'brokenLinks'],
+      });
+
+      const result = await linter.lint();
+
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        process.exit(result.passed ? 0 : 1);
+      }
+
+      console.log(chalk.bold('\n📋 Specification Check Results\n'));
+      printResults(result, options.verbose);
+      process.exit(result.passed ? 0 : 1);
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('review:code')
+  .description('AI-powered code review (requirement coverage)')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('-s, --src-dir <path>', 'Source directory', './src')
+  .option('--spec-patterns <patterns>', 'Spec file patterns (comma-separated)', '**/*SPEC*.md,**/*FUNCTIONAL*.md,**/*API*.md,**/*SCREEN*.md,**/*REQUIREMENTS*.md')
+  .option('--source-patterns <patterns>', 'Source file patterns (comma-separated)', '**/*.ts,**/*.tsx,**/*.js,**/*.jsx')
+  .option('-v, --verbose', 'Verbose output')
+  .option('--json', 'Output as JSON')
+  .option('--model <model>', 'AI model to use', 'claude-sonnet-4-20250514')
+  .action(async (options) => {
+    try {
+      if (!process.env.ANTHROPIC_API_KEY) {
+        console.error(chalk.red('Error: ANTHROPIC_API_KEY environment variable is required'));
+        console.log(chalk.gray('Set it in .env file or export ANTHROPIC_API_KEY=...'));
+        process.exit(1);
+      }
+
+      console.log(chalk.bold('\n🤖 AI Code Review - Requirement Coverage\n'));
+
+      const analyzer = createAnalyzer({
+        docsDir: options.docsDir,
+        srcDir: options.srcDir,
+        specPatterns: options.specPatterns.split(','),
+        sourcePatterns: options.sourcePatterns.split(','),
+        model: options.model,
+        verbose: options.verbose,
+      });
+
+      const report = await analyzer.analyze();
+
+      if (options.json) {
+        console.log(JSON.stringify(report, null, 2));
+      } else {
+        printCoverageReport(report, options.verbose);
+      }
+
+      process.exit(report.percentage >= 70 ? 0 : 1);
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('review:spec')
+  .description('AI-powered specification review (consistency, terminology)')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('-v, --verbose', 'Verbose output')
+  .option('--json', 'Output as JSON')
+  .option('--model <model>', 'AI model to use', 'claude-sonnet-4-20250514')
+  .action(async (options) => {
+    try {
+      if (!process.env.ANTHROPIC_API_KEY) {
+        console.error(chalk.red('Error: ANTHROPIC_API_KEY environment variable is required'));
+        console.log(chalk.gray('Set it in .env file or export ANTHROPIC_API_KEY=...'));
+        process.exit(1);
+      }
+
+      console.log(chalk.bold('\n🤖 AI Specification Review\n'));
+      console.log(chalk.yellow('Coming soon: Document consistency and terminology analysis'));
+      console.log(chalk.gray('\nFor now, use "docs-lint lint --ai-prompt" to generate AI review prompts'));
+      process.exit(0);
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Print code check results
+ */
+function printCodeCheckResults(
+  result: Awaited<ReturnType<typeof createChecker.prototype.check>>,
+  verbose?: boolean
+) {
+  console.log(chalk.bold('\n🔍 Code Check Results\n'));
+  console.log(`Source files: ${result.sourceFilesChecked}`);
+  console.log(`Test files: ${result.testFilesFound}`);
+  console.log(
+    `Test coverage: ${chalk.cyan(result.summary.coverage.percentage + '%')} (${result.summary.coverage.testedFiles}/${result.summary.coverage.sourceFiles})`
+  );
+  console.log(
+    `Status: ${result.passed ? chalk.green('PASSED') : chalk.red('FAILED')}\n`
+  );
+
+  console.log(chalk.bold('Summary:'));
+  console.log(`  ${chalk.red('Errors:')} ${result.summary.errors}`);
+  console.log(`  ${chalk.yellow('Warnings:')} ${result.summary.warnings}`);
+  console.log(`  ${chalk.green('Passed:')} ${result.summary.passed}\n`);
+
+  for (const rule of result.ruleResults) {
+    const icon = rule.passed
+      ? chalk.green('✓')
+      : rule.severity === 'error'
+        ? chalk.red('✗')
+        : chalk.yellow('⚠');
+    const label =
+      rule.severity === 'error'
+        ? chalk.red(rule.rule)
+        : rule.severity === 'warn'
+          ? chalk.yellow(rule.rule)
+          : rule.rule;
+
+    if (rule.issues.length === 0) {
+      if (verbose) {
+        console.log(`${icon} ${label}`);
+      }
+    } else {
+      console.log(`${icon} ${label} (${rule.issues.length} issues)`);
+
+      if (verbose) {
+        for (const issue of rule.issues) {
+          console.log(`    ${chalk.gray(issue.file)} ${issue.message}`);
+          if (issue.suggestion) {
+            console.log(`      ${chalk.blue('→')} ${issue.suggestion}`);
+          }
+        }
+      } else {
+        for (const issue of rule.issues.slice(0, 3)) {
+          console.log(`    ${chalk.gray(issue.file)} ${issue.message}`);
+        }
+        if (rule.issues.length > 3) {
+          console.log(`    ${chalk.gray(`... and ${rule.issues.length - 3} more`)}`);
+        }
+      }
+    }
+  }
+
+  console.log('');
+}
+
+/**
+ * Print AI coverage report
+ */
+function printCoverageReport(report: CoverageReport, verbose?: boolean) {
+  console.log(chalk.bold('📊 Requirement Coverage Report\n'));
+  console.log(`Total requirements: ${report.totalRequirements}`);
+  console.log(`Coverage: ${chalk.cyan(report.percentage + '%')}`);
+
+  console.log(chalk.bold('\nStatus breakdown:'));
+  console.log(`  ${chalk.green('✓ Implemented:')} ${report.coverage.implemented}`);
+  console.log(`  ${chalk.yellow('◐ Partial:')} ${report.coverage.partial}`);
+  console.log(`  ${chalk.red('✗ Not implemented:')} ${report.coverage.notImplemented}`);
+  console.log(`  ${chalk.gray('? Unknown:')} ${report.coverage.unknown}`);
+
+  if (Object.keys(report.byCategory).length > 0) {
+    console.log(chalk.bold('\nBy category:'));
+    for (const [cat, stats] of Object.entries(report.byCategory)) {
+      const bar = getProgressBar(stats.percentage);
+      console.log(`  ${cat}: ${bar} ${stats.percentage}% (${stats.implemented}/${stats.total})`);
+    }
+  }
+
+  if (verbose) {
+    console.log(chalk.bold('\nDetails:'));
+    for (const cov of report.details) {
+      const icon = cov.status === 'implemented'
+        ? chalk.green('✓')
+        : cov.status === 'partial'
+          ? chalk.yellow('◐')
+          : cov.status === 'not_implemented'
+            ? chalk.red('✗')
+            : chalk.gray('?');
+
+      console.log(`\n${icon} [${cov.requirement.id}] ${cov.requirement.description}`);
+      console.log(`   ${chalk.gray(`Source: ${cov.requirement.sourceFile} | Category: ${cov.requirement.category} | Priority: ${cov.requirement.priority}`)}`);
+      console.log(`   ${chalk.gray(`Confidence: ${cov.confidence}%`)}`);
+      if (cov.implementedIn.length > 0) {
+        console.log(`   ${chalk.blue('Tested in:')} ${cov.implementedIn.join(', ')}`);
+      }
+      console.log(`   ${chalk.gray(cov.evidence)}`);
+      if (cov.suggestion) {
+        console.log(`   ${chalk.yellow('Missing:')} ${cov.suggestion}`);
+      }
+    }
+  } else {
+    const notImplemented = report.details.filter(d => d.status === 'not_implemented');
+    if (notImplemented.length > 0) {
+      console.log(chalk.bold('\nNot implemented:'));
+      for (const cov of notImplemented.slice(0, 5)) {
+        console.log(`  ${chalk.red('✗')} [${cov.requirement.id}] ${cov.requirement.description.substring(0, 60)}...`);
+      }
+      if (notImplemented.length > 5) {
+        console.log(`  ${chalk.gray(`... and ${notImplemented.length - 5} more`)}`);
+      }
+    }
+  }
+
+  console.log('');
+}
+
+/**
+ * Generate progress bar
+ */
+function getProgressBar(percentage: number): string {
+  const width = 20;
+  const filled = Math.round((percentage / 100) * width);
+  const empty = width - filled;
+  return chalk.green('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
 }
 
 program.parse();

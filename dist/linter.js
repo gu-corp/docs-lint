@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import { defaultConfig, } from './types.js';
 import { checkBrokenLinks, checkLegacyFileNames, checkVersionInfo, checkRelatedDocuments, checkHeadingHierarchy, checkTodoComments, checkCodeBlockLanguage, checkOrphanDocuments, checkTerminology, checkBidirectionalRefs, checkRequiredFiles, checkStandardsDrift, } from './rules/index.js';
-import { checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, checkI18nStructure, } from './rules/structure.js';
+import { checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, checkI18nStructure, checkStandardFileNames, } from './rules/structure.js';
 /**
  * Main linter class
  */
@@ -87,6 +87,18 @@ export class DocsLinter {
         // Required Files
         if (this.config.requiredFiles.length > 0) {
             ruleResults.push(await this.runRule('requiredFiles', () => checkRequiredFiles(docsDir, this.config.requiredFiles)));
+        }
+        // Folder Numbering
+        if (this.shouldRun('folderNumbering')) {
+            ruleResults.push(await this.runRule('folderNumbering', () => checkFolderNumbering(docsDir, this.config.rules.folderNumbering)));
+        }
+        // File Naming
+        if (this.shouldRun('fileNaming')) {
+            ruleResults.push(await this.runRule('fileNaming', () => checkFileNaming(docsDir, files, { upperCase: false })));
+        }
+        // Standard File Names
+        if (this.shouldRun('standardFileNames')) {
+            ruleResults.push(await this.runRule('standardFileNames', () => checkStandardFileNames(docsDir, files, this.config.rules.standardFileNames)));
         }
         // Calculate summary
         const summary = {
