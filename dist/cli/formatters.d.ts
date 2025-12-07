@@ -1,6 +1,6 @@
 import type { LintResult } from '../types.js';
 import type { CheckResult } from '../code/types.js';
-import type { CoverageReport } from '../ai/types.js';
+import type { CoverageReport, SpecReviewReport } from '../ai/types.js';
 /**
  * Print lint results in human-readable format
  */
@@ -17,4 +17,8 @@ export declare function printCoverageReport(report: CoverageReport, verbose?: bo
  * Generate progress bar
  */
 export declare function getProgressBar(percentage: number): string;
+/**
+ * Print spec review report
+ */
+export declare function printSpecReviewReport(report: SpecReviewReport, verbose?: boolean): void;
 //# sourceMappingURL=formatters.d.ts.map

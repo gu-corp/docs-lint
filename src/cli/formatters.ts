@@ -4,7 +4,7 @@
 import chalk from 'chalk';
 import type { LintResult } from '../types.js';
 import type { CheckResult } from '../code/types.js';
-import type { CoverageReport } from '../ai/types.js';
+import type { CoverageReport, SpecReviewReport } from '../ai/types.js';
 
 /**
  * Print lint results in human-readable format
@@ -189,4 +189,95 @@ export function getProgressBar(percentage: number): string {
   const filled = Math.round((percentage / 100) * width);
   const empty = width - filled;
   return chalk.green('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
+}
+
+/**
+ * Print spec review report
+ */
+export function printSpecReviewReport(report: SpecReviewReport, verbose?: boolean): void {
+  console.log(chalk.bold('📋 Specification Review Report\n'));
+  console.log(`Documents reviewed: ${report.totalDocuments}`);
+  console.log(`Quality score: ${getQualityColor(report.qualityScore)}${report.qualityScore}%${chalk.reset()}`);
+  console.log(`Documents without issues: ${chalk.green(report.passedDocuments)}/${report.totalDocuments}`);
+
+  if (report.summary) {
+    console.log(chalk.bold('\n📝 Summary:'));
+    console.log(`  ${report.summary}`);
+  }
+
+  if (Object.keys(report.byCategory).length > 0) {
+    console.log(chalk.bold('\nIssues by category:'));
+    for (const [cat, stats] of Object.entries(report.byCategory)) {
+      const icon = getCategoryIcon(cat);
+      const errStr = stats.errors > 0 ? chalk.red(`${stats.errors} errors`) : '';
+      const warnStr = stats.warnings > 0 ? chalk.yellow(`${stats.warnings} warnings`) : '';
+      const parts = [errStr, warnStr].filter(Boolean).join(', ');
+      console.log(`  ${icon} ${cat}: ${stats.total} issues (${parts || 'info only'})`);
+    }
+  }
+
+  const errors = report.issues.filter(i => i.severity === 'error');
+  const warnings = report.issues.filter(i => i.severity === 'warning');
+
+  if (errors.length > 0) {
+    console.log(chalk.bold('\n❌ Errors:'));
+    for (const issue of verbose ? errors : errors.slice(0, 5)) {
+      const loc = issue.line ? `${issue.file}:${issue.line}` : issue.file;
+      console.log(`  ${chalk.red('✗')} ${chalk.gray(loc)}`);
+      console.log(`    ${issue.message}`);
+      if (issue.suggestion) {
+        console.log(`    ${chalk.blue('→')} ${issue.suggestion}`);
+      }
+    }
+    if (!verbose && errors.length > 5) {
+      console.log(`  ${chalk.gray(`... and ${errors.length - 5} more errors`)}`);
+    }
+  }
+
+  if (warnings.length > 0) {
+    console.log(chalk.bold('\n⚠️ Warnings:'));
+    for (const issue of verbose ? warnings : warnings.slice(0, 5)) {
+      const loc = issue.line ? `${issue.file}:${issue.line}` : issue.file;
+      console.log(`  ${chalk.yellow('⚠')} ${chalk.gray(loc)}`);
+      console.log(`    ${issue.message}`);
+      if (verbose && issue.suggestion) {
+        console.log(`    ${chalk.blue('→')} ${issue.suggestion}`);
+      }
+    }
+    if (!verbose && warnings.length > 5) {
+      console.log(`  ${chalk.gray(`... and ${warnings.length - 5} more warnings`)}`);
+    }
+  }
+
+  if (report.recommendations.length > 0) {
+    console.log(chalk.bold('\n💡 Recommendations:'));
+    for (const rec of report.recommendations.slice(0, 5)) {
+      console.log(`  • ${rec}`);
+    }
+  }
+
+  console.log('');
+}
+
+/**
+ * Get color based on quality score
+ */
+function getQualityColor(score: number): string {
+  if (score >= 80) return chalk.green('');
+  if (score >= 60) return chalk.yellow('');
+  return chalk.red('');
+}
+
+/**
+ * Get icon for issue category
+ */
+function getCategoryIcon(category: string): string {
+  switch (category) {
+    case 'structure': return '🏗️';
+    case 'terminology': return '📝';
+    case 'consistency': return '🔄';
+    case 'completeness': return '✅';
+    case 'reference': return '🔗';
+    default: return '📌';
+  }
 }

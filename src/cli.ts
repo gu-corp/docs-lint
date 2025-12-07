@@ -21,14 +21,19 @@ import { defaultConfig as codeDefaultConfig } from './code/types.js';
 // CLI utilities
 import { loadConfig } from './cli/config.js';
 import { prompt, selectOption, getTemplatesDir } from './cli/utils.js';
-import { printResults, printCodeCheckResults, printCoverageReport } from './cli/formatters.js';
+import { printResults, printCodeCheckResults, printCoverageReport, printSpecReviewReport } from './cli/formatters.js';
+import { createSpecAnalyzer } from './ai/spec-analyzer.js';
+
+// Read version from package.json
+const packageJsonPath = path.join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
 const program = new Command();
 
 program
   .name('docs-lint')
   .description('Lint and validate documentation structure and quality')
-  .version('1.0.0');
+  .version(packageJson.version);
 
 program
   .command('lint')
@@ -489,9 +494,28 @@ program
       }
 
       console.log(chalk.bold('\n🤖 AI Specification Review\n'));
-      console.log(chalk.yellow('Coming soon: Document consistency and terminology analysis'));
-      console.log(chalk.gray('\nFor now, use "docs-lint lint --ai-prompt" to generate AI review prompts'));
-      process.exit(0);
+
+      // Load config to get terminology
+      const config = await loadConfig(undefined, options.docsDir);
+
+      const analyzer = createSpecAnalyzer({
+        docsDir: options.docsDir,
+        model: options.model,
+        verbose: options.verbose,
+        terminology: config.terminology,
+      });
+
+      const report = await analyzer.review();
+
+      if (options.json) {
+        console.log(JSON.stringify(report, null, 2));
+      } else {
+        printSpecReviewReport(report, options.verbose);
+      }
+
+      // Exit with error if quality score is below 60 or there are errors
+      const hasErrors = report.issues.some(i => i.severity === 'error');
+      process.exit(hasErrors || report.qualityScore < 60 ? 1 : 0);
     } catch (error) {
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
       process.exit(1);
