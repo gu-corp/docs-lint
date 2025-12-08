@@ -16,6 +16,8 @@ A comprehensive documentation linting tool for validating structure, quality, an
 - **Terminology Consistency**: Enforce consistent terminology usage
 - **Bidirectional References**: Check for missing back-references
 - **Folder Structure Validation**: Verify expected folder organization
+- **Standard Folder Structure (v1.7.0)**: Enforce G.U.Corp standard structure (01-plan, 02-spec, etc.)
+- **Requirement-Test Mapping (v1.4.0)**: Validate FR-XXX requirements have corresponding TC-XXX test cases
 - **Document Standards**: Built-in G.U.Corp document standards with project-level customization
 
 ### Code Review (v1.2.0+)
@@ -57,6 +59,11 @@ docs-lint check-structure --numbered --upper-case
 
 # Initialize configuration
 docs-lint init
+
+# Create standard folder structure (v1.7.0)
+docs-lint scaffold -d ./docs
+docs-lint scaffold -d ./docs --with-templates  # Include template files
+docs-lint scaffold -d ./docs --dry-run         # Preview without creating
 ```
 
 ### Code Review Commands (v1.2.0+)
@@ -194,6 +201,63 @@ Some rules support advanced configuration:
 }
 ```
 
+## Standard Folder Structure (v1.7.0)
+
+docs-lint enforces the G.U.Corp standard folder structure:
+
+```text
+docs/
+├── 01-plan/              # Planning & proposals (required)
+├── 02-spec/              # Specifications (required)
+│   ├── 01-requirements/  # Requirements (required)
+│   ├── 02-architecture/  # Architecture design
+│   ├── 03-detail-design/ # Detail design
+│   ├── 04-infrastructure/# Infrastructure specs
+│   └── 05-testing/       # Test specs (required)
+├── 03-guide/             # Guides & manuals (required)
+├── 04-development/       # Development standards (required)
+├── 05-business/          # Business strategy (optional)
+└── 06-reference/         # Reference materials (optional)
+```
+
+Use `docs-lint scaffold` to create this structure automatically.
+
+## Requirement-Test Mapping (v1.4.0+)
+
+Validates that all functional requirements have corresponding test cases:
+
+### Requirement ID Format
+
+```markdown
+| ID | Requirement | Priority | Version |
+|----|-------------|----------|---------|
+| FR-001 | User can login | High | v1 |
+| FR-AUTH-001 | Two-factor auth | Medium | v2 |
+| FR-AUTH-LOGIN-001 | SSO login | Low | - |
+```
+
+Supported formats: `FR-XXX`, `FR-CATEGORY-XXX`, `FR-CAT-SUB-XXX`
+
+### Test Case ID Format
+
+```markdown
+| ID | Requirement | Description | Expected |
+|----|-------------|-------------|----------|
+| TC-U001 | FR-001 | Valid login test | Success |
+| TC-D001 | FR-AUTH-001 | Deferred to v2 | - |
+| TC-X001 | FR-EXT-001 | Out of scope | - |
+```
+
+| Prefix | Category | Description |
+|--------|----------|-------------|
+| TC-U | Unit | Unit tests |
+| TC-I | Integration | Integration tests |
+| TC-E | E2E | End-to-end tests |
+| TC-P | Performance | Performance tests |
+| TC-S | Security | Security tests |
+| TC-D | Deferred | Deferred to future version |
+| TC-X | Excluded | Out of scope |
+
 ## Document Standards
 
 docs-lint includes built-in G.U.Corp document standards. If your project has a `DOCUMENT_STANDARDS.md` file, it will be used instead.
@@ -222,6 +286,7 @@ npx docs-lint init-standards --force
 3. **AI Prompt**: When using `--ai-prompt`, standards are included with instructions for AI to read them first
 
 Supported file names:
+
 - `DOCUMENT_STANDARDS.md`
 - `DOCUMENT-STANDARDS.md`
 - `DOC_STANDARDS.md`
@@ -236,6 +301,7 @@ npx docs-lint lint --ai-prompt > quality-report.md
 ```
 
 This generates a structured markdown report that includes:
+
 1. **AI Instructions**: Guidance for the AI on how to evaluate
 2. **Document Standards**: The evaluation criteria (project-specific or G.U.Corp default)
 3. **Lint Results**: Automated check results
@@ -338,6 +404,7 @@ jobs:
 ```
 
 This workflow:
+
 - Runs on docs changes only
 - Generates AI-friendly report on failure
 - Uploads report as artifact for debugging

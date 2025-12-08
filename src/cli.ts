@@ -367,6 +367,110 @@ program
     }
   });
 
+program
+  .command('scaffold')
+  .description('Create G.U.Corp standard folder structure')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('--with-templates', 'Include template files (README, REQUIREMENTS, etc.)', false)
+  .option('--dry-run', 'Show what would be created without creating', false)
+  .action(async (options) => {
+    const docsDir = path.resolve(options.docsDir);
+
+    console.log(chalk.bold('\n📁 Creating G.U.Corp Standard Structure\n'));
+
+    const folders = [
+      { path: '01-plan', desc: 'Planning & proposals' },
+      { path: '02-spec', desc: 'Specifications' },
+      { path: '02-spec/01-requirements', desc: 'Requirements' },
+      { path: '02-spec/02-architecture', desc: 'Architecture design' },
+      { path: '02-spec/03-detail-design', desc: 'Detail design' },
+      { path: '02-spec/04-infrastructure', desc: 'Infrastructure specs' },
+      { path: '02-spec/05-testing', desc: 'Test specifications' },
+      { path: '03-guide', desc: 'Guides & manuals (SysOps)' },
+      { path: '04-development', desc: 'Development standards (DevOps)' },
+    ];
+
+    const templates: Array<{ path: string; content: string }> = [
+      {
+        path: 'README.md',
+        content: `# Documentation\n\nThis folder contains project documentation.\n\n## Structure\n\n- \`01-plan/\` - Planning & proposals\n- \`02-spec/\` - Specifications\n- \`03-guide/\` - Guides & manuals\n- \`04-development/\` - Development standards\n`,
+      },
+      {
+        path: '01-plan/README.md',
+        content: `# Planning\n\nProject planning documents.\n\n- PROPOSAL.md - Project proposal\n- MVP.md - MVP definition\n- ROADMAP.md - Project roadmap\n`,
+      },
+      {
+        path: '02-spec/01-requirements/REQUIREMENTS.md',
+        content: `# Requirements\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\nThis document defines functional requirements.\n\n## Functional Requirements\n\n| ID | Requirement | Priority | Version |\n|----|-------------|----------|--------|\n| FR-001 | [Description] | High | v1 |\n| FR-002 | [Description] | Medium | v1 |\n\n---\n\n## Related Documents\n\n- [Architecture](../02-architecture/ARCHITECTURE.md)\n`,
+      },
+      {
+        path: '02-spec/05-testing/TEST-PLAN.md',
+        content: `# Test Plan\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\nThis document defines the test strategy.\n\n## Test Cases\n\n| ID | Requirement | Description | Expected |\n|----|-------------|-------------|----------|\n| TC-U001 | FR-001 | [Test description] | [Expected result] |\n\n---\n\n## Related Documents\n\n- [Requirements](../01-requirements/REQUIREMENTS.md)\n`,
+      },
+    ];
+
+    let created = 0;
+    let skipped = 0;
+
+    // Create folders
+    for (const folder of folders) {
+      const folderPath = path.join(docsDir, folder.path);
+      const exists = fs.existsSync(folderPath);
+
+      if (options.dryRun) {
+        console.log(`${exists ? chalk.gray('○') : chalk.green('+')} ${folder.path}/`);
+      } else {
+        if (!exists) {
+          fs.mkdirSync(folderPath, { recursive: true });
+          console.log(`${chalk.green('✓')} ${folder.path}/`);
+          created++;
+        } else {
+          console.log(`${chalk.gray('○')} ${folder.path}/ (exists)`);
+          skipped++;
+        }
+      }
+    }
+
+    // Create template files
+    if (options.withTemplates) {
+      console.log(chalk.bold('\n📄 Creating template files\n'));
+
+      for (const template of templates) {
+        const filePath = path.join(docsDir, template.path);
+        const exists = fs.existsSync(filePath);
+
+        if (options.dryRun) {
+          console.log(`${exists ? chalk.gray('○') : chalk.green('+')} ${template.path}`);
+        } else {
+          if (!exists) {
+            // Ensure parent directory exists
+            const dir = path.dirname(filePath);
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true });
+            }
+            fs.writeFileSync(filePath, template.content);
+            console.log(`${chalk.green('✓')} ${template.path}`);
+            created++;
+          } else {
+            console.log(`${chalk.gray('○')} ${template.path} (exists)`);
+            skipped++;
+          }
+        }
+      }
+    }
+
+    console.log('');
+    if (options.dryRun) {
+      console.log(chalk.yellow('Dry run - no changes made'));
+      console.log(chalk.gray('Run without --dry-run to create'));
+    } else {
+      console.log(chalk.green(`Created: ${created}`), chalk.gray(`Skipped: ${skipped}`));
+      if (!options.withTemplates) {
+        console.log(chalk.gray('\nTip: Use --with-templates to also create template files'));
+      }
+    }
+  });
+
 
 // ============================================
 // Code & Spec Check/Review Commands
