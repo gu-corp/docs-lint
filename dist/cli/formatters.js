@@ -43,6 +43,11 @@ export function printResults(result, verbose) {
             }
         }
     }
+    // Show hint to use --fix if there are fixable issues
+    const hasMarkdownLintIssues = result.ruleResults.some(r => r.rule === 'markdownLint' && r.issues.length > 0);
+    if (hasMarkdownLintIssues) {
+        console.log(chalk.cyan('\n💡 Tip: Run "docs-lint lint --fix" to auto-fix markdown formatting issues.'));
+    }
     console.log('');
 }
 /**
