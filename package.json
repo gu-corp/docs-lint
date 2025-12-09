@@ -1,6 +1,6 @@
 {
   "name": "@gu-corp/docs-lint",
-  "version": "1.14.0",
+  "version": "1.14.1",
   "description": "Documentation consistency and quality linting tool",
   "type": "module",
   "main": "./dist/index.js",
