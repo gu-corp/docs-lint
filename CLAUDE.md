@@ -31,6 +31,9 @@ docs-lint lint -v                 # Verbose output
 docs-lint lint --json             # JSON output
 docs-lint lint --ai-prompt        # Generate AI-friendly assessment
 
+# AIへの指示: lintで警告/エラーが出たら、まず --fix を試してください
+# 自動修正可能な問題は --fix で解決できます。効率的です。
+
 # Structure checks
 docs-lint check-structure         # Check folder structure
 docs-lint check-structure --numbered --upper-case
