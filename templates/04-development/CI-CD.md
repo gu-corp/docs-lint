@@ -90,7 +90,7 @@ jobs:
 
 ### 2.2 設定方法
 
-```
+```text
 Settings > Branches > Add rule
 - Branch name pattern: main
 - 上記設定を適用
@@ -110,7 +110,7 @@ Settings > Branches > Add rule
 
 ### 3.2 タグ命名規則
 
-```
+```text
 v{MAJOR}.{MINOR}.{PATCH}[-{prerelease}]
 ```
 
@@ -143,7 +143,7 @@ v{MAJOR}.{MINOR}.{PATCH}[-{prerelease}]
 
 ### 5.1 命名規則
 
-```
+```text
 {SERVICE}_{PURPOSE}_{TYPE}
 ```
 

@@ -32,7 +32,7 @@
 
 ### 1.3 命名規則
 
-```
+```text
 {type}/{short-description}
 ```
 
@@ -46,7 +46,7 @@
 
 ### 2.1 コミットメッセージ形式
 
-```
+```text
 {type}: {subject}
 
 {body}
@@ -68,7 +68,7 @@
 
 ### 2.3 例
 
-```
+```text
 feat: Add user authentication
 
 - Implement JWT-based authentication
@@ -114,7 +114,7 @@ Closes #123
 
 セマンティックバージョニング（SemVer）を使用:
 
-```
+```text
 v{MAJOR}.{MINOR}.{PATCH}[-{prerelease}]
 ```
 
@@ -186,9 +186,11 @@ AIアシスタントは、機能追加後のコミット時に以下を自動で
 **AIへの指示**: `docs-lint lint` で警告やエラーが出た場合：
 
 1. **まず `--fix` を試す**
+
    ```bash
    docs-lint lint --fix
    ```
+
    自動修正可能な問題（Markdownフォーマット等）はこれで解決できます。
 
 2. **残った問題を手動修正**
