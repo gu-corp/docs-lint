@@ -30,17 +30,25 @@ A comprehensive documentation linting tool for validating structure, quality, an
 
 ## Installation
 
+このパッケージはnpm registryには公開されていません。GitHubリポジトリから直接インストールしてください。
+
 ```bash
-# Install as dev dependency (recommended)
+# Install from GitHub (recommended)
 npm install github:gu-corp/docs-lint --save-dev
 
-# Or add to package.json
+# Or add to package.json manually
 # "devDependencies": {
 #   "@gu-corp/docs-lint": "github:gu-corp/docs-lint"
 # }
+
+# Install specific version
+npm install github:gu-corp/docs-lint#v1.14.1 --save-dev
 ```
 
-> ⚠️ **Important**: Always install as a local devDependency, never globally. This ensures consistent versions across the team and prevents "command not found" errors for AI assistants.
+> ⚠️ **Important**:
+> - このパッケージはGitHub npm registryやnpmjs.comには公開されていません
+> - `github:gu-corp/docs-lint` の形式でインストールしてください
+> - 常にローカルのdevDependencyとしてインストールし、グローバルインストールは避けてください
 
 ## CLI Usage
 

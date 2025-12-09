@@ -6,6 +6,18 @@ This file provides guidance to Claude Code when working with the docs-lint packa
 
 `@gu-corp/docs-lint` is a documentation consistency and quality linting tool for G.U.Corp projects. It validates markdown documentation structure, terminology consistency, and adherence to organizational standards.
 
+## Installation (for other projects)
+
+> **重要**: このパッケージはnpm registryには公開されていません。GitHubから直接インストールしてください。
+
+```bash
+# GitHubからインストール
+npm install github:gu-corp/docs-lint --save-dev
+
+# 特定バージョンをインストール
+npm install github:gu-corp/docs-lint#v1.14.1 --save-dev
+```
+
 ## Development Commands
 
 ```bash
