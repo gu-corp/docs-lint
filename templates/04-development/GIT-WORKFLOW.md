@@ -137,7 +137,53 @@ git push origin main --tags
 
 ---
 
-## 5. 禁止事項
+## 5. コミット前チェックリスト
+
+### 5.1 必須確認事項
+
+コミット前に以下を確認してください：
+
+```bash
+# 1. 変更内容の確認
+git diff --staged
+
+# 2. テスト実行
+npm test
+
+# 3. リント実行
+npm run lint
+
+# 4. 型チェック
+npm run typecheck  # TypeScriptプロジェクトの場合
+
+# 5. ビルド確認
+npm run build
+```
+
+### 5.2 機能追加・変更時の追加確認
+
+新機能追加やCLI変更時は、以下も確認：
+
+| 確認項目 | 対象ファイル |
+|----------|-------------|
+| 機能説明を追加 | README.md の Features セクション |
+| コマンド/オプション説明を追加 | README.md の CLI Usage セクション |
+| オプション一覧を更新 | README.md の CLI Options テーブル |
+| 設定例を追加（必要に応じて） | README.md の Configuration セクション |
+| 開発者向け説明を更新 | CLAUDE.md または CONTRIBUTING.md |
+| CLIヘルプ表示を確認 | `./dist/cli.js --help` |
+
+### 5.3 AI向け指示
+
+AIアシスタントは、機能追加後のコミット時に以下を自動で確認してください：
+
+1. 新しいCLIオプションがREADME.mdに記載されているか
+2. 新しい機能がFeaturesセクションに記載されているか
+3. 設定変更がある場合、設定例が更新されているか
+
+---
+
+## 6. 禁止事項
 
 - `main` への直接プッシュ
 - Force push（`--force`）を共有ブランチに

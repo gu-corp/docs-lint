@@ -19,6 +19,7 @@ A comprehensive documentation linting tool for validating structure, quality, an
 - **Standard Folder Structure (v1.7.0)**: Enforce G.U.Corp standard structure (01-plan, 02-spec, etc.)
 - **Requirement-Test Mapping (v1.4.0)**: Validate FR-XXX requirements have corresponding TC-XXX test cases
 - **Document Standards**: Built-in G.U.Corp document standards with project-level customization
+- **Markdown Lint (v1.14.0)**: Integrated markdownlint for formatting/syntax checks with auto-fix support
 
 ### Code Review (v1.2.0+)
 - **Test File Existence**: Check if source files have corresponding test files
@@ -30,20 +31,25 @@ A comprehensive documentation linting tool for validating structure, quality, an
 ## Installation
 
 ```bash
-# GitHubから直接インストール
-npm install github:gu-corp/docs-lint
+# Install as dev dependency (recommended)
+npm install github:gu-corp/docs-lint --save-dev
 
-# または package.json に追加
+# Or add to package.json
 # "devDependencies": {
 #   "@gu-corp/docs-lint": "github:gu-corp/docs-lint"
 # }
 ```
+
+> ⚠️ **Important**: Always install as a local devDependency, never globally. This ensures consistent versions across the team and prevents "command not found" errors for AI assistants.
 
 ## CLI Usage
 
 ```bash
 # Basic linting
 docs-lint lint
+
+# Auto-fix markdown formatting issues (v1.14.0)
+docs-lint lint --fix
 
 # Specify docs directory
 docs-lint lint -d ./documentation
@@ -101,6 +107,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-...
 | `-v, --verbose` | Verbose output |
 | `--json` | Output as JSON |
 | `--ai-prompt` | Generate AI-friendly assessment prompt |
+| `--fix` | Auto-fix markdown formatting issues (v1.14.0) |
 
 ## Programmatic Usage
 
@@ -196,6 +203,13 @@ Some rules support advanced configuration:
       "severity": "warn",
       "patterns": ["**バージョン**:", "**Version**:"],
       "include": ["**/spec/**"]
+    },
+    "markdownLint": {
+      "severity": "warn",
+      "rules": {
+        "MD013": false,
+        "MD033": false
+      }
     }
   }
 }

@@ -90,6 +90,9 @@ export interface RulesConfig {
 
   /** Check requirement to test case mapping (100% coverage required) */
   requirementTestMapping: RuleSeverity | RequirementTestMappingConfig;
+
+  /** Run markdownlint for Markdown syntax/formatting checks */
+  markdownLint: RuleSeverity | MarkdownLintConfig;
 }
 
 export interface StandardsDriftConfig {
@@ -141,6 +144,14 @@ export interface RequirementTestMappingConfig {
   requireRequirementIds: boolean;
   /** Whether test case IDs are required in test files */
   requireTestCaseIds: boolean;
+}
+
+export interface MarkdownLintConfig {
+  severity: RuleSeverity;
+  /** Custom markdownlint rules configuration */
+  rules?: Record<string, boolean | Record<string, unknown>>;
+  /** File patterns to exclude from markdownlint checks */
+  exclude?: string[];
 }
 
 export type RuleSeverity = 'off' | 'warn' | 'error';
@@ -317,6 +328,7 @@ export const defaultConfig: DocsLintConfig = {
       requireRequirementIds: true,
       requireTestCaseIds: true,
     },
+    markdownLint: 'warn',
   },
   terminology: [],
   requiredFiles: [],

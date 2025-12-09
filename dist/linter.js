@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import { defaultConfig, } from './types.js';
-import { checkBrokenLinks, checkLegacyFileNames, checkVersionInfo, checkRelatedDocuments, checkHeadingHierarchy, checkTodoComments, checkCodeBlockLanguage, checkOrphanDocuments, checkTerminology, checkBidirectionalRefs, checkRequiredFiles, checkStandardsDrift, checkRequirementTestMapping, } from './rules/index.js';
+import { checkBrokenLinks, checkLegacyFileNames, checkVersionInfo, checkRelatedDocuments, checkHeadingHierarchy, checkTodoComments, checkCodeBlockLanguage, checkOrphanDocuments, checkTerminology, checkBidirectionalRefs, checkRequiredFiles, checkStandardsDrift, checkRequirementTestMapping, checkMarkdownLint, } from './rules/index.js';
 import { checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, checkI18nStructure, checkStandardFileNames, checkStandardFolderStructure, } from './rules/structure.js';
 /**
  * Main linter class
@@ -107,6 +107,10 @@ export class DocsLinter {
         // Requirement Test Mapping
         if (this.shouldRun('requirementTestMapping')) {
             ruleResults.push(await this.runRule('requirementTestMapping', () => checkRequirementTestMapping(docsDir, files, this.config.rules.requirementTestMapping)));
+        }
+        // markdownlint (Markdown syntax/formatting checks)
+        if (this.shouldRun('markdownLint')) {
+            ruleResults.push(await this.runRule('markdownLint', () => checkMarkdownLint(docsDir, files, this.config.rules.markdownLint)));
         }
         // Calculate summary
         const summary = {

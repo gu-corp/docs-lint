@@ -26,6 +26,7 @@ docs-lint init-standards          # Generate DOCUMENT_STANDARDS.md
 
 # Linting
 docs-lint lint                    # Run all linting rules
+docs-lint lint --fix              # Auto-fix markdown formatting issues
 docs-lint lint -v                 # Verbose output
 docs-lint lint --json             # JSON output
 docs-lint lint --ai-prompt        # Generate AI-friendly assessment
@@ -162,6 +163,32 @@ Uses Vitest for fast ESM-native testing:
 npm test              # Run all tests
 npm test -- --watch   # Watch mode
 ```
+
+## Commit Checklist
+
+> **AIへの指示**: コミット前に必ず [templates/04-development/GIT-WORKFLOW.md](templates/04-development/GIT-WORKFLOW.md) のセクション5「コミット前チェックリスト」に従ってください。
+
+### 機能追加・CLI変更時の必須対応
+
+新機能やCLIオプションを追加した場合、コミット前に以下を必ず実行:
+
+1. **README.md を更新**
+   - Features セクションに新機能を追加
+   - CLI Usage に新コマンド/オプションを追加
+   - CLI Options テーブルを更新
+   - 必要に応じて設定例を追加
+
+2. **CLAUDE.md を更新**
+   - CLI Usage セクションを更新
+
+3. **テストとビルド確認**
+   ```bash
+   npm test
+   npm run build
+   ./dist/cli.js --help  # 新オプションが表示されることを確認
+   ```
+
+**これらが完了していない場合、コミットしないでください。**
 
 ## Release Process
 

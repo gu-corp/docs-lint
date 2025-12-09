@@ -24,6 +24,7 @@ import { prompt, selectOption, getTemplatesDir } from './cli/utils.js';
 import { printResults, printCodeCheckResults, printCoverageReport, printSpecReviewReport } from './cli/formatters.js';
 import { createSpecAnalyzer } from './ai/spec-analyzer.js';
 import { generateSpecReviewPrompt, generateDesignReviewPrompt, generateCodeReviewPrompt } from './ai/review-prompt.js';
+import { fixMarkdownLint } from './rules/index.js';
 
 // Read version from package.json
 const packageJsonPath = path.join(__dirname, '..', 'package.json');
@@ -46,9 +47,36 @@ program
   .option('-v, --verbose', 'Verbose output')
   .option('--json', 'Output as JSON')
   .option('--ai-prompt', 'Generate AI-friendly assessment prompt')
+  .option('--fix', 'Automatically fix markdown formatting issues')
   .action(async (options) => {
     try {
       const config = await loadConfig(options.config, options.docsDir);
+
+      // Handle --fix option
+      if (options.fix) {
+        const files = await glob('**/*.md', { cwd: config.docsDir, ignore: config.exclude });
+        console.log(chalk.bold('\n🔧 Auto-fixing markdown issues...\n'));
+
+        const { fixed, errors } = await fixMarkdownLint(
+          config.docsDir,
+          files,
+          config.rules.markdownLint
+        );
+
+        if (fixed > 0) {
+          console.log(chalk.green(`✓ Fixed ${fixed} file(s)`));
+        } else {
+          console.log(chalk.gray('No auto-fixable issues found'));
+        }
+
+        if (errors.length > 0) {
+          console.log(chalk.yellow('\nErrors during fix:'));
+          errors.forEach(e => console.log(chalk.red(`  ${e}`)));
+        }
+
+        console.log(chalk.gray('\nRe-running lint to check remaining issues...\n'));
+      }
+
       const linter = createLinter(config, {
         verbose: options.verbose,
         only: options.only?.split(','),
@@ -187,6 +215,29 @@ program
     console.log(chalk.gray('\nNext steps:'));
     console.log(chalk.gray('  1. Run "docs-lint init-standards" to create DOCUMENT_STANDARDS.md'));
     console.log(chalk.gray('  2. Run "docs-lint lint" to check your documentation'));
+    console.log(chalk.gray('  3. Run "docs-lint lint --fix" to auto-fix markdown formatting issues'));
+
+    console.log(chalk.bold('\n📦 Installation & AI Setup:\n'));
+    console.log(chalk.gray('  For AI assistants (Claude Code, etc.), add to your CLAUDE.md:'));
+    console.log(chalk.cyan(`
+  ## docs-lint Configuration
+
+  This project uses @gu-corp/docs-lint for documentation quality.
+
+  ### Install (local to project - NOT global)
+  \`\`\`bash
+  npm install @gu-corp/docs-lint --save-dev
+  \`\`\`
+
+  ### Usage
+  \`\`\`bash
+  npx docs-lint lint           # Check documentation
+  npx docs-lint lint --fix     # Auto-fix markdown issues
+  npx docs-lint review:spec    # Generate spec review prompt
+  \`\`\`
+`));
+    console.log(chalk.yellow('  ⚠️  Always install as devDependency, never globally.'));
+    console.log(chalk.gray('     This ensures consistent versions across the team.\n'));
   });
 
 program

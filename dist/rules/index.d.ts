@@ -1,4 +1,4 @@
-import type { LintIssue, RuleSeverity, LegacyFileNamesConfig, VersionInfoConfig, RelatedDocumentsConfig, StandardsDriftConfig, RequirementTestMappingConfig } from '../types.js';
+import type { LintIssue, RuleSeverity, LegacyFileNamesConfig, VersionInfoConfig, RelatedDocumentsConfig, StandardsDriftConfig, RequirementTestMappingConfig, MarkdownLintConfig } from '../types.js';
 /**
  * Check for broken markdown links
  */
@@ -55,5 +55,17 @@ export declare function checkStandardsDrift(docsDir: string, templatesDir: strin
  * Ensures all functional requirements have corresponding test cases
  */
 export declare function checkRequirementTestMapping(docsDir: string, files: string[], config: RequirementTestMappingConfig | RuleSeverity): Promise<LintIssue[]>;
+/**
+ * Check markdown formatting using markdownlint
+ */
+export declare function checkMarkdownLint(docsDir: string, files: string[], config: MarkdownLintConfig | RuleSeverity): Promise<LintIssue[]>;
+/**
+ * Fix markdown formatting issues using markdownlint
+ * Returns the number of files fixed
+ */
+export declare function fixMarkdownLint(docsDir: string, files: string[], config: MarkdownLintConfig | RuleSeverity): Promise<{
+    fixed: number;
+    errors: string[];
+}>;
 export { checkI18nStructure, checkDraftStructure, checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, readDocsLanguageConfig, type DocsLanguageConfig, type FolderStructureConfig, type FolderDefinition, } from './structure.js';
 //# sourceMappingURL=index.d.ts.map

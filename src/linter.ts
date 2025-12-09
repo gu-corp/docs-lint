@@ -27,6 +27,7 @@ import {
   checkRequiredFiles,
   checkStandardsDrift,
   checkRequirementTestMapping,
+  checkMarkdownLint,
 } from './rules/index.js';
 import {
   checkFolderStructure,
@@ -240,6 +241,15 @@ export class DocsLinter {
       ruleResults.push(
         await this.runRule('requirementTestMapping', () =>
           checkRequirementTestMapping(docsDir, files, this.config.rules.requirementTestMapping)
+        )
+      );
+    }
+
+    // markdownlint (Markdown syntax/formatting checks)
+    if (this.shouldRun('markdownLint')) {
+      ruleResults.push(
+        await this.runRule('markdownLint', () =>
+          checkMarkdownLint(docsDir, files, this.config.rules.markdownLint)
         )
       );
     }

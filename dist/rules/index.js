@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { lint as markdownlintSync } from 'markdownlint/sync';
+import { applyFixes } from 'markdownlint';
 /**
  * Helper to check if we're in a code block
  */
@@ -538,6 +540,144 @@ export async function checkRequirementTestMapping(docsDir, files, config) {
         });
     }
     return issues;
+}
+/**
+ * Check markdown formatting using markdownlint
+ */
+export async function checkMarkdownLint(docsDir, files, config) {
+    const issues = [];
+    // Default markdownlint config optimized for documentation
+    const defaultRules = {
+        // Headings
+        'MD001': true, // heading-increment
+        'MD003': { style: 'atx' }, // heading-style
+        'MD018': true, // no-missing-space-atx
+        'MD019': true, // no-multiple-space-atx
+        'MD022': true, // blanks-around-headings
+        'MD023': true, // heading-start-left
+        'MD024': false, // no-duplicate-heading (allow same headings in different sections)
+        'MD025': true, // single-h1
+        'MD041': true, // first-line-heading
+        // Lists
+        'MD004': { style: 'dash' }, // ul-style
+        'MD005': true, // list-indent
+        'MD007': { indent: 2 }, // ul-indent
+        'MD030': true, // list-marker-space
+        'MD032': true, // blanks-around-lists
+        // Code blocks
+        'MD014': false, // commands-show-output (allow $ in code blocks)
+        'MD031': true, // blanks-around-fences
+        'MD040': true, // fenced-code-language
+        'MD046': { style: 'fenced' }, // code-block-style
+        'MD048': { style: 'backtick' }, // code-fence-style
+        // Whitespace
+        'MD009': true, // no-trailing-spaces
+        'MD010': true, // no-hard-tabs
+        'MD012': true, // no-multiple-blanks
+        'MD047': true, // single-trailing-newline
+        // Links
+        'MD011': true, // no-reversed-links
+        'MD034': true, // no-bare-urls
+        'MD042': true, // no-empty-links
+        // Line length - disabled for documentation (tables, etc.)
+        'MD013': false,
+        // Inline HTML - allow for special cases
+        'MD033': false,
+        // Emphasis
+        'MD036': false, // no-emphasis-as-heading (allow **bold** headings in tables)
+        'MD037': true, // no-space-in-emphasis
+        'MD038': true, // no-space-in-code
+        'MD039': true, // no-space-in-links
+        // Other
+        'MD026': { punctuation: '.,;:!?' }, // no-trailing-punctuation
+        'MD027': true, // no-multiple-space-blockquote
+        'MD028': true, // no-blanks-blockquote
+        'MD029': { style: 'ordered' }, // ol-prefix
+        'MD035': { style: '---' }, // hr-style
+        'MD044': false, // proper-names (too strict)
+        'MD045': false, // no-alt-text (images without alt OK in docs)
+        'MD049': { style: 'asterisk' }, // emphasis-style
+        'MD050': { style: 'asterisk' }, // strong-style
+    };
+    // Merge with user config
+    const userRules = typeof config === 'object' && config.rules ? config.rules : {};
+    const mergedRules = { ...defaultRules, ...userRules };
+    // Get absolute paths
+    const absolutePaths = files.map(f => path.join(docsDir, f));
+    // Run markdownlint
+    const results = markdownlintSync({
+        files: absolutePaths,
+        config: mergedRules,
+    });
+    // Convert results to LintIssue format
+    for (const file of absolutePaths) {
+        const fileResults = results[file];
+        if (fileResults && fileResults.length > 0) {
+            const relativePath = path.relative(docsDir, file);
+            for (const result of fileResults) {
+                issues.push({
+                    file: relativePath,
+                    line: result.lineNumber,
+                    message: `[${result.ruleNames.join('/')}] ${result.ruleDescription}`,
+                    suggestion: result.errorDetail || result.fixInfo?.editColumn
+                        ? `Fix at column ${result.fixInfo?.editColumn}`
+                        : undefined,
+                });
+            }
+        }
+    }
+    return issues;
+}
+/**
+ * Fix markdown formatting issues using markdownlint
+ * Returns the number of files fixed
+ */
+export async function fixMarkdownLint(docsDir, files, config) {
+    let fixed = 0;
+    const errors = [];
+    // Default markdownlint config (same as checkMarkdownLint)
+    const defaultRules = {
+        'MD001': true, 'MD003': { style: 'atx' }, 'MD018': true, 'MD019': true,
+        'MD022': true, 'MD023': true, 'MD024': false, 'MD025': true, 'MD041': true,
+        'MD004': { style: 'dash' }, 'MD005': true, 'MD007': { indent: 2 },
+        'MD030': true, 'MD032': true, 'MD014': false, 'MD031': true, 'MD040': true,
+        'MD046': { style: 'fenced' }, 'MD048': { style: 'backtick' },
+        'MD009': true, 'MD010': true, 'MD012': true, 'MD047': true,
+        'MD011': true, 'MD034': true, 'MD042': true, 'MD013': false,
+        'MD033': false, 'MD036': false, 'MD037': true, 'MD038': true, 'MD039': true,
+        'MD026': { punctuation: '.,;:!?' }, 'MD027': true, 'MD028': true,
+        'MD029': { style: 'ordered' }, 'MD035': { style: '---' },
+        'MD044': false, 'MD045': false,
+        'MD049': { style: 'asterisk' }, 'MD050': { style: 'asterisk' },
+    };
+    const userRules = typeof config === 'object' && config.rules ? config.rules : {};
+    const mergedRules = { ...defaultRules, ...userRules };
+    for (const file of files) {
+        const filePath = path.join(docsDir, file);
+        try {
+            const content = fs.readFileSync(filePath, 'utf-8');
+            const results = markdownlintSync({
+                strings: { [filePath]: content },
+                config: mergedRules,
+            });
+            const fileErrors = results[filePath];
+            if (fileErrors && fileErrors.length > 0) {
+                // Check if any errors have fixInfo
+                const fixableErrors = fileErrors.filter(e => e.fixInfo);
+                if (fixableErrors.length > 0) {
+                    const fixedContent = applyFixes(content, fixableErrors);
+                    if (fixedContent !== content) {
+                        fs.writeFileSync(filePath, fixedContent, 'utf-8');
+                        fixed++;
+                    }
+                }
+            }
+        }
+        catch (error) {
+            errors.push(`${file}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+    return { fixed, errors };
 }
 // Re-export structure functions
 export { checkI18nStructure, checkDraftStructure, checkFolderStructure, checkFolderNumbering, checkFileNaming, checkDuplicateContent, readDocsLanguageConfig, } from './structure.js';

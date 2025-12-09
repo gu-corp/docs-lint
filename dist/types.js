@@ -58,6 +58,7 @@ export const defaultConfig = {
             requireRequirementIds: true,
             requireTestCaseIds: true,
         },
+        markdownLint: 'warn',
     },
     terminology: [],
     requiredFiles: [],
