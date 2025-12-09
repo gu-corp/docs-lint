@@ -588,6 +588,11 @@ export async function checkMarkdownLint(docsDir, files, config) {
         'MD037': true, // no-space-in-emphasis
         'MD038': true, // no-space-in-code
         'MD039': true, // no-space-in-links
+        // Tables
+        'MD055': false, // table-pipe-style (allow flexible pipe alignment)
+        'MD056': false, // table-column-count (allow flexible columns)
+        'MD058': false, // blanks-around-tables (allow compact tables)
+        'MD060': false, // table-column-style (don't require alignment markers)
         // Other
         'MD026': { punctuation: '.,;:!?' }, // no-trailing-punctuation
         'MD027': true, // no-multiple-space-blockquote
@@ -645,6 +650,7 @@ export async function fixMarkdownLint(docsDir, files, config) {
         'MD009': true, 'MD010': true, 'MD012': true, 'MD047': true,
         'MD011': true, 'MD034': true, 'MD042': true, 'MD013': false,
         'MD033': false, 'MD036': false, 'MD037': true, 'MD038': true, 'MD039': true,
+        'MD055': false, 'MD056': false, 'MD058': false, 'MD060': false, // Tables
         'MD026': { punctuation: '.,;:!?' }, 'MD027': true, 'MD028': true,
         'MD029': { style: 'ordered' }, 'MD035': { style: '---' },
         'MD044': false, 'MD045': false,
