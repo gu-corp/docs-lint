@@ -2,7 +2,7 @@ import type { LintResult, DocsLintConfig } from '../types.js';
 export declare const STANDARDS_FILES: string[];
 interface DocsLanguageConfig {
     commonLanguage: string;
-    draftLanguages?: string[];
+    translationLanguages?: string[];
     teams?: Record<string, string>;
 }
 /**

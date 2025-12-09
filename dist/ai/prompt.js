@@ -49,8 +49,8 @@ export function generateAIPrompt(docsDir, files, lintResult, config) {
     const langInfo = langConfig
         ? `
 **言語設定:**
-- 共通語: ${langConfig.commonLanguage}
-${langConfig.draftLanguages ? `- ドラフト言語: ${langConfig.draftLanguages.join(', ')}` : ''}
+- ソース言語: ${langConfig.commonLanguage}
+${langConfig.translationLanguages ? `- 翻訳言語: ${langConfig.translationLanguages.join(', ')}` : ''}
 ${langConfig.teams ? `- チーム: ${Object.entries(langConfig.teams).map(([k, v]) => `${k}(${v})`).join(', ')}` : ''}`
         : '';
     // Header with AI instructions
@@ -61,17 +61,30 @@ ${langConfig.teams ? `- チーム: ${Object.entries(langConfig.teams).map(([k, v
 
 このレポートは、ドキュメント品質評価を支援するために自動生成されました。
 
+**あなたのペルソナ:**
+以下の視点を持って評価してください：
+- **アーキテクト**: システム全体の整合性、設計の一貫性
+- **エンジニア**: 実装可能性、技術的正確性
+- **テスト設計者**: テスト可能性、要件の追跡可能性
+- **セキュリティエンジニア**: セキュリティ考慮事項の有無
+
 **評価手順:**
 1. **まず「0. ドキュメント標準規約」を熟読してください** - これが評価の基準となります
-2. **言語設定を確認してください** - 共通語とドラフト言語の使い分けが適切か評価します
-3. 検出された問題を確認してください
-4. フォルダ構成と品質メトリクスを確認してください
-5. 標準規約に基づいて総合評価を行ってください
+2. **言語設定を確認してください** - ソース言語と翻訳言語の使い分けが適切か評価します
+3. **フォルダの役割分担を確認してください**:
+   - 01-plan/: 計画・提案（WHYとWHAT）
+   - 02-spec/: 仕様・設計（HOW）- 要件(01-requirements)、設計(02-design)、テスト(04-testing)
+   - 03-guide/: 利用者向けガイド
+   - 04-development/: 開発者向け標準
+4. 検出された問題を確認してください
+5. フォルダ構成と品質メトリクスを確認してください
+6. 標準規約に基づいて総合評価を行ってください
 
 **重要:**
 - 標準規約を理解せずに評価を行わないでください
-- docs/直下は共通語、drafts/は各チームの作業言語です
-- 翻訳版は共通語版と同期されている必要があります
+- docs/直下がソース言語、translations/{lang}/が翻訳版です
+- 翻訳版はソース言語版と同期されている必要があります
+- FR-XXX形式の要件IDとTC-XXX形式のテストケースIDの対応関係を確認してください
 ${langInfo}
 </ai-instructions>
 
@@ -122,23 +135,34 @@ ${formatIssues(lintResult.ruleResults.filter((r) => r.severity === 'warn'))}`);
 
 ### 4.1 構造的完全性
 - [ ] 必須ドキュメントが揃っているか
-- [ ] フォルダ構成が論理的か
-- [ ] 命名規則が統一されているか
+- [ ] フォルダ構成が論理的か（01-plan, 02-spec, 03-guide, 04-development）
+- [ ] 命名規則が統一されているか（UPPER-CASE.md）
+- [ ] フォルダ番号が連番になっているか（01, 02, 03...）
 
 ### 4.2 内容の一貫性
 - [ ] 用語が統一されているか
 - [ ] 相互参照が適切か
 - [ ] 重複や矛盾がないか
+- [ ] 01-plan（WHY/WHAT）と02-spec（HOW）の役割分担が適切か
 
 ### 4.3 保守性
 - [ ] バージョン情報が明記されているか
 - [ ] 変更履歴が追跡可能か
 - [ ] 関連ドキュメントへのリンクがあるか
+- [ ] 各ドキュメントの最終更新日が記載されているか
 
 ### 4.4 完成度
 - [ ] TODO/FIXMEが残っていないか
 - [ ] プレースホルダーがないか
-- [ ] 空セクションがないか`);
+- [ ] 空セクションがないか
+- [ ] [TBD]や[未定]が残っていないか
+
+### 4.5 要件追跡（02-spec がある場合）
+- [ ] FR-XXX形式の要件IDが定義されているか
+- [ ] TC-XXX形式のテストケースIDが定義されているか
+- [ ] 各要件に対応するテストケースが存在するか
+- [ ] 要件カバレッジは十分か（未テスト要件がないか）
+- [ ] テストケースの「対象要件」列が正しく記載されているか`);
     // Evaluation request
     sections.push(`## 5. 評価依頼
 

@@ -23,6 +23,7 @@ import { loadConfig } from './cli/config.js';
 import { prompt, selectOption, getTemplatesDir } from './cli/utils.js';
 import { printResults, printCodeCheckResults, printCoverageReport, printSpecReviewReport } from './cli/formatters.js';
 import { createSpecAnalyzer } from './ai/spec-analyzer.js';
+import { generateSpecReviewPrompt, generateDesignReviewPrompt } from './ai/review-prompt.js';
 
 // Read version from package.json
 const packageJsonPath = path.join(__dirname, '..', 'package.json');
@@ -587,20 +588,46 @@ program
 
 program
   .command('review:spec')
-  .description('AI-powered specification review (consistency, terminology)')
+  .description('Generate specification review prompt for chat AI')
   .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('-s, --src-dir <path>', 'Source directory (for design-implementation check)', './src')
+  .option('--design', 'Focus on design-implementation consistency', false)
+  .option('--api', 'Run with Anthropic API instead of generating prompt', false)
   .option('-v, --verbose', 'Verbose output')
   .option('--json', 'Output as JSON')
-  .option('--model <model>', 'AI model to use', 'claude-sonnet-4-20250514')
+  .option('--model <model>', 'AI model to use (with --api)', 'claude-sonnet-4-20250514')
   .action(async (options) => {
     try {
+      // Default mode: Generate prompt for chat AI
+      if (!options.api) {
+        const prompt = options.design
+          ? generateDesignReviewPrompt({
+              docsDir: options.docsDir,
+              srcDir: options.srcDir,
+              verbose: options.verbose,
+            })
+          : generateSpecReviewPrompt({
+              docsDir: options.docsDir,
+              srcDir: options.srcDir,
+              verbose: options.verbose,
+            });
+
+        console.log(prompt);
+        console.log(chalk.gray('\n---'));
+        console.log(chalk.gray('上記のプロンプトをAIに送信してレビューを実行してください。'));
+        console.log(chalk.gray('または --api オプションでAnthropic APIを直接呼び出せます。'));
+        process.exit(0);
+      }
+
+      // API mode: Call Anthropic API directly
       if (!process.env.ANTHROPIC_API_KEY) {
         console.error(chalk.red('Error: ANTHROPIC_API_KEY environment variable is required'));
         console.log(chalk.gray('Set it in .env file or export ANTHROPIC_API_KEY=...'));
+        console.log(chalk.gray('\nOr run without --api to generate a prompt for chat AI.'));
         process.exit(1);
       }
 
-      console.log(chalk.bold('\n🤖 AI Specification Review\n'));
+      console.log(chalk.bold('\n🤖 AI Specification Review (API Mode)\n'));
 
       // Load config to get terminology
       const config = await loadConfig(undefined, options.docsDir);
