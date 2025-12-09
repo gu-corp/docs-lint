@@ -250,19 +250,112 @@ docs/
 │   ├── ERROR-HANDLING.md        # エラー処理設計
 │   ├── API.md                   # API仕様（REST/GraphQL/gRPC）
 │   ├── DATABASE.md              # データベース設計・ER図
-│   ├── SCREEN.md                # 画面設計・UIフロー
-│   └── UML.md                   # UML図（シーケンス、状態遷移等）
+│   ├── SCREEN.md                # 画面設計・UIフロー（概要）
+│   ├── UML.md                   # UML図（シーケンス、状態遷移等）
+│   └── screens/                 # 画面詳細設計（複雑な場合）
+│       ├── 01-login/
+│       │   └── LOGIN.md
+│       ├── 02-dashboard/
+│       │   └── DASHBOARD.md
+│       └── 03-settings/
+│           └── SETTINGS.md
 ├── 03-infrastructure/           # （オプション）
 │   ├── INFRASTRUCTURE.md        # インフラ構成
 │   ├── DEPLOYMENT.md            # デプロイ仕様
 │   └── SECURITY.md              # セキュリティ仕様
 └── 04-testing/
-    ├── TEST-CASES.md            # テストケース（TC-XXX形式必須）
-    ├── TEST.md                  # テスト戦略・方針
-    └── E2E.md                   # E2Eテストシナリオ
+    ├── TEST-CASES.md            # テストケース総括（TC-XXX形式必須）
+    ├── UNIT-TESTS.md            # 単体テスト仕様
+    ├── INTEGRATION-TESTS.md     # 結合テスト仕様
+    ├── E2E-TESTS.md             # E2Eテスト仕様
+    ├── SCENARIO-TESTS.md        # ユーザーシナリオテスト
+    └── scenarios/               # シナリオ詳細（複雑な場合）
+        ├── 01-onboarding/
+        └── 02-checkout/
 \`\`\`
 
-### 1.3 規模別ガイドライン
+### 1.5 詳細設計のフォルダ分割ルール
+
+> **AI向け指示**: 設計が複雑な場合は、必ずフォルダを分割して管理してください。
+
+#### 分割の判断基準
+
+| 条件 | 対応 |
+|------|------|
+| 画面数が10以上 | \`02-design/screens/\` にフォルダ分割 |
+| API エンドポイントが20以上 | \`02-design/api/\` にドメイン別分割 |
+| 1ファイルが500行を超える | 機能別にフォルダ分割 |
+| 複数チームが並行開発 | 担当領域ごとにフォルダ分割 |
+
+#### 画面詳細設計の分割例
+
+\`\`\`text
+02-design/screens/
+├── 01-auth/                     # 認証関連画面
+│   ├── LOGIN.md                 # ログイン画面
+│   ├── REGISTER.md              # 新規登録画面
+│   ├── PASSWORD-RESET.md        # パスワードリセット
+│   └── MFA.md                   # 多要素認証
+├── 02-dashboard/                # ダッシュボード
+│   ├── OVERVIEW.md              # 概要画面
+│   ├── ANALYTICS.md             # 分析画面
+│   └── WIDGETS.md               # ウィジェット仕様
+├── 03-user/                     # ユーザー管理
+│   ├── PROFILE.md               # プロフィール
+│   └── SETTINGS.md              # 設定画面
+└── 04-admin/                    # 管理者画面
+    ├── USER-MANAGEMENT.md       # ユーザー管理
+    └── SYSTEM-SETTINGS.md       # システム設定
+\`\`\`
+
+#### 各画面詳細設計ファイルの必須項目
+
+\`\`\`markdown
+# {画面名} 画面詳細設計
+
+**対応要件**: FR-XXX, FR-YYY
+**画面ID**: SCR-001
+
+---
+
+## 画面概要
+（画面の目的、アクセス条件）
+
+## 画面レイアウト
+（Mermaid/ASCII/Figma リンク）
+
+## UI コンポーネント
+| ID | コンポーネント | 種類 | バリデーション |
+|----|--------------|------|--------------|
+| C001 | メールアドレス入力 | TextField | 必須、Email形式 |
+
+## 画面遷移
+\`\`\`mermaid
+stateDiagram-v2
+    [*] --> 入力中
+    入力中 --> 確認中: 送信
+    確認中 --> 完了: 確認OK
+    確認中 --> 入力中: 戻る
+\`\`\`
+
+## API連携
+| アクション | API | メソッド |
+|-----------|-----|---------|
+| ログイン | /api/auth/login | POST |
+
+## エラー処理
+| エラーコード | 表示メッセージ | 対応 |
+|-------------|--------------|------|
+| AUTH001 | メールアドレスが無効です | 入力欄をハイライト |
+
+---
+
+## 関連ドキュメント
+- [API仕様](../API.md)
+- [エラー処理](../ERROR-HANDLING.md)
+\`\`\`
+
+### 1.6 規模別ガイドライン
 
 | 規模 | 基準 | 02-spec 構成 |
 |------|------|--------------|
@@ -368,13 +461,19 @@ docs/
 
 #### 1.8.3 テストファイル構成
 
-\`\`\`
-05-testing/
-├── TEST-PLAN.md           # テスト計画・方針
-├── UNIT-TESTS.md          # TC-U001, TC-U002...
-├── INTEGRATION-TESTS.md   # TC-I001, TC-I002...
-├── E2E-TESTS.md           # TC-E001, TC-E002...
-└── DEFERRED-TESTS.md      # TC-D001, TC-X001... (延期・対象外)
+\`\`\`text
+04-testing/
+├── TEST-CASES.md            # テストケース総括・トレーサビリティマトリクス
+├── UNIT-TESTS.md            # 単体テスト仕様（TC-U001...）
+├── INTEGRATION-TESTS.md     # 結合テスト仕様（TC-I001...）
+├── E2E-TESTS.md             # E2Eテスト仕様（TC-E001...）
+├── SCENARIO-TESTS.md        # ユーザーシナリオテスト（TC-SC001...）
+├── DEFERRED-TESTS.md        # 延期・対象外（TC-D001, TC-X001...）
+└── scenarios/               # 複雑なシナリオの詳細
+    ├── 01-user-onboarding/
+    │   └── ONBOARDING.md
+    └── 02-purchase-flow/
+        └── CHECKOUT.md
 \`\`\`
 
 #### 1.8.4 カバレッジ要件
@@ -389,15 +488,456 @@ docs/
 
 ---
 
-## 2. ファイル命名規則
+## 2. テスト仕様の詳細規約
 
-### 2.1 基本規則
+> **AI向け指示**: テスト仕様は実装者が迷わず書けるレベルで詳細に記述してください。
+
+### 2.1 テストレベルと責務
+
+| レベル | 責務 | ツール | カバレッジ目標 |
+|--------|------|-------|--------------|
+| Unit（単体） | 関数・クラス単位の動作検証 | **Vitest** | 80%以上 |
+| Integration（結合） | API・DB・外部サービス連携 | **Vitest** + Supertest | 主要パス100% |
+| Component（コンポーネント） | UIコンポーネント単体 | **Vitest** + Testing Library | 全コンポーネント |
+| E2E（エンドツーエンド） | ユーザー操作フロー | **Playwright** | クリティカルパス100% |
+| Scenario（シナリオ） | 業務シナリオ全体 | **Playwright** | 主要ユースケース |
+
+### 2.2 単体テスト仕様（UNIT-TESTS.md）
+
+> **AI向け指示**: 全ての公開関数・メソッドに対してテストケースを設計してください。
+
+#### 必須テンプレート
+
+\`\`\`markdown
+# 単体テスト仕様
+
+**対象**: src/services/*.ts, src/utils/*.ts
+**ツール**: Vitest
+**カバレッジ目標**: 80%以上
+
+---
+
+## テストケース
+
+### UserService
+
+| ID | メソッド | テスト内容 | 入力 | 期待結果 |
+|----|---------|----------|------|---------|
+| TC-U001 | createUser | 正常系：有効なデータ | {name: "Test", email: "test@example.com"} | User オブジェクト返却 |
+| TC-U002 | createUser | 異常系：email重複 | {name: "Test", email: "existing@example.com"} | DuplicateEmailError |
+| TC-U003 | createUser | 境界値：name最大長 | {name: "A".repeat(255)} | 正常終了 |
+| TC-U004 | createUser | 境界値：name超過 | {name: "A".repeat(256)} | ValidationError |
+
+### 実装ファイル配置
+
+\\\`\\\`\\\`text
+src/
+├── services/
+│   ├── UserService.ts
+│   └── __tests__/
+│       └── UserService.test.ts    # TC-U001〜TC-U004
+\\\`\\\`\\\`
+\`\`\`
+
+#### 単体テスト設計のルール
+
+1. **テストケース設計技法を必ず適用**
+   - 同値分割（有効・無効クラス）
+   - 境界値分析（最小、最大、境界±1）
+   - デシジョンテーブル（条件の組み合わせ）
+
+2. **異常系を必ず網羅**
+   - null/undefined 入力
+   - 空文字・空配列
+   - 型エラー
+   - 権限エラー
+
+3. **モック戦略**
+   - 外部API → モック必須
+   - データベース → インメモリDB or モック
+   - 時刻依存 → vi.useFakeTimers()
+
+### 2.3 結合テスト仕様（INTEGRATION-TESTS.md）
+
+> **AI向け指示**: API エンドポイントとデータベース操作を中心にテストを設計してください。
+
+#### 必須テンプレート
+
+\`\`\`markdown
+# 結合テスト仕様
+
+**対象**: API エンドポイント、DB 操作
+**ツール**: Vitest + Supertest + テストDB
+**環境**: Docker Compose でテスト用DB起動
+
+---
+
+## テストケース
+
+### POST /api/users
+
+| ID | シナリオ | 前提条件 | リクエスト | 期待レスポンス |
+|----|---------|---------|-----------|--------------|
+| TC-I001 | ユーザー作成成功 | DBが空 | {name, email, password} | 201 Created |
+| TC-I002 | メール重複エラー | 同一メールが存在 | {name, email, password} | 409 Conflict |
+| TC-I003 | 認証エラー | トークンなし | {name, email} | 401 Unauthorized |
+
+### データベーステスト
+
+| ID | 対象 | テスト内容 | 期待結果 |
+|----|------|----------|---------|
+| TC-I010 | users テーブル | 作成→取得→更新→削除 | 全操作成功 |
+| TC-I011 | トランザクション | 途中エラーでロールバック | データ不整合なし |
+\`\`\`
+
+### 2.4 E2Eテスト仕様（E2E-TESTS.md）
+
+> **AI向け指示**: Playwright を使用し、実際のブラウザ操作をテストしてください。
+
+#### 必須テンプレート
+
+\`\`\`markdown
+# E2Eテスト仕様
+
+**ツール**: Playwright
+**ブラウザ**: Chromium, Firefox, WebKit
+**環境**: ステージング環境
+
+---
+
+## テストケース
+
+### ログインフロー
+
+| ID | シナリオ | 操作手順 | 期待結果 |
+|----|---------|---------|---------|
+| TC-E001 | 正常ログイン | 1. /login にアクセス<br>2. メール入力<br>3. パスワード入力<br>4. ログインボタン押下 | ダッシュボードに遷移 |
+| TC-E002 | ログイン失敗 | 1. /login にアクセス<br>2. 不正なパスワード入力<br>3. ログインボタン押下 | エラーメッセージ表示 |
+
+### 実装例
+
+\\\`\\\`\\\`typescript
+// e2e/auth/login.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('TC-E001: 正常ログイン', async ({ page }) => {
+  await page.goto('/login');
+  await page.fill('[data-testid="email"]', 'user@example.com');
+  await page.fill('[data-testid="password"]', 'password123');
+  await page.click('[data-testid="login-button"]');
+  await expect(page).toHaveURL('/dashboard');
+});
+\\\`\\\`\\\`
+\`\`\`
+
+#### E2Eテスト設計のルール
+
+1. **data-testid 属性を必須化**
+   - 全ての操作対象要素に \`data-testid\` を付与
+   - 命名規則: \`{component}-{action}\`（例: \`login-button\`）
+
+2. **ページオブジェクトパターン推奨**
+   - 画面ごとにページクラスを作成
+   - セレクタの重複を排除
+
+3. **テストデータ管理**
+   - テスト専用のシードデータを用意
+   - テスト後のクリーンアップ必須
+
+### 2.5 ユーザーシナリオテスト（SCENARIO-TESTS.md）
+
+> **AI向け指示**: 実際のユーザーが行う一連の業務フローを網羅してください。
+
+#### 必須テンプレート
+
+\`\`\`markdown
+# ユーザーシナリオテスト仕様
+
+**目的**: 実際のユーザー行動に基づく業務フローの検証
+**ツール**: Playwright
+**観点**: ユーザビリティ、業務完遂性
+
+---
+
+## シナリオ一覧
+
+| ID | シナリオ名 | アクター | 対応要件 | 優先度 |
+|----|-----------|---------|---------|-------|
+| TC-SC001 | 新規ユーザーオンボーディング | 新規ユーザー | FR-001〜FR-005 | 高 |
+| TC-SC002 | 商品購入フロー | 購入者 | FR-010〜FR-020 | 高 |
+| TC-SC003 | 管理者によるユーザー管理 | 管理者 | FR-ADMIN-001〜005 | 中 |
+
+---
+
+## TC-SC001: 新規ユーザーオンボーディング
+
+### シナリオ概要
+新規ユーザーがサービスに登録し、初期設定を完了するまでの一連のフロー
+
+### 前提条件
+- ユーザーは未登録状態
+- メールアドレスは有効
+
+### 手順
+
+| ステップ | 操作 | 期待結果 | 備考 |
+|---------|------|---------|------|
+| 1 | トップページにアクセス | ランディングページ表示 | |
+| 2 | 「新規登録」ボタン押下 | 登録フォーム表示 | |
+| 3 | メール・パスワード入力 | バリデーション通過 | パスワード強度表示 |
+| 4 | 「登録」ボタン押下 | 確認メール送信 | |
+| 5 | メール内リンクをクリック | メール認証完了 | |
+| 6 | プロフィール設定 | 設定保存成功 | |
+| 7 | チュートリアル完了 | ダッシュボード表示 | |
+
+### 代替フロー
+
+| 分岐点 | 条件 | 代替手順 |
+|-------|------|---------|
+| ステップ3 | パスワードが弱い | エラー表示、再入力促進 |
+| ステップ4 | メール送信失敗 | リトライ案内表示 |
+| ステップ5 | リンク期限切れ | 再送信リンク表示 |
+
+### 検証ポイント
+
+- [ ] 全ステップが3分以内に完了可能
+- [ ] エラー時のリカバリーが明確
+- [ ] 離脱ポイントでの適切なガイダンス
+\`\`\`
+
+### 2.6 テストフォルダ構成（実装側）
+
+> **AI向け指示**: テストコードは以下の構成で配置してください。
+
+\`\`\`text
+project/
+├── src/
+│   ├── services/
+│   │   └── __tests__/           # 単体テスト（コロケーション）
+│   └── components/
+│       └── __tests__/           # コンポーネントテスト
+├── tests/
+│   ├── integration/             # 結合テスト
+│   │   ├── api/
+│   │   └── db/
+│   └── e2e/                     # E2E・シナリオテスト
+│       ├── auth/
+│       ├── dashboard/
+│       └── scenarios/
+├── vitest.config.ts             # Vitest 設定
+└── playwright.config.ts         # Playwright 設定
+\`\`\`
+
+### 2.7 テストツール設定
+
+#### Vitest 推奨設定
+
+\`\`\`typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',           // or 'jsdom' for React
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      exclude: ['**/*.test.ts', '**/tests/**'],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+      },
+    },
+    include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
+  },
+});
+\`\`\`
+
+#### Playwright 推奨設定
+
+\`\`\`typescript
+// playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests/e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [['html'], ['list']],
+  use: {
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+  ],
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+  },
+});
+\`\`\`
+
+### 2.8 テスト品質チェックリスト
+
+> **AI向け指示**: テスト仕様作成時に以下を必ず確認してください。
+
+#### 網羅性
+
+- [ ] 全ての FR-XXX に対応する TC-XXX が存在する
+- [ ] 正常系・異常系の両方がカバーされている
+- [ ] 境界値テストが含まれている
+- [ ] 権限別のテストが含まれている（ある場合）
+
+#### 実行可能性
+
+- [ ] テストデータが明確に定義されている
+- [ ] 前提条件が明記されている
+- [ ] 期待結果が具体的である
+- [ ] 再現可能な手順になっている
+
+#### 保守性
+
+- [ ] テストIDが一意で追跡可能
+- [ ] テストの独立性が保たれている（順序依存なし）
+- [ ] セットアップ・クリーンアップが明確
+
+### 2.9 追加のベストプラクティス
+
+> **AI向け指示**: 以下のプラクティスを積極的に適用してください。
+
+#### テストピラミッドの遵守
+
+\`\`\`text
+        /\\
+       /  \\  E2E（少数・重要フローのみ）
+      /----\\
+     /      \\  Integration（API境界）
+    /--------\\
+   /          \\  Unit（多数・高速）
+  --------------
+\`\`\`
+
+| レベル | 割合目安 | 特徴 |
+|--------|---------|------|
+| Unit | 70% | 高速、独立、モック多用 |
+| Integration | 20% | API/DB境界、実環境に近い |
+| E2E | 10% | 遅い、脆い、クリティカルパスのみ |
+
+#### スナップショットテストの活用
+
+UIコンポーネントの意図しない変更を検出：
+
+\`\`\`typescript
+// コンポーネントテスト
+import { render } from '@testing-library/react';
+
+test('Button コンポーネントのスナップショット', () => {
+  const { container } = render(<Button>Click me</Button>);
+  expect(container).toMatchSnapshot();
+});
+\`\`\`
+
+#### テストダブルの使い分け
+
+| 種類 | 用途 | 例 |
+|------|------|-----|
+| **Stub** | 固定値を返す | API レスポンスの固定 |
+| **Mock** | 呼び出しを検証 | 関数が呼ばれたか確認 |
+| **Spy** | 実装を保持しつつ監視 | 実際の処理 + 呼び出し検証 |
+| **Fake** | 簡易実装 | インメモリDB |
+
+#### 非同期テストのパターン
+
+\`\`\`typescript
+// ❌ 悪い例：タイムアウト依存
+await new Promise(resolve => setTimeout(resolve, 1000));
+
+// ✅ 良い例：条件待機
+await waitFor(() => {
+  expect(screen.getByText('Loaded')).toBeInTheDocument();
+});
+
+// ✅ 良い例：Playwright の自動待機
+await expect(page.getByText('Loaded')).toBeVisible();
+\`\`\`
+
+#### フレイキーテスト（不安定テスト）の防止
+
+| 原因 | 対策 |
+|------|------|
+| タイミング依存 | 明示的な待機条件を使用 |
+| 順序依存 | テストごとにデータをリセット |
+| 環境依存 | Docker で環境を固定 |
+| 乱数依存 | シードを固定 |
+
+#### アクセシビリティテストの組み込み
+
+\`\`\`typescript
+// axe-core を使用
+import { axe, toHaveNoViolations } from 'jest-axe';
+
+test('アクセシビリティ違反がないこと', async () => {
+  const { container } = render(<LoginForm />);
+  const results = await axe(container);
+  expect(results).toHaveNoViolations();
+});
+\`\`\`
+
+#### パフォーマンステストの基準
+
+| 指標 | 目標値 | 測定方法 |
+|------|--------|---------|
+| API レスポンス | < 200ms（p95） | k6, Artillery |
+| ページロード | < 3s（LCP） | Lighthouse CI |
+| バンドルサイズ | < 200KB（gzip） | webpack-bundle-analyzer |
+
+#### CI/CD でのテスト実行
+
+\`\`\`yaml
+# .github/workflows/test.yml
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm run test:unit -- --coverage
+      - run: npm run test:integration
+      - name: E2E Tests
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+\`\`\`
+
+---
+
+## 3. ファイル命名規則
+
+### 3.1 基本規則
 
 - ファイル名: \`UPPER-CASE.md\` 形式（例: \`REQUIREMENTS.md\`, \`API.md\`）
 - README: 各フォルダに必須（小文字でも可）
 - 禁止: 日付や番号のプレフィックス（旧形式: \`00-PROPOSAL.md\`）
 
-### 2.2 必須ファイル
+### 3.2 必須ファイル
 
 | パス | 説明 |
 |------|------|
@@ -407,9 +947,9 @@ docs/
 
 ---
 
-## 3. ドキュメント構造
+## 4. ドキュメント構造
 
-### 3.1 必須セクション
+### 4.1 必須セクション
 
 すべての仕様書には以下のセクションを含める：
 
@@ -435,12 +975,12 @@ docs/
 - [設計書](../02-design/ARCHITECTURE.md)
 \`\`\`
 
-### 3.2 バージョン情報
+### 4.2 バージョン情報
 
 - 形式: \`**バージョン**: X.X\` または \`**Version**: X.X\`
 - 位置: ドキュメント冒頭（タイトル直後）
 
-### 3.3 関連ドキュメント
+### 4.3 関連ドキュメント
 
 - 形式: 「関連ドキュメント」または「Related Documents」セクション
 - 位置: ドキュメント末尾
@@ -448,14 +988,14 @@ docs/
 
 ---
 
-## 4. マークダウン規約
+## 5. マークダウン規約
 
-### 4.1 見出し
+### 5.1 見出し
 
 - H1（\`#\`）: ドキュメントタイトル（1つのみ）
 - H2以降: 階層を飛ばさない（H1→H2→H3）
 
-### 4.2 コードブロック
+### 5.2 コードブロック
 
 - 必ず言語を指定する
 
@@ -466,16 +1006,16 @@ const example = "value";
 
 - 禁止: 言語指定なしのコードブロック
 
-### 4.3 TODO/FIXME
+### 5.3 TODO/FIXME
 
 - 本番ドキュメントには残さない
 - 未完成の場合は「[未定]」「TBD」を使用
 
 ---
 
-## 5. 品質基準
+## 6. 品質基準
 
-### 5.1 評価項目
+### 6.1 評価項目
 
 | 項目 | 基準 |
 |------|------|
@@ -484,14 +1024,14 @@ const example = "value";
 | 用語統一 | プロジェクト内で用語が統一 |
 | 完成度 | TODO/FIXME なし、プレースホルダなし |
 
-### 5.2 重要度
+### 6.2 重要度
 
 - **エラー（修正必須）**: リンク切れ、レガシーファイル参照
 - **警告（改善推奨）**: バージョン情報なし、関連ドキュメントなし、言語指定なしのコードブロック
 
 ---
 
-## 6. 用語集
+## 7. 用語集
 
 | 用語 | 表記 | 禁止表記 |
 |------|------|----------|
@@ -503,16 +1043,16 @@ const example = "value";
 
 ---
 
-## 7. 多言語化規約
+## 8. 多言語化規約
 
-### 7.1 基本方針
+### 8.1 基本方針
 
 **「共通語」と「ドラフト（作業）語」を分離する**
 
 - **共通語**: チーム横断で共有するドキュメントの言語（通常は英語）
 - **ドラフト語**: 各チームが作業時に使用する言語（チームの母語）
 
-### 7.2 フォルダ構成
+### 8.2 フォルダ構成
 
 \`\`\`text
 docs/
@@ -534,7 +1074,7 @@ docs/
 - \`docs/drafts/{lang}/\` = 作業用ドラフト
 - ドラフト → 共通語への翻訳はレビュー後に実施
 
-### 7.3 言語選択ルール
+### 8.3 言語選択ルール
 
 | 対象 | 言語 | 理由 |
 |------|------|------|
@@ -544,7 +1084,7 @@ docs/
 | コード/コメント | 英語 | コード=共有資産 |
 | PR/レビュー | 英語 | 非同期コミュニケーション |
 
-### 7.4 設定ファイル
+### 8.4 設定ファイル
 
 **docs.config.json**
 \`\`\`json
@@ -559,7 +1099,7 @@ docs/
 }
 \`\`\`
 
-### 7.5 翻訳ルール
+### 8.5 翻訳ルール
 
 | 規則 | 説明 |
 |------|------|
@@ -569,13 +1109,13 @@ docs/
 | 技術用語 | 原則英語のまま使用（API, KMS, OAuth等） |
 | 固有名詞 | 製品名・会社名は原語のまま |
 
-### 7.6 翻訳品質基準
+### 8.6 翻訳品質基準
 
 - 機械翻訳のみは禁止（レビュー必須）
 - 専門用語の一貫性を維持（用語集を参照）
 - 文化的な表現の適切な置き換え
 
-### 7.7 本プロジェクトの設定
+### 8.7 本プロジェクトの設定
 
 <!-- TODO: プロジェクトに合わせて設定してください -->
 | 項目 | 値 |
@@ -586,7 +1126,7 @@ docs/
 
 ---
 
-## 8. レビューチェックリスト
+## 9. レビューチェックリスト
 
 ドキュメント作成時・レビュー時に確認：
 
