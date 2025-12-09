@@ -23,8 +23,10 @@ export interface FolderDefinition {
     description?: string;
     /** Whether this folder is required */
     required: boolean;
-    /** Expected files in this folder */
+    /** Required files in this folder (must exist if folder exists) */
     files?: string[];
+    /** Optional files - if present, must follow this naming convention */
+    optionalFiles?: string[];
 }
 /**
  * Check folder structure matches expected configuration

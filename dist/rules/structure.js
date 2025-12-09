@@ -5,19 +5,18 @@ import path from 'path';
  */
 export const STANDARD_FOLDER_STRUCTURE = [
     // Top-level required folders
-    { path: '01-plan', required: true, description: '企画・提案（PROPOSAL, MVP, ROADMAP）' },
-    { path: '02-spec', required: true, description: '仕様書' },
-    { path: '03-guide', required: true, description: 'ガイド・マニュアル・運用ガイド（SysOps）' },
-    { path: '04-development', required: true, description: '開発・DevOps（CI/CD, IaC, 自動化）' },
+    { path: '01-plan', required: true, description: 'Planning & Proposals / 企画・提案', files: ['PROPOSAL.md'], optionalFiles: ['MVP.md', 'ROADMAP.md'] },
+    { path: '02-spec', required: true, description: 'Specifications / 仕様書' },
+    { path: '03-guide', required: true, description: 'Guides & Manuals (SysOps) / ガイド・マニュアル・運用', optionalFiles: ['OPERATION-GUIDE.md', 'DEPLOYMENT-GUIDE.md'] },
+    { path: '04-development', required: true, description: 'Development (DevOps, CI/CD, IaC) / 開発・DevOps', files: ['SETUP.md'], optionalFiles: ['CODING-STANDARDS.md', 'TESTING.md', 'GIT-WORKFLOW.md', 'CI-CD.md'] },
     // Optional folders
-    { path: '05-business', required: false, description: 'ビジネス戦略（オプション）' },
-    { path: '06-reference', required: false, description: 'リサーチ・参考資料（オプション）' },
+    { path: '05-business', required: false, description: 'Business Strategy (optional) / ビジネス戦略' },
+    { path: '06-reference', required: false, description: 'Research & References (optional) / リサーチ・参考資料' },
     // 02-spec subfolders
-    { path: '02-spec/01-requirements', required: true, description: '要件定義', files: ['REQUIREMENTS.md'] },
-    { path: '02-spec/02-architecture', required: false, description: '全体設計' },
-    { path: '02-spec/03-detail-design', required: false, description: '詳細設計（機能別）' },
-    { path: '02-spec/04-infrastructure', required: false, description: 'インフラ仕様・SLA' },
-    { path: '02-spec/05-testing', required: true, description: 'テスト仕様' },
+    { path: '02-spec/01-requirements', required: true, description: 'Requirements / 要件定義', files: ['REQUIREMENTS.md'] },
+    { path: '02-spec/02-design', required: true, description: 'Design / 設計', files: ['ARCHITECTURE.md', 'CLASS.md', 'ERROR-HANDLING.md', 'UML.md'], optionalFiles: ['API.md', 'DATABASE.md', 'SCREEN.md'] },
+    { path: '02-spec/03-infrastructure', required: false, description: 'Infrastructure, Deployment, Security / インフラ', files: ['INFRASTRUCTURE.md'], optionalFiles: ['DEPLOYMENT.md', 'SECURITY.md'] },
+    { path: '02-spec/04-testing', required: true, description: 'Test Specifications / テスト仕様', files: ['TEST-CASES.md'], optionalFiles: ['TEST.md', 'E2E.md'] },
 ];
 /**
  * Check folder structure matches expected configuration

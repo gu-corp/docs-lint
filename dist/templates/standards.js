@@ -4,8 +4,122 @@
  */
 export const DEFAULT_STANDARDS_TEMPLATE = `# ドキュメント標準規約
 
-**バージョン**: 1.0
+**バージョン**: 2.0
 **更新日**: ${new Date().toISOString().split('T')[0]}
+
+---
+
+## AI向けプロンプト
+
+> **重要**: このセクションはAI（Claude等）がドキュメントを生成する際の指示です。
+
+### あなたの役割
+
+あなたは以下の専門家として、プロフェッショナルな仕様書を作成してください：
+
+1. **超優秀なシステムアーキテクト**として
+   - システム全体の構成を俯瞰し、適切な技術選定と設計判断を行う
+   - スケーラビリティ、保守性、拡張性を考慮した設計を提案する
+   - トレードオフを明確にし、選定理由を論理的に説明する
+
+2. **超優秀なソフトウェアエンジニア**として
+   - クリーンなクラス設計とドメインモデリングを行う
+   - SOLID原則、デザインパターンを適切に適用する
+   - エラー処理、例外設計を網羅的に考慮する
+   - API設計はRESTful/GraphQLのベストプラクティスに従う
+
+3. **超優秀なテスト設計者**として
+   - 要件を100%カバーするテストケースを設計する
+   - 境界値分析、同値分割、状態遷移テストを適用する
+   - 正常系だけでなく、異常系・エッジケースを漏れなく洗い出す
+   - テストの優先度と実行順序を考慮する
+
+4. **超優秀なセキュリティエンジニア**として
+   - OWASP Top 10を意識したセキュリティ設計
+   - 認証・認可の適切な実装方針
+   - データ保護、暗号化、監査ログの考慮
+
+### 作成時の心構え
+
+- **網羅性**: 「書けるものは全て書く」。省略せず、詳細まで記述する
+- **具体性**: 抽象的な表現を避け、具体的な実装方針を示す
+- **一貫性**: 用語、形式、記法を統一する
+- **追跡可能性**: 要件→設計→テストの対応関係を明確にする（FR-XXX, TC-XXX形式）
+- **実用性**: 実際の開発者が読んで実装できるレベルの詳細度
+
+### 各ドキュメントの品質基準
+
+| ドキュメント | 期待されるレベル |
+|-------------|----------------|
+| REQUIREMENTS.md | 全機能要件をFR-XXX形式で列挙。優先度・実装バージョンを明記 |
+| ARCHITECTURE.md | 技術選定理由、コンポーネント間の依存関係、データフローを図示 |
+| CLASS.md | ドメインモデル、クラス図、責務の明確化 |
+| ERROR-HANDLING.md | エラーコード体系、リトライ戦略、ユーザーへの通知方針 |
+| UML.md | シーケンス図、状態遷移図、アクティビティ図をMermaid/PlantUMLで記述 |
+| API.md | 全エンドポイント、リクエスト/レスポンス例、エラーレスポンス |
+| DATABASE.md | ER図、テーブル定義、インデックス戦略、マイグレーション方針 |
+| TEST-CASES.md | 全要件に対応するTC-XXX形式のテストケース、100%カバレッジ |
+
+### UML.md の詳細指示
+
+> **AI向け指示**: UML.mdは実装精度を高めるために極めて重要です。以下を必ず含めてください。
+
+#### 必須のUML図
+
+| 図の種類 | 用途 | 記述内容 |
+|---------|------|---------|
+| **シーケンス図** | 処理フローの可視化 | 主要ユースケースごとのオブジェクト間メッセージ、非同期処理、エラーハンドリング |
+| **クラス図** | 静的構造の定義 | クラス間の関連（継承、集約、依存）、属性、メソッドシグネチャ |
+| **状態遷移図** | 状態管理の明確化 | エンティティの状態、遷移条件、ガード条件 |
+
+#### 推奨のUML図
+
+| 図の種類 | 用途 | 記述内容 |
+|---------|------|---------|
+| **アクティビティ図** | ビジネスロジック | 分岐、並行処理、スイムレーン |
+| **コンポーネント図** | システム構成 | モジュール間の依存関係 |
+| **ユースケース図** | 機能概要 | アクター、ユースケース、関係 |
+
+#### 記述フォーマット
+
+\`\`\`mermaid
+sequenceDiagram
+    participant U as User
+    participant A as API Gateway
+    participant S as Service
+    participant D as Database
+
+    U->>A: POST /api/resource
+    A->>S: validateRequest()
+    alt validation success
+        S->>D: save()
+        D-->>S: result
+        S-->>A: 201 Created
+        A-->>U: response
+    else validation failed
+        S-->>A: 400 Bad Request
+        A-->>U: error response
+    end
+\`\`\`
+
+#### 精度向上のためのルール
+
+1. **全ての主要ユースケースにシーケンス図を作成**
+   - 正常系フローを必ず記述
+   - 代表的な異常系フローも記述
+
+2. **状態を持つエンティティには状態遷移図を作成**
+   - 例: 注文（pending→confirmed→shipped→delivered）
+   - 例: ユーザー（inactive→active→suspended）
+
+3. **クラス図は実装可能なレベルで記述**
+   - 属性の型を明記
+   - メソッドの引数・戻り値を明記
+   - アクセス修飾子を記述（+public, -private, #protected）
+
+4. **図とコードの対応を明確に**
+   - 図中のクラス名・メソッド名は実装時の命名と一致させる
+   - 変更があれば図も同時に更新する
 
 ---
 
@@ -20,46 +134,132 @@ AIやレビュアーがドキュメントの品質を評価する際の基準と
 
 ### 1.1 標準構成
 
-\`\`\`
+\`\`\`text
 docs/
-├── 01-plan/          # 企画・提案（PROPOSAL, MVP, ROADMAP）
-├── 02-spec/          # 仕様書
-│   ├── 01-requirements/     # 要件定義
-│   ├── 02-architecture/     # 全体設計
-│   ├── 03-detail-design/    # 詳細設計（機能別）
-│   ├── 04-infrastructure/   # インフラ仕様・SLA
-│   └── 05-testing/          # テスト仕様
-├── 03-guide/         # ガイド・マニュアル・運用ガイド（SysOps）
-├── 04-development/   # 開発・DevOps（CI/CD, IaC, 自動化）
-├── 05-business/      # ビジネス戦略（オプション）
-├── 06-reference/     # リサーチ・参考資料（オプション）
-└── README.md         # ドキュメント全体の目次
+├── 01-plan/              # Planning & Proposals / 企画・提案
+├── 02-spec/              # Specifications / 仕様書
+│   ├── 01-requirements/  # Requirements / 要件定義
+│   ├── 02-design/        # Design / 設計
+│   ├── 03-infrastructure/# Infrastructure / インフラ（オプション）
+│   └── 04-testing/       # Test Specifications / テスト仕様
+├── 03-guide/             # Guides & Manuals (SysOps) / ガイド・運用
+├── 04-development/       # Development (DevOps) / 開発標準
+├── 05-business/          # Business Strategy / ビジネス戦略（オプション）
+├── 06-reference/         # Research & References / 参考資料（オプション）
+└── README.md             # Documentation index / ドキュメント目次
 \`\`\`
 
-### 1.2 仕様書（02-spec）の詳細構成
+### 1.2 必須ファイル一覧
 
+> **AI向け指示**: 以下のファイルは必ず作成してください。プロジェクトの性質上不要な場合のみスキップ可能です。
+
+| パス | ファイル | 必須 | 説明 |
+|------|----------|------|------|
+| \`01-plan/\` | PROPOSAL.md | ✅ | プロジェクト提案書・企画書 |
+| \`01-plan/\` | MVP.md | ○ | MVP定義（段階的リリースの場合） |
+| \`01-plan/\` | ROADMAP.md | ○ | ロードマップ（複数バージョン計画時） |
+| \`02-spec/01-requirements/\` | REQUIREMENTS.md | ✅ | 機能要件定義（FR-XXX形式） |
+| \`02-spec/02-design/\` | ARCHITECTURE.md | ✅ | システム全体構成・技術選定 |
+| \`02-spec/02-design/\` | CLASS.md | ✅ | クラス設計・ドメインモデル |
+| \`02-spec/02-design/\` | ERROR-HANDLING.md | ✅ | エラー処理・例外設計 |
+| \`02-spec/02-design/\` | API.md | △ | API仕様（APIがある場合） |
+| \`02-spec/02-design/\` | DATABASE.md | △ | データベース設計（DBがある場合） |
+| \`02-spec/02-design/\` | SCREEN.md | △ | 画面設計（UIがある場合） |
+| \`02-spec/02-design/\` | UML.md | ✅ | UML図（シーケンス図、クラス図、状態遷移図）※実装精度向上に必須 |
+| \`02-spec/03-infrastructure/\` | INFRASTRUCTURE.md | △ | インフラ構成（自社運用の場合） |
+| \`02-spec/03-infrastructure/\` | DEPLOYMENT.md | △ | デプロイ仕様 |
+| \`02-spec/03-infrastructure/\` | SECURITY.md | △ | セキュリティ仕様 |
+| \`02-spec/04-testing/\` | TEST-CASES.md | ✅ | テストケース（TC-XXX形式） |
+| \`02-spec/04-testing/\` | TEST.md | ○ | テスト戦略・方針 |
+| \`02-spec/04-testing/\` | E2E.md | ○ | E2Eテストシナリオ |
+| \`03-guide/\` | OPERATION-GUIDE.md | △ | 運用ガイド（本番運用時） |
+| \`03-guide/\` | DEPLOYMENT-GUIDE.md | △ | デプロイ手順 |
+| \`04-development/\` | SETUP.md | ✅ | 開発環境構築手順 |
+| \`04-development/\` | CODING-STANDARDS.md | ○ | コーディング規約 |
+| \`04-development/\` | TESTING.md | ○ | テスト実装ガイド |
+| \`04-development/\` | GIT-WORKFLOW.md | ○ | Git運用ルール |
+| \`04-development/\` | CI-CD.md | ○ | CI/CDパイプライン |
+
+**凡例**: ✅=必須 / △=条件付き必須 / ○=推奨（あれば作成）
+
+### 1.3 プロジェクトタイプ別ガイド
+
+> **AI向け指示**: プロジェクトの種類を判断し、該当するファイルを作成してください。
+
+#### Web アプリケーション（フロントエンド + バックエンド）
+
+\`\`\`text
+必須: ARCHITECTURE.md, CLASS.md, ERROR-HANDLING.md, UML.md, API.md, DATABASE.md, SCREEN.md
+推奨: INFRASTRUCTURE.md, DEPLOYMENT.md
 \`\`\`
+
+#### バックエンドAPI / マイクロサービス
+
+\`\`\`text
+必須: ARCHITECTURE.md, CLASS.md, ERROR-HANDLING.md, UML.md, API.md, DATABASE.md
+不要: SCREEN.md
+推奨: INFRASTRUCTURE.md, SECURITY.md
+\`\`\`
+
+#### ライブラリ / SDK / パッケージ
+
+\`\`\`text
+必須: ARCHITECTURE.md, CLASS.md, ERROR-HANDLING.md, UML.md, API.md（公開API）
+不要: DATABASE.md, SCREEN.md, INFRASTRUCTURE.md
+\`\`\`
+
+#### CLI ツール
+
+\`\`\`text
+必須: ARCHITECTURE.md, CLASS.md, ERROR-HANDLING.md, UML.md（コマンドフロー・状態遷移）
+不要: API.md（REST API）, DATABASE.md, SCREEN.md
+\`\`\`
+
+#### インフラ / DevOps ツール
+
+\`\`\`text
+必須: ARCHITECTURE.md, ERROR-HANDLING.md, UML.md, INFRASTRUCTURE.md, DEPLOYMENT.md, SECURITY.md
+不要: CLASS.md（簡易な場合）, SCREEN.md
+\`\`\`
+
+#### スマートコントラクト / ブロックチェーン
+
+\`\`\`text
+必須: ARCHITECTURE.md, CLASS.md, ERROR-HANDLING.md, UML.md（状態遷移図必須）, SECURITY.md
+条件付き: API.md（フロントエンド連携時）, DATABASE.md（オフチェーンDB使用時）
+\`\`\`
+
+#### ドキュメントサイト / 静的サイト
+
+\`\`\`text
+必須: ARCHITECTURE.md（構成）
+不要: CLASS.md, ERROR-HANDLING.md, UML.md, API.md, DATABASE.md
+条件付き: INFRASTRUCTURE.md（自社ホスティング時）
+\`\`\`
+
+### 1.4 仕様書（02-spec）の詳細構成
+
+\`\`\`text
 02-spec/
 ├── 01-requirements/
-│   ├── REQUIREMENTS.md          # 全体要件
-│   └── 01-feature-xxx/          # 機能別要件（大規模時）
-├── 02-architecture/             # 全体設計
+│   ├── REQUIREMENTS.md          # 機能要件（FR-XXX形式必須）
+│   └── {FEATURE}.md             # 機能別要件（大規模時）
+├── 02-design/
 │   ├── ARCHITECTURE.md          # システム全体構成
-│   ├── DATA-MODEL.md            # データモデル
-│   └── API-DESIGN.md            # API設計
-├── 03-detail-design/            # 詳細設計（機能別）
-│   ├── 01-auth/
-│   │   ├── DESIGN.md
-│   │   └── SEQUENCE.md
-│   ├── 02-payment/
-│   │   └── DESIGN.md
-│   └── 03-notification/
-│       └── DESIGN.md
-├── 04-infrastructure/
+│   ├── CLASS.md                 # クラス設計・ドメインモデル
+│   ├── ERROR-HANDLING.md        # エラー処理設計
+│   ├── API.md                   # API仕様（REST/GraphQL/gRPC）
+│   ├── DATABASE.md              # データベース設計・ER図
+│   ├── SCREEN.md                # 画面設計・UIフロー
+│   └── UML.md                   # UML図（シーケンス、状態遷移等）
+├── 03-infrastructure/           # （オプション）
 │   ├── INFRASTRUCTURE.md        # インフラ構成
-│   └── SLA.md                   # SLA定義
-└── 05-testing/
-    └── TEST-PLAN.md             # テスト計画
+│   ├── DEPLOYMENT.md            # デプロイ仕様
+│   └── SECURITY.md              # セキュリティ仕様
+└── 04-testing/
+    ├── TEST-CASES.md            # テストケース（TC-XXX形式必須）
+    ├── TEST.md                  # テスト戦略・方針
+    └── E2E.md                   # E2Eテストシナリオ
 \`\`\`
 
 ### 1.3 規模別ガイドライン

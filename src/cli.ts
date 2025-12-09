@@ -382,10 +382,9 @@ program
       { path: '01-plan', desc: 'Planning & proposals' },
       { path: '02-spec', desc: 'Specifications' },
       { path: '02-spec/01-requirements', desc: 'Requirements' },
-      { path: '02-spec/02-architecture', desc: 'Architecture design' },
-      { path: '02-spec/03-detail-design', desc: 'Detail design' },
-      { path: '02-spec/04-infrastructure', desc: 'Infrastructure specs' },
-      { path: '02-spec/05-testing', desc: 'Test specifications' },
+      { path: '02-spec/02-design', desc: 'Design (API, Architecture, Database, Screen)' },
+      { path: '02-spec/03-infrastructure', desc: 'Infrastructure, deployment, security' },
+      { path: '02-spec/04-testing', desc: 'Test specifications' },
       { path: '03-guide', desc: 'Guides & manuals (SysOps)' },
       { path: '04-development', desc: 'Development standards (DevOps)' },
     ];
@@ -396,16 +395,20 @@ program
         content: `# Documentation\n\nThis folder contains project documentation.\n\n## Structure\n\n- \`01-plan/\` - Planning & proposals\n- \`02-spec/\` - Specifications\n- \`03-guide/\` - Guides & manuals\n- \`04-development/\` - Development standards\n`,
       },
       {
-        path: '01-plan/README.md',
-        content: `# Planning\n\nProject planning documents.\n\n- PROPOSAL.md - Project proposal\n- MVP.md - MVP definition\n- ROADMAP.md - Project roadmap\n`,
+        path: '01-plan/PROPOSAL.md',
+        content: `# Project Proposal\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\n[Project overview and objectives]\n\n## Goals\n\n- [Goal 1]\n- [Goal 2]\n\n## Scope\n\n### In Scope\n\n- [Feature 1]\n\n### Out of Scope\n\n- [Excluded feature]\n\n---\n\n## Related Documents\n\n- [Requirements](../02-spec/01-requirements/REQUIREMENTS.md)\n`,
       },
       {
         path: '02-spec/01-requirements/REQUIREMENTS.md',
-        content: `# Requirements\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\nThis document defines functional requirements.\n\n## Functional Requirements\n\n| ID | Requirement | Priority | Version |\n|----|-------------|----------|--------|\n| FR-001 | [Description] | High | v1 |\n| FR-002 | [Description] | Medium | v1 |\n\n---\n\n## Related Documents\n\n- [Architecture](../02-architecture/ARCHITECTURE.md)\n`,
+        content: `# Requirements\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\nThis document defines functional requirements.\n\n## Functional Requirements\n\n| ID | Requirement | Priority | Version |\n|----|-------------|----------|--------|\n| FR-001 | [Description] | High | v1 |\n| FR-002 | [Description] | Medium | v1 |\n\n---\n\n## Related Documents\n\n- [Architecture](../02-design/ARCHITECTURE.md)\n`,
       },
       {
-        path: '02-spec/05-testing/TEST-PLAN.md',
-        content: `# Test Plan\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\nThis document defines the test strategy.\n\n## Test Cases\n\n| ID | Requirement | Description | Expected |\n|----|-------------|-------------|----------|\n| TC-U001 | FR-001 | [Test description] | [Expected result] |\n\n---\n\n## Related Documents\n\n- [Requirements](../01-requirements/REQUIREMENTS.md)\n`,
+        path: '02-spec/02-design/ARCHITECTURE.md',
+        content: `# Architecture\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\n[System architecture overview]\n\n## Components\n\n### [Component 1]\n\n[Description]\n\n## Technology Stack\n\n- [Technology 1]\n- [Technology 2]\n\n---\n\n## Related Documents\n\n- [Requirements](../01-requirements/REQUIREMENTS.md)\n- [API](./API.md)\n`,
+      },
+      {
+        path: '02-spec/04-testing/TEST-CASES.md',
+        content: `# Test Cases\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\nThis document defines test cases for requirements coverage.\n\n## Test Cases\n\n| ID | Requirement | Description | Expected |\n|----|-------------|-------------|----------|\n| TC-U001 | FR-001 | [Test description] | [Expected result] |\n\n---\n\n## Related Documents\n\n- [Requirements](../01-requirements/REQUIREMENTS.md)\n`,
       },
     ];
 
