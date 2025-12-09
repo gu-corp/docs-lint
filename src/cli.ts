@@ -23,7 +23,7 @@ import { loadConfig } from './cli/config.js';
 import { prompt, selectOption, getTemplatesDir } from './cli/utils.js';
 import { printResults, printCodeCheckResults, printCoverageReport, printSpecReviewReport } from './cli/formatters.js';
 import { createSpecAnalyzer } from './ai/spec-analyzer.js';
-import { generateSpecReviewPrompt, generateDesignReviewPrompt } from './ai/review-prompt.js';
+import { generateSpecReviewPrompt, generateDesignReviewPrompt, generateCodeReviewPrompt } from './ai/review-prompt.js';
 
 // Read version from package.json
 const packageJsonPath = path.join(__dirname, '..', 'package.json');
@@ -544,23 +544,43 @@ program
 
 program
   .command('review:code')
-  .description('AI-powered code review (requirement coverage)')
+  .description('Generate code review prompt for requirement coverage')
   .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
   .option('-s, --src-dir <path>', 'Source directory', './src')
   .option('--spec-patterns <patterns>', 'Spec file patterns (comma-separated)', '**/*SPEC*.md,**/*FUNCTIONAL*.md,**/*API*.md,**/*SCREEN*.md,**/*REQUIREMENTS*.md')
   .option('--source-patterns <patterns>', 'Source file patterns (comma-separated)', '**/*.ts,**/*.tsx,**/*.js,**/*.jsx')
+  .option('--api', 'Run with Anthropic API instead of generating prompt', false)
   .option('-v, --verbose', 'Verbose output')
   .option('--json', 'Output as JSON')
-  .option('--model <model>', 'AI model to use', 'claude-sonnet-4-20250514')
+  .option('--model <model>', 'AI model to use (with --api)', 'claude-sonnet-4-20250514')
   .action(async (options) => {
     try {
+      // Default mode: Generate prompt for chat AI
+      if (!options.api) {
+        const prompt = generateCodeReviewPrompt({
+          docsDir: options.docsDir,
+          srcDir: options.srcDir,
+          specPatterns: options.specPatterns.split(','),
+          sourcePatterns: options.sourcePatterns.split(','),
+          verbose: options.verbose,
+        });
+
+        console.log(prompt);
+        console.log(chalk.gray('\n---'));
+        console.log(chalk.gray('上記のプロンプトをAIに送信してレビューを実行してください。'));
+        console.log(chalk.gray('または --api オプションでAnthropic APIを直接呼び出せます。'));
+        process.exit(0);
+      }
+
+      // API mode: Call Anthropic API directly
       if (!process.env.ANTHROPIC_API_KEY) {
         console.error(chalk.red('Error: ANTHROPIC_API_KEY environment variable is required'));
         console.log(chalk.gray('Set it in .env file or export ANTHROPIC_API_KEY=...'));
+        console.log(chalk.gray('\nOr run without --api to generate a prompt for chat AI.'));
         process.exit(1);
       }
 
-      console.log(chalk.bold('\n🤖 AI Code Review - Requirement Coverage\n'));
+      console.log(chalk.bold('\n🤖 AI Code Review - Requirement Coverage (API Mode)\n'));
 
       const analyzer = createAnalyzer({
         docsDir: options.docsDir,
