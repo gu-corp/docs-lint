@@ -136,17 +136,47 @@ AIやレビュアーがドキュメントの品質を評価する際の基準と
 
 \`\`\`text
 docs/
-├── 01-plan/              # Planning & Proposals / 企画・提案
-├── 02-spec/              # Specifications / 仕様書
+├── 01-plan/              # Planning & Future Vision / 計画・構想・将来仕様
+├── 02-spec/              # Current Specifications / 現在の仕様（実装対象）
 │   ├── 01-requirements/  # Requirements / 要件定義
 │   ├── 02-design/        # Design / 設計
 │   ├── 03-infrastructure/# Infrastructure / インフラ（オプション）
 │   └── 04-testing/       # Test Specifications / テスト仕様
 ├── 03-guide/             # Guides & Manuals (SysOps) / ガイド・運用
 ├── 04-development/       # Development (DevOps) / 開発標準
-├── 05-business/          # Business Strategy / ビジネス戦略（オプション）
+├── 05-business/          # Other Business Materials / その他ビジネス関連（オプション）
 ├── 06-reference/         # Research & References / 参考資料（オプション）
 └── README.md             # Documentation index / ドキュメント目次
+\`\`\`
+
+### 1.1.1 01-plan と 02-spec の役割分担
+
+> **AI向け指示**: この分離を厳密に守ってください。実装時は02-specのみを参照します。
+
+| フォルダ | 役割 | 実装対象 |
+|---------|------|---------|
+| \`01-plan/\` | 計画・構想・将来仕様 | ❌ 実装しない |
+| \`02-spec/\` | 現在の仕様 | ✅ 実装する |
+
+#### 01-plan に含めるもの
+
+- **ビジョン・目的**: なぜこのプロジェクトを作るのか
+- **ビジネスプラン**: 収益モデル、市場分析、競合調査
+- **ロードマップ**: バージョン別の計画
+- **将来仕様**: 次バージョン以降で実装予定の要件・設計
+
+#### 02-spec に含めるもの
+
+- **現バージョンの要件**: 今実装すべき機能要件（FR-XXX）
+- **現バージョンの設計**: 今実装すべきアーキテクチャ、クラス設計
+- **テスト仕様**: 現バージョンのテストケース
+
+#### バージョンアップ時の移動
+
+\`\`\`text
+v1リリース後、v2開発開始時:
+  01-plan/v2/REQUIREMENTS.md → 02-spec/01-requirements/REQUIREMENTS.md に統合
+  01-plan/v2/DESIGN.md → 02-spec/02-design/ に統合
 \`\`\`
 
 ### 1.2 必須ファイル一覧
@@ -155,9 +185,13 @@ docs/
 
 | パス | ファイル | 必須 | 説明 |
 |------|----------|------|------|
-| \`01-plan/\` | PROPOSAL.md | ✅ | プロジェクト提案書・企画書 |
+| \`01-plan/\` | PROPOSAL.md | ✅ | プロジェクト提案書・ビジョン |
+| \`01-plan/\` | BUSINESS-PLAN.md | ○ | ビジネスプラン・収益モデル |
+| \`01-plan/\` | MARKET-ANALYSIS.md | ○ | 市場分析・競合調査 |
+| \`01-plan/\` | ROADMAP.md | ○ | バージョン別ロードマップ |
 | \`01-plan/\` | MVP.md | ○ | MVP定義（段階的リリースの場合） |
-| \`01-plan/\` | ROADMAP.md | ○ | ロードマップ（複数バージョン計画時） |
+| \`01-plan/v{N}/\` | REQUIREMENTS.md | ○ | 将来バージョンの要件（v2, v3...） |
+| \`01-plan/v{N}/\` | DESIGN.md | ○ | 将来バージョンの設計概要 |
 | \`02-spec/01-requirements/\` | REQUIREMENTS.md | ✅ | 機能要件定義（FR-XXX形式） |
 | \`02-spec/02-design/\` | ARCHITECTURE.md | ✅ | システム全体構成・技術選定 |
 | \`02-spec/02-design/\` | CLASS.md | ✅ | クラス設計・ドメインモデル |
@@ -363,7 +397,7 @@ stateDiagram-v2
 | 中規模 | 機能6-15個 | 02-architecture/ + 03-detail-design/ 分離 |
 | 大規模 | 機能16個以上 | 詳細設計を機能別フォルダで管理 |
 
-### 1.4 ファイル分割ルール
+### 1.7 ファイル分割ルール
 
 | 基準 | 説明 |
 |------|------|
@@ -371,14 +405,105 @@ stateDiagram-v2
 | ✅ 独立性 | 単独で読んで理解できる単位 |
 | ❌ 行数で機械的に分割 | 同じ機能が細切れになるのは避ける |
 
-### 1.5 オプションフォルダ
+### 1.8 01-plan の詳細構成
+
+> **AI向け指示**: 01-planはビジネス計画と将来仕様を含みます。実装時は参照しないでください。
+
+\`\`\`text
+01-plan/
+├── PROPOSAL.md              # プロジェクト提案・ビジョン [必須]
+├── BUSINESS-PLAN.md         # ビジネスプラン・収益モデル
+├── MARKET-ANALYSIS.md       # 市場分析・競合調査
+├── ROADMAP.md               # バージョン別ロードマップ
+├── MVP.md                   # MVP定義
+├── v2/                      # v2で実装予定の仕様
+│   ├── REQUIREMENTS.md      # v2の要件
+│   ├── DESIGN.md            # v2の設計概要
+│   └── MIGRATION.md         # v1→v2移行計画
+├── v3/                      # v3で実装予定の仕様
+│   └── ...
+└── backlog/                 # 優先度未定・検討中のアイデア
+    └── IDEAS.md
+\`\`\`
+
+#### PROPOSAL.md の必須項目
+
+\`\`\`markdown
+# プロジェクト名
+
+**バージョン**: 1.0
+**更新日**: YYYY-MM-DD
+
+---
+
+## ビジョン
+（このプロジェクトが目指す世界）
+
+## 解決する課題
+（ユーザーが抱える問題）
+
+## ターゲットユーザー
+（誰のために作るのか）
+
+## 主要機能
+（コア機能の概要）
+
+## 成功指標（KPI）
+（何をもって成功とするか）
+
+## スコープ
+### In Scope（対象）
+### Out of Scope（対象外）
+
+---
+
+## 関連ドキュメント
+- [ロードマップ](./ROADMAP.md)
+- [現在の要件](../02-spec/01-requirements/REQUIREMENTS.md)
+\`\`\`
+
+#### BUSINESS-PLAN.md の項目
+
+| セクション | 内容 |
+|-----------|------|
+| 収益モデル | どのように収益を得るか（SaaS、ライセンス、広告等） |
+| 価格戦略 | 価格設定、プラン構成 |
+| ターゲット市場 | TAM/SAM/SOM |
+| 競合優位性 | 差別化ポイント |
+| Go-to-Market | 市場投入戦略 |
+
+#### ROADMAP.md の項目
+
+\`\`\`markdown
+# ロードマップ
+
+## 現在のバージョン: v1.0
+
+## v1.0（現在開発中）
+- [ ] FR-001: ユーザー認証
+- [ ] FR-002: ダッシュボード
+- 詳細: [02-spec/01-requirements/REQUIREMENTS.md](../02-spec/01-requirements/REQUIREMENTS.md)
+
+## v2.0（計画中）
+- [ ] FR-AUTH-001: 二要素認証
+- [ ] FR-PAY-001: 決済機能
+- 詳細: [01-plan/v2/REQUIREMENTS.md](./v2/REQUIREMENTS.md)
+
+## v3.0（構想）
+- [ ] FR-EXT-001: 外部連携
+- 詳細: [01-plan/backlog/IDEAS.md](./backlog/IDEAS.md)
+\`\`\`
+
+### 1.9 オプションフォルダ
 
 | フォルダ | 用途 | ドキュメント例 |
 |----------|------|----------------|
-| 05-business/ | ビジネス戦略・事業計画 | GTM-STRATEGY.md, PARTNERSHIP.md, REVENUE-MODEL.md |
-| 06-reference/ | リサーチ・分析・参考資料 | COMPETITIVE-ANALYSIS.md, MARKET-RESEARCH.md, BENCHMARK.md |
+| 05-business/ | その他ビジネス関連資料 | CONTRACTS/, PARTNERSHIPS.md, SALES-MATERIALS/ |
+| 06-reference/ | リサーチ・参考資料 | COMPETITIVE-ANALYSIS.md, BENCHMARK.md |
 
-### 1.6 運用ドキュメントの配置
+**注意**: ビジネスプラン本体は \`01-plan/\` に配置。\`05-business/\` は契約書テンプレート、パートナー資料、営業資料など補助的な資料用。
+
+### 1.10 運用ドキュメントの配置
 
 | ドキュメント | 配置先 | 理由 |
 |-------------|--------|------|
@@ -386,16 +511,16 @@ stateDiagram-v2
 | DR手順、インシデント対応 | 03-guide/ | 運用ガイド（SysOps） |
 | CI/CD、デプロイ自動化 | 04-development/ | DevOps |
 
-### 1.7 番号付け規則
+### 1.11 番号付け規則
 
 - 第1レベルフォルダ: \`XX-name/\` 形式（例: \`01-plan/\`, \`02-spec/\`）
 - 第2レベルフォルダ: \`XX-name/\` 形式（例: \`01-requirements/\`）
 - 第3レベルフォルダ（機能別）: \`XX-name/\` 形式（例: \`01-auth/\`）
 - 番号は連番で欠番なし（オプションフォルダ 05, 06 は使用時のみ）
 
-### 1.8 要件とテストケースの規約（必須）
+### 1.12 要件とテストケースの規約（必須）
 
-#### 1.8.1 要件ID
+#### 1.12.1 要件ID
 
 すべての機能要件には一意のIDを付与すること：
 
@@ -420,7 +545,7 @@ stateDiagram-v2
 | FR-カテゴリ-XXX | FR-AUTH-001, FR-PAY-001 | 機能カテゴリ付き |
 | FR-カテゴリ-サブ-XXX | FR-AUTH-LOGIN-001, FR-PAY-REFUND-001 | 階層カテゴリ |
 
-#### 1.8.2 テストケースID
+#### 1.12.2 テストケースID
 
 すべてのテストケースには一意のIDと対応する要件IDを付与すること：
 
@@ -445,7 +570,7 @@ stateDiagram-v2
 | TC-D | Deferred | 延期（将来バージョンで実装予定） |
 | TC-X | Excluded | 対象外（スコープ外、または実装しない） |
 
-#### 1.8.2.1 延期・対象外の記録
+#### 1.12.2.1 延期・対象外の記録
 
 現バージョンで実装しない要件は、理由を明記してテストケースとして記録：
 
@@ -459,7 +584,7 @@ stateDiagram-v2
 
 **注意**: TC-D/TC-X も100%カバレッジに含まれます（要件の追跡漏れを防ぐため）
 
-#### 1.8.3 テストファイル構成
+#### 1.12.3 テストファイル構成
 
 \`\`\`text
 04-testing/
@@ -476,7 +601,7 @@ stateDiagram-v2
         └── CHECKOUT.md
 \`\`\`
 
-#### 1.8.4 カバレッジ要件
+#### 1.12.4 カバレッジ要件
 
 | 要件 | 必須レベル |
 |------|-----------|
