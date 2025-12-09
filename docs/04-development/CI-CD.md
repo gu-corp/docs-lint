@@ -1,17 +1,17 @@
-# GitHub Actions Integration
+# GitHub Actions 連携
 
-**Version**: 1.0.0
-**Updated**: 2025-12-07
+**バージョン**: 1.0
+**更新日**: 2025-12-10
 
 ---
 
-## Overview
+## 概要
 
-This guide explains how to integrate docs-lint into your GitHub Actions CI/CD pipeline.
+docs-lint を GitHub Actions CI/CD パイプラインに統合する方法を説明します。
 
-## Basic Workflow
+## 基本ワークフロー
 
-Create `.github/workflows/docs-lint.yml`:
+`.github/workflows/docs-lint.yml` を作成：
 
 ```yaml
 name: Docs Lint
@@ -56,11 +56,11 @@ jobs:
           path: docs-lint-report.md
 ```
 
-## Workflow Features
+## ワークフロー機能
 
-### Path Filtering
+### パスフィルタリング
 
-The workflow only runs when documentation files change:
+ドキュメントファイルの変更時のみ実行：
 
 ```yaml
 on:
@@ -70,13 +70,13 @@ on:
       - 'docs-lint.config.json'
 ```
 
-### Manual Trigger
+### 手動トリガー
 
-`workflow_dispatch` allows manual triggering from GitHub UI.
+`workflow_dispatch` で GitHub UI から手動実行可能。
 
-### Failure Artifacts
+### 失敗時のアーティファクト
 
-When linting fails, an AI-friendly report is uploaded as an artifact:
+リントが失敗した場合、AI向けレポートをアーティファクトとしてアップロード：
 
 ```yaml
 - name: Generate AI prompt (on failure)
@@ -91,11 +91,11 @@ When linting fails, an AI-friendly report is uploaded as an artifact:
     path: docs-lint-report.md
 ```
 
-## Advanced Workflows
+## 高度なワークフロー
 
-### With PR Comments
+### PRコメント
 
-Post lint results as PR comments:
+リント結果をPRにコメント：
 
 ```yaml
 - name: Run docs-lint
@@ -127,9 +127,9 @@ Post lint results as PR comments:
       });
 ```
 
-### With Caching
+### キャッシュ
 
-Cache npm dependencies for faster runs:
+npmパッケージのキャッシュ：
 
 ```yaml
 - name: Cache node modules
@@ -142,20 +142,20 @@ Cache npm dependencies for faster runs:
   run: npm install github:gu-corp/docs-lint
 ```
 
-### Scheduled Runs
+### スケジュール実行
 
-Run docs-lint on a schedule:
+定期実行：
 
 ```yaml
 on:
   schedule:
-    - cron: '0 9 * * 1'  # Every Monday at 9:00 UTC
+    - cron: '0 9 * * 1'  # 毎週月曜 9:00 UTC
   workflow_dispatch:
 ```
 
-## Monorepo Setup
+## モノレポ設定
 
-For monorepos with multiple docs directories:
+複数のドキュメントディレクトリがある場合：
 
 ```yaml
 jobs:
@@ -182,9 +182,9 @@ jobs:
         run: npx docs-lint lint -d ${{ matrix.docs-dir }} -v
 ```
 
-## Status Badge
+## ステータスバッジ
 
-Add a status badge to your README:
+READMEにステータスバッジを追加：
 
 ```markdown
 ![Docs Lint](https://github.com/gu-corp/your-repo/actions/workflows/docs-lint.yml/badge.svg)
@@ -192,8 +192,8 @@ Add a status badge to your README:
 
 ---
 
-## Related Documents
+## 関連ドキュメント
 
-- [CLI Reference](CLI.md)
-- [Configuration](CONFIGURATION.md)
-- [Getting Started](GETTING-STARTED.md)
+- [CLIリファレンス](../03-guide/CLI.md)
+- [設定リファレンス](../03-guide/CONFIGURATION.md)
+- [はじめに](../03-guide/GETTING-STARTED.md)

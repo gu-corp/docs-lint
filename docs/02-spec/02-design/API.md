@@ -1,21 +1,21 @@
-# API Reference
+# API仕様
 
-**Version**: 1.0.0
-**Updated**: 2025-12-07
+**バージョン**: 1.0
+**更新日**: 2025-12-10
 
 ---
 
-## Overview
+## 概要
 
-docs-lint can be used programmatically in Node.js applications.
+docs-lint のプログラマティックAPIを定義します。
 
-## Installation
+## インストール
 
 ```bash
 npm install github:gu-corp/docs-lint
 ```
 
-## Basic Usage
+## 基本的な使用方法
 
 ```typescript
 import { createLinter } from '@gu-corp/docs-lint';
@@ -26,27 +26,23 @@ const linter = createLinter({
 
 const result = await linter.lint();
 
-console.log(`Passed: ${result.passed}`);
-console.log(`Errors: ${result.summary.errors}`);
-console.log(`Warnings: ${result.summary.warnings}`);
+console.log(`合格: ${result.passed}`);
+console.log(`エラー数: ${result.summary.errors}`);
+console.log(`警告数: ${result.summary.warnings}`);
 ```
 
-## API
+## API リファレンス
 
 ### createLinter(config, options?)
 
-Creates a new linter instance.
+リンターインスタンスを作成します。
 
-**Parameters**:
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| `config` | `Partial<DocsLintConfig>` | 設定オプション |
+| `options` | `LinterOptions` | 実行時オプション |
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `config` | `Partial<DocsLintConfig>` | Configuration options |
-| `options` | `LinterOptions` | Runtime options |
-
-**Returns**: `Linter` instance
-
-**Example**:
+**戻り値**: `Linter` インスタンス
 
 ```typescript
 import { createLinter, DocsLintConfig } from '@gu-corp/docs-lint';
@@ -69,9 +65,9 @@ const linter = createLinter(config, {
 
 ### linter.lint()
 
-Runs all configured lint rules.
+設定されたすべてのルールを実行します。
 
-**Returns**: `Promise<LintResult>`
+**戻り値**: `Promise<LintResult>`
 
 ```typescript
 interface LintResult {
@@ -102,9 +98,7 @@ interface Issue {
 
 ### linter.lintStructure(options)
 
-Validates folder structure.
-
-**Parameters**:
+フォルダ構成を検証します。
 
 ```typescript
 interface StructureOptions {
@@ -118,24 +112,22 @@ interface StructureOptions {
 }
 ```
 
-**Returns**: `Promise<RuleResult[]>`
-
-**Example**:
+**戻り値**: `Promise<RuleResult[]>`
 
 ```typescript
 const results = await linter.lintStructure({
   folders: [
-    { path: '01-plan', required: true, description: 'Planning docs' },
-    { path: '02-spec', required: true, description: 'Specifications' },
+    { path: '01-plan', required: true, description: '計画' },
+    { path: '02-spec', required: true, description: '仕様書' },
   ],
   numberedFolders: true,
   upperCaseFiles: true,
 });
 ```
 
-## Individual Rule Functions
+## 個別ルール関数
 
-Use individual rules for custom integrations:
+カスタム統合用に個別ルールをエクスポートしています：
 
 ```typescript
 import {
@@ -145,16 +137,16 @@ import {
   checkCodeBlockLanguage,
 } from '@gu-corp/docs-lint';
 
-// Check broken links
+// リンク切れチェック
 const linkIssues = await checkBrokenLinks('./docs', ['README.md', 'guide/API.md']);
 
-// Check heading hierarchy
+// 見出し階層チェック
 const headingIssues = await checkHeadingHierarchy('./docs', ['guide/API.md']);
 ```
 
-## AI Prompt Generation
+## AI プロンプト生成
 
-Generate AI-friendly assessment prompts:
+AI向けの評価プロンプトを生成します：
 
 ```typescript
 import { generateAIPrompt, generateJSONSummary } from '@gu-corp/docs-lint';
@@ -166,7 +158,7 @@ const json = generateJSONSummary(docsDir, files, lintResult);
 console.log(JSON.stringify(json, null, 2));
 ```
 
-## Types
+## 型定義
 
 ### DocsLintConfig
 
@@ -203,8 +195,8 @@ interface TerminologyRule {
 
 ---
 
-## Related Documents
+## 関連ドキュメント
 
-- [Configuration](CONFIGURATION.md)
-- [Rules Reference](RULES.md)
-- [CLI Reference](CLI.md)
+- [クラス設計](./CLASS.md)
+- [設定リファレンス](../../03-guide/CONFIGURATION.md)
+- [CLIリファレンス](../../03-guide/CLI.md)
