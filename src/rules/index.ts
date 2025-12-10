@@ -477,7 +477,7 @@ export async function checkOrphanDocuments(
 export async function checkTerminology(
   docsDir: string,
   files: string[],
-  terminology: { preferred: string; variants: string[] }[]
+  terminology: { preferred: string; variants: string[]; exceptions?: string[]; wordBoundary?: boolean }[]
 ): Promise<LintIssue[]> {
   const issues: LintIssue[] = [];
 
@@ -485,7 +485,7 @@ export async function checkTerminology(
     const content = fs.readFileSync(path.join(docsDir, file), 'utf-8');
     const lines = content.split('\n');
 
-    for (const { preferred, variants } of terminology) {
+    for (const { preferred, variants, exceptions = [], wordBoundary = false } of terminology) {
       for (const variant of variants) {
         let inCodeBlock = false;
 
@@ -496,20 +496,36 @@ export async function checkTerminology(
           }
           if (inCodeBlock) return;
 
-          if (line.includes(variant)) {
-            issues.push({
-              file,
-              line: lineNum + 1,
-              message: `"${variant}" should be "${preferred}"`,
-              suggestion: `Replace with "${preferred}"`,
-            });
-          }
+          // Check if line contains the variant
+          const hasVariant = wordBoundary
+            ? new RegExp(`\\b${escapeRegex(variant)}\\b`).test(line)
+            : line.includes(variant);
+
+          if (!hasVariant) return;
+
+          // Check if the match is part of an exception
+          const isException = exceptions.some(exc => line.includes(exc));
+          if (isException) return;
+
+          issues.push({
+            file,
+            line: lineNum + 1,
+            message: `"${variant}" should be "${preferred}"`,
+            suggestion: `Replace with "${preferred}"`,
+          });
         });
       }
     }
   }
 
   return issues;
+}
+
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**

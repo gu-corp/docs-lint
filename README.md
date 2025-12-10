@@ -182,6 +182,11 @@ Create a `docs-lint.config.json` file in your project root:
     {
       "preferred": "API",
       "variants": ["api", "Api"]
+    },
+    {
+      "preferred": "ドキュメント",
+      "variants": ["文書"],
+      "exceptions": ["ドキュメンテーション"]
     }
   ],
   "requiredFiles": ["README.md", "CHANGELOG.md"]
@@ -257,6 +262,34 @@ Options:
 - `ignoreInTables`: Ignore TODO in table cells (default: false)
 - `customTags`: Add custom tags to detect
 - `excludePatterns`: Regex patterns to exclude
+
+### Terminology Configuration (v1.18.0)
+
+Configure terminology consistency checks with exception patterns:
+
+```json
+{
+  "terminology": [
+    {
+      "preferred": "ドキュメント",
+      "variants": ["文書"],
+      "exceptions": ["ドキュメンテーション"],
+      "wordBoundary": false
+    },
+    {
+      "preferred": "API",
+      "variants": ["api", "Api"],
+      "wordBoundary": true
+    }
+  ]
+}
+```
+
+Options:
+- `preferred`: The preferred term to use
+- `variants`: Terms that should be replaced with the preferred term
+- `exceptions`: Patterns that should not be flagged (e.g., "ドキュメンテーション" contains "ドキュメント" but should not be flagged)
+- `wordBoundary`: Use word boundary matching (default: false)
 
 ### Testing Configuration (v1.16.0)
 

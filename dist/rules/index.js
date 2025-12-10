@@ -361,7 +361,7 @@ export async function checkTerminology(docsDir, files, terminology) {
     for (const file of files) {
         const content = fs.readFileSync(path.join(docsDir, file), 'utf-8');
         const lines = content.split('\n');
-        for (const { preferred, variants } of terminology) {
+        for (const { preferred, variants, exceptions = [], wordBoundary = false } of terminology) {
             for (const variant of variants) {
                 let inCodeBlock = false;
                 lines.forEach((line, lineNum) => {
@@ -371,19 +371,33 @@ export async function checkTerminology(docsDir, files, terminology) {
                     }
                     if (inCodeBlock)
                         return;
-                    if (line.includes(variant)) {
-                        issues.push({
-                            file,
-                            line: lineNum + 1,
-                            message: `"${variant}" should be "${preferred}"`,
-                            suggestion: `Replace with "${preferred}"`,
-                        });
-                    }
+                    // Check if line contains the variant
+                    const hasVariant = wordBoundary
+                        ? new RegExp(`\\b${escapeRegex(variant)}\\b`).test(line)
+                        : line.includes(variant);
+                    if (!hasVariant)
+                        return;
+                    // Check if the match is part of an exception
+                    const isException = exceptions.some(exc => line.includes(exc));
+                    if (isException)
+                        return;
+                    issues.push({
+                        file,
+                        line: lineNum + 1,
+                        message: `"${variant}" should be "${preferred}"`,
+                        suggestion: `Replace with "${preferred}"`,
+                    });
                 });
             }
         }
     }
     return issues;
+}
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 /**
  * Check bidirectional references

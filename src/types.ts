@@ -254,6 +254,10 @@ export interface TerminologyMapping {
   preferred: string;
   /** Variants that should be replaced */
   variants: string[];
+  /** Exception patterns that should not be flagged (e.g., "ドキュメンテーション" for "ドキュメント") */
+  exceptions?: string[];
+  /** Use word boundary matching (default: false for backward compatibility) */
+  wordBoundary?: boolean;
 }
 
 export interface I18nConfig {

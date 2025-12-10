@@ -34,6 +34,8 @@ export declare function checkOrphanDocuments(docsDir: string, files: string[], e
 export declare function checkTerminology(docsDir: string, files: string[], terminology: {
     preferred: string;
     variants: string[];
+    exceptions?: string[];
+    wordBoundary?: boolean;
 }[]): Promise<LintIssue[]>;
 /**
  * Check bidirectional references
