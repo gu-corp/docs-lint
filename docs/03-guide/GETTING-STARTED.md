@@ -43,6 +43,7 @@ npx docs-lint init
 ```
 
 これにより以下が作成されます：
+
 - `docs-lint.config.json` - リントルール設定
 - `docs/docs.config.json` - 言語設定
 

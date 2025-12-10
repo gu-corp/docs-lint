@@ -15,7 +15,7 @@ docs-lint の開発ロードマップです。
 
 - [x] 基本的なリントルール実装
   - brokenLinks, legacyFileNames, versionInfo, headingHierarchy
-  - todoComments, codeBlockLanguage, orphanDocuments, terminology
+  - `todoComments`, `codeBlockLanguage`, `orphanDocuments`, `terminology`
 - [x] CLI インターフェース（lint, init, init-standards）
 - [x] 設定ファイル対応（docs-lint.config.json）
 - [x] AI向けプロンプト生成（--ai-prompt）
@@ -26,7 +26,7 @@ docs-lint の開発ロードマップです。
 - [x] フォルダ番号付けチェック（folderNumbering）
 - [x] 要件・テストケースマッピング（requirementTestMapping）
 - [x] scaffoldコマンド追加
-- [x] review:specコマンド追加
+- [x] `review:spec`コマンド追加
 - [x] ドキュメント標準規約（DOCUMENT_STANDARDS.md）のテンプレート強化
   - AI向けプロンプト（4つのペルソナ）
   - UML.md必須化

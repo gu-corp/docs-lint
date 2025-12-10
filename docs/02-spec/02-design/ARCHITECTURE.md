@@ -58,7 +58,7 @@ docs-lint のシステムアーキテクチャを定義します。
 | init-standards | DOCUMENT_STANDARDS.md生成 | src/cli.ts |
 | check-structure | フォルダ構成チェック | src/cli.ts |
 | scaffold | 標準フォルダ構成生成 | src/cli.ts |
-| review:spec | AIレビュー実行 | src/cli.ts |
+| `review:spec` | AIレビュー実行 | src/cli.ts |
 
 ### Core Layer
 

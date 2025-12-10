@@ -18,7 +18,7 @@ docs-lint のテストケースを定義します。
 | TC-U001 | FR-CONTENT-001 | 有効な内部リンクを含むファイル | エラーなし |
 | TC-U002 | FR-CONTENT-001 | 存在しないファイルへのリンク | エラー検出 |
 | TC-U003 | FR-CONTENT-001 | 相対パスリンクの検証 | 正しく解決 |
-| TC-U004 | FR-CONTENT-002 | 00-XXXX.md形式のファイル | レガシー警告 |
+| TC-U004 | FR-CONTENT-002 | `00-XXXX.md`形式のファイル | レガシー警告 |
 | TC-U005 | FR-CONTENT-002 | 正常なファイル名 | エラーなし |
 | TC-U006 | FR-CONTENT-003 | バージョン情報あり | エラーなし |
 | TC-U007 | FR-CONTENT-003 | バージョン情報なし | 警告検出 |
@@ -26,8 +26,8 @@ docs-lint のテストケースを定義します。
 | TC-U009 | FR-CONTENT-004 | 関連ドキュメントセクションなし | 警告検出 |
 | TC-U010 | FR-CONTENT-005 | 正しい見出し階層（H1→H2→H3） | エラーなし |
 | TC-U011 | FR-CONTENT-005 | 見出し階層スキップ（H1→H3） | エラー検出 |
-| TC-U012 | FR-CONTENT-006 | TODOコメントを含むファイル | 警告検出 |
-| TC-U013 | FR-CONTENT-006 | FIXMEコメントを含むファイル | 警告検出 |
+| TC-U012 | FR-CONTENT-006 | `TODO`コメントを含むファイル | 警告検出 |
+| TC-U013 | FR-CONTENT-006 | `FIXME`コメントを含むファイル | 警告検出 |
 | TC-U014 | FR-CONTENT-007 | 言語指定ありのコードブロック | エラーなし |
 | TC-U015 | FR-CONTENT-007 | 言語指定なしのコードブロック | 警告検出 |
 | TC-U016 | FR-CONTENT-008 | どこからもリンクされていないファイル | 孤立警告 |
@@ -69,12 +69,12 @@ docs-lint のテストケースを定義します。
 | TC-I013 | FR-CLI-004 | docs-lint show-standards 実行 | 標準表示 |
 | TC-I014 | FR-CLI-005 | docs-lint check-structure 実行 | 構成チェック |
 | TC-I015 | FR-CLI-006 | docs-lint scaffold 実行 | フォルダ生成 |
-| TC-I016 | FR-CLI-007 | docs-lint review:spec 実行 | AIレビュー |
+| TC-I016 | FR-CLI-007 | `docs-lint review:spec` 実行 | AIレビュー |
 | TC-I004 | FR-CLI-008 | --verbose オプション | 詳細出力 |
 | TC-I005 | FR-CLI-009 | --json オプション | JSON出力 |
 | TC-I006 | FR-CLI-010 | --ai-prompt オプション | プロンプト生成 |
 | TC-I007 | FR-CLI-011 | --only brokenLinks | 指定ルールのみ実行 |
-| TC-I008 | FR-CLI-012 | --skip todoComments | 指定ルールをスキップ |
+| TC-I008 | FR-CLI-012 | `--skip todoComments` | 指定ルールをスキップ |
 
 ### API
 

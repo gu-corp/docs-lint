@@ -1,0 +1,23 @@
+{
+  "docsDir": "./docs",
+  "rules": {
+    "todoComments": {
+      "severity": "warn",
+      "tags": {
+        "TODO": { "severity": "info" },
+        "FIXME": { "severity": "warn" },
+        "XXX": { "severity": "warn" },
+        "HACK": { "severity": "warn" },
+        "BUG": { "severity": "error" },
+        "NOTE": { "severity": "off" },
+        "REVIEW": { "severity": "info" },
+        "OPTIMIZE": { "severity": "info" },
+        "WARNING": { "severity": "warn" },
+        "QUESTION": { "severity": "info" }
+      },
+      "ignoreInlineCode": true,
+      "ignoreCodeBlocks": true,
+      "ignoreInTables": true
+    }
+  }
+}

@@ -1,199 +1,187 @@
-# GitHub Actions 連携
+# CI/CD 規約
 
 **バージョン**: 1.0
-**更新日**: 2025-12-10
+**更新日**: 2025-12-07
 
 ---
 
 ## 概要
 
-docs-lint を GitHub Actions CI/CD パイプラインに統合する方法を説明します。
+本文書は、G.U.Corp プロジェクトにおける CI/CD パイプラインの標準規約を定めます。
 
-## 基本ワークフロー
+---
 
-`.github/workflows/docs-lint.yml` を作成：
+## 1. GitHub Actions 基本構成
+
+### 1.1 必須ワークフロー
+
+| ワークフロー | トリガー | 用途 |
+|-------------|---------|------|
+| `ci.yml` | push/PR to main | ビルド・テスト |
+| `release.yml` | tag v* | リリース作成 |
+
+### 1.2 CI ワークフロー例
 
 ```yaml
-name: Docs Lint
+name: CI
 
 on:
   push:
-    paths:
-      - 'docs/**'
-      - 'docs-lint.config.json'
+    branches: [main]
   pull_request:
-    paths:
-      - 'docs/**'
-      - 'docs-lint.config.json'
-  workflow_dispatch:
+    branches: [main]
 
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Install docs-lint
-        run: npm install github:gu-corp/docs-lint
-
-      - name: Run docs-lint
-        run: npx docs-lint lint -v
-
-      - name: Generate AI prompt (on failure)
-        if: failure()
-        run: npx docs-lint lint --ai-prompt > docs-lint-report.md
-
-      - name: Upload report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs-lint-report
-          path: docs-lint-report.md
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
 ```
 
-## ワークフロー機能
-
-### パスフィルタリング
-
-ドキュメントファイルの変更時のみ実行：
+### 1.3 Release ワークフロー例
 
 ```yaml
+name: Release
+
 on:
   push:
-    paths:
-      - 'docs/**'
-      - 'docs-lint.config.json'
-```
+    tags: ['v*']
 
-### 手動トリガー
+permissions:
+  contents: write
 
-`workflow_dispatch` で GitHub UI から手動実行可能。
-
-### 失敗時のアーティファクト
-
-リントが失敗した場合、AI向けレポートをアーティファクトとしてアップロード：
-
-```yaml
-- name: Generate AI prompt (on failure)
-  if: failure()
-  run: npx docs-lint lint --ai-prompt > docs-lint-report.md
-
-- name: Upload report
-  if: failure()
-  uses: actions/upload-artifact@v4
-  with:
-    name: docs-lint-report
-    path: docs-lint-report.md
-```
-
-## 高度なワークフロー
-
-### PRコメント
-
-リント結果をPRにコメント：
-
-```yaml
-- name: Run docs-lint
-  id: lint
-  run: |
-    npx docs-lint lint --json > result.json
-    echo "result=$(cat result.json | jq -c)" >> $GITHUB_OUTPUT
-  continue-on-error: true
-
-- name: Comment on PR
-  if: github.event_name == 'pull_request'
-  uses: actions/github-script@v7
-  with:
-    script: |
-      const result = ${{ steps.lint.outputs.result }};
-      const body = `## Docs Lint Results
-
-      - **Files**: ${result.summary.totalFiles}
-      - **Errors**: ${result.summary.errors}
-      - **Warnings**: ${result.summary.warnings}
-      - **Status**: ${result.summary.passed ? '✅ Passed' : '❌ Failed'}
-      `;
-
-      github.rest.issues.createComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        issue_number: context.issue.number,
-        body
-      });
-```
-
-### キャッシュ
-
-npmパッケージのキャッシュ：
-
-```yaml
-- name: Cache node modules
-  uses: actions/cache@v4
-  with:
-    path: ~/.npm
-    key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-
-- name: Install docs-lint
-  run: npm install github:gu-corp/docs-lint
-```
-
-### スケジュール実行
-
-定期実行：
-
-```yaml
-on:
-  schedule:
-    - cron: '0 9 * * 1'  # 毎週月曜 9:00 UTC
-  workflow_dispatch:
-```
-
-## モノレポ設定
-
-複数のドキュメントディレクトリがある場合：
-
-```yaml
 jobs:
-  lint:
+  release:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        docs-dir:
-          - packages/app/docs
-          - packages/sdk/docs
-          - docs
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Install docs-lint
-        run: npm install github:gu-corp/docs-lint
-
-      - name: Run docs-lint
-        run: npx docs-lint lint -d ${{ matrix.docs-dir }} -v
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
 ```
 
-## ステータスバッジ
+---
 
-READMEにステータスバッジを追加：
+## 2. ブランチ保護ルール
 
-```markdown
-![Docs Lint](https://github.com/gu-corp/your-repo/actions/workflows/docs-lint.yml/badge.svg)
+### 2.1 main ブランチ
+
+| 設定 | 値 |
+|------|-----|
+| Require pull request reviews | 有効 |
+| Required approving reviews | 1以上 |
+| Require status checks to pass | 有効 |
+| Required status checks | CI |
+| Require branches to be up to date | 有効 |
+
+### 2.2 設定方法
+
+```text
+Settings > Branches > Add rule
+- Branch name pattern: main
+- 上記設定を適用
 ```
+
+---
+
+## 3. タグ保護ルール
+
+### 3.1 リリースタグ
+
+| 設定 | 値 |
+|------|-----|
+| Tag name pattern | `v*` |
+| Restrict who can create matching tags | 有効 |
+| Allowed actors | Maintainers以上 |
+
+### 3.2 タグ命名規則
+
+```text
+v{MAJOR}.{MINOR}.{PATCH}[-{prerelease}]
+```
+
+| 例 | 説明 |
+|-----|------|
+| `v1.0.0` | 正式リリース |
+| `v1.0.0-beta.1` | ベータリリース |
+| `v1.0.0-rc.1` | リリース候補 |
+
+---
+
+## 4. Secrets 管理
+
+### 4.1 標準 Secrets
+
+| Secret名 | 用途 |
+|----------|------|
+| `NPM_TOKEN` | npm publish（公開パッケージ） |
+| `DEPLOY_KEY` | デプロイ用SSH鍵 |
+
+### 4.2 禁止事項
+
+- Secretsをログに出力しない
+- Secretsをコードにハードコードしない
+- 不要になったSecretsは削除する
+
+---
+
+## 5. 環境変数
+
+### 5.1 命名規則
+
+```text
+{SERVICE}_{PURPOSE}_{TYPE}
+```
+
+| 例 | 説明 |
+|-----|------|
+| `AWS_ACCESS_KEY_ID` | AWSアクセスキーID |
+| `DATABASE_URL` | データベース接続URL |
+| `NEXT_PUBLIC_API_URL` | 公開API URL |
+
+### 5.2 環境別ファイル
+
+| ファイル | 環境 | コミット |
+|---------|------|---------|
+| `.env.example` | テンプレート | 可 |
+| `.env.local` | ローカル開発 | 不可 |
+| `.env.production` | 本番 | 不可 |
+
+---
+
+## 6. デプロイ戦略
+
+### 6.1 環境構成
+
+| 環境 | ブランチ | デプロイ |
+|------|---------|---------|
+| Development | feature/* | 自動（任意） |
+| Staging | main | 自動 |
+| Production | tag v* | 手動承認 |
+
+### 6.2 ロールバック
+
+- 問題発生時は前のタグを再デプロイ
+- ホットフィックスが必要な場合は`hotfix/*`ブランチを使用
 
 ---
 
 ## 関連ドキュメント
 
-- [CLIリファレンス](../03-guide/CLI.md)
-- [設定リファレンス](../03-guide/CONFIGURATION.md)
-- [はじめに](../03-guide/GETTING-STARTED.md)
+- [Git ワークフロー](GIT-WORKFLOW.md)
+- [コーディング規約](CODING-STANDARDS.md)
+- [テスト規約](TESTING.md)

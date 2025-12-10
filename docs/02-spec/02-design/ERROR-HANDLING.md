@@ -36,6 +36,7 @@ docs-lint のエラー処理方針を定義します。
 ```
 
 例：
+
 ```text
 ✗ brokenLinks (2 issues)
     README.md:15 Broken link: ./guide/SETUP.md (file not found)

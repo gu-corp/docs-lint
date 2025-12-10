@@ -39,6 +39,7 @@ README.md:15 Broken link: ./guide/SETUP.md (file not found)
 **デフォルト**: `warn`
 
 **検出パターン**:
+
 - `**Version**: X.X`
 - `**バージョン**: X.X`
 
@@ -54,6 +55,7 @@ guide/SETUP.md Missing version information
 **デフォルト**: `warn`
 
 **検出セクション名**:
+
 - `## Related Documents`
 - `## 関連ドキュメント`
 
@@ -67,13 +69,14 @@ guide/SETUP.md Missing version information
 guide/API.md:45 Heading hierarchy violation: H1 → H4 (skipped H2, H3)
 ```
 
-### todoComments
+### `todoComments`
 
-未解決の TODO/FIXME コメントを検出します。
+未解決の `TODO`/`FIXME` コメントを検出します。
 
 **デフォルト**: `warn`
 
 **検出パターン**:
+
 - `TODO:`
 - `FIXME:`
 - `XXX:`
@@ -174,7 +177,7 @@ G.U.Corp標準フォルダ構成に従っているかチェックします。
 
 ### requirementTestMapping
 
-要件ID（FR-XXX）とテストケースID（TC-XXX）の対応をチェックします。
+要件ID（`FR-XXX`）とテストケースID（`TC-XXX`）の対応をチェックします。
 
 **デフォルト**: `warn`
 
