@@ -325,6 +325,25 @@ docs/
 
 Use `docs-lint scaffold` to create this structure automatically.
 
+### Archive Folders (v1.17.0)
+
+Folders and files starting with `_` are treated as archives and excluded from linting:
+
+```text
+docs/
+├── 01-plan/
+├── 02-spec/
+├── _archive/           # Excluded - old documents
+│   └── old-spec.md
+├── _drafts/            # Excluded - work in progress
+│   └── WIP.md
+└── _OLD-README.md      # Excluded - archived file
+```
+
+Default exclude patterns:
+- `**/_*/**` - All folders starting with `_`
+- `**/_*.md` - All markdown files starting with `_`
+
 ## Requirement-Test Mapping (v1.4.0+)
 
 Validates that all functional requirements have corresponding test cases:

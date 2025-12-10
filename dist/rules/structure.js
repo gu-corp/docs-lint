@@ -91,7 +91,7 @@ export async function checkStandardFolderStructure(docsDir) {
         const folders = entries
             .filter((e) => e.isDirectory())
             .map((e) => e.name)
-            .filter((name) => !name.startsWith('.') && name !== 'translations' && name !== 'drafts');
+            .filter((name) => !name.startsWith('.') && !name.startsWith('_') && name !== 'translations' && name !== 'drafts');
         const standardFolderNames = STANDARD_FOLDER_STRUCTURE
             .map((f) => f.path.split('/')[0])
             .filter((v, i, a) => a.indexOf(v) === i); // unique
@@ -146,7 +146,7 @@ function checkFolderNumberingAt(targetDir, pathLabel, checkSequence) {
     const folders = entries
         .filter((e) => e.isDirectory())
         .map((e) => e.name)
-        .filter((name) => !name.startsWith('.') && name !== 'translations');
+        .filter((name) => !name.startsWith('.') && !name.startsWith('_') && name !== 'translations');
     // Check if folders follow numbered pattern
     const numberedPattern = /^(\d{2})-(.+)$/;
     const numberedFolders = folders.filter((f) => numberedPattern.test(f));

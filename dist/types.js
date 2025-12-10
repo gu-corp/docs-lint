@@ -4,7 +4,10 @@
 export const defaultConfig = {
     docsDir: './docs',
     include: ['**/*.md'],
-    exclude: [],
+    exclude: [
+        '**/_*/**', // Archive folders (e.g., _archive/, _drafts/)
+        '**/_*.md', // Archive files (e.g., _OLD-API.md)
+    ],
     rules: {
         brokenLinks: 'error',
         legacyFileNames: 'error',
