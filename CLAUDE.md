@@ -162,7 +162,18 @@ This approach ensures:
     },
     "fileNaming": "warn",
     "requiredSections": "error",
-    "terminology": "warn"
+    "terminology": "warn",
+    "todoComments": {
+      "severity": "warn",
+      "tags": {
+        "TODO": { "severity": "info" },
+        "FIXME": { "severity": "warn" },
+        "BUG": { "severity": "error" },
+        "NOTE": { "severity": "off" }
+      },
+      "ignoreInlineCode": true,
+      "ignoreCodeBlocks": true
+    }
   },
   "terminology": [
     { "preferred": "ドキュメント", "variants": ["文書"] }
