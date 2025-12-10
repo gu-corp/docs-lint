@@ -258,6 +258,52 @@ Options:
 - `customTags`: Add custom tags to detect
 - `excludePatterns`: Regex patterns to exclude
 
+### Testing Configuration (v1.16.0)
+
+Configure test coverage evaluation criteria for `review:code`:
+
+```json
+{
+  "testing": {
+    "projectType": "api",
+    "coreLogicPatterns": [
+      "src/domain/**/*.ts",
+      "src/rules/**/*.ts"
+    ],
+    "coverageThresholds": {
+      "coreLogic": 100,
+      "utilities": 90,
+      "api": 80,
+      "ui": 60,
+      "overall": 70
+    },
+    "requireIntegrationTests": ["src/api/**/*.ts"],
+    "requireE2ETests": false,
+    "requireCITests": true
+  }
+}
+```
+
+#### Project Types
+
+| Type | Unit Tests | Min Coverage | Integration | E2E |
+|------|------------|--------------|-------------|-----|
+| `library` | Required | 80% | - | - |
+| `api` | Required | 70% | Required | - |
+| `web-app` | Required | 60% | Required | Required |
+| `cli` | Required | 60% | - | - |
+| `critical` | Required | 90% | Required | Required |
+
+#### Coverage Thresholds by Category
+
+| Category | Default | Description |
+|----------|---------|-------------|
+| `coreLogic` | 100% | Business logic (domain, services, usecases) |
+| `utilities` | 90% | Shared utilities and helpers |
+| `api` | 80% | API controllers and routes |
+| `ui` | 60% | UI components (covered by E2E) |
+| `overall` | 70% | Minimum overall coverage |
+
 ## Standard Folder Structure (v1.7.0)
 
 docs-lint enforces the G.U.Corp standard folder structure:

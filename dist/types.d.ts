@@ -18,6 +18,8 @@ export interface DocsLintConfig {
     requirementPatterns: RequirementPattern[];
     /** i18n configuration for multilingual documents */
     i18n?: I18nConfig;
+    /** Testing configuration for code review and quality assessment */
+    testing?: TestingConfig;
 }
 export interface RulesConfig {
     /** Check for broken markdown links */
@@ -211,6 +213,44 @@ export interface I18nConfig {
     translationsFolder?: string;
     /** Whether to check translation sync (default: false) */
     checkSync?: boolean;
+}
+/**
+ * Testing configuration for code review and quality assessment
+ */
+export interface TestingConfig {
+    /** Project type affects default thresholds and requirements */
+    projectType?: 'library' | 'api' | 'web-app' | 'cli' | 'critical';
+    /** Glob patterns for core logic files (should have 100% coverage) */
+    coreLogicPatterns?: string[];
+    /** Glob patterns for utility files */
+    utilityPatterns?: string[];
+    /** Glob patterns for API/controller files */
+    apiPatterns?: string[];
+    /** Glob patterns for UI/presentation files */
+    uiPatterns?: string[];
+    /** Glob patterns to exclude from coverage analysis */
+    excludePatterns?: string[];
+    /** Coverage thresholds by category (percentage) */
+    coverageThresholds?: {
+        /** Core business logic - default: 100 */
+        coreLogic?: number;
+        /** Utility functions - default: 90 */
+        utilities?: number;
+        /** API/controllers - default: 80 */
+        api?: number;
+        /** UI/presentation - default: 60 */
+        ui?: number;
+        /** Overall minimum - default: 70 */
+        overall?: number;
+    };
+    /** Require integration tests for these patterns */
+    requireIntegrationTests?: string[];
+    /** Require E2E tests (default: based on projectType) */
+    requireE2ETests?: boolean;
+    /** Minimum test file coverage (percentage of source files with tests) */
+    minTestFileCoverage?: number;
+    /** Require CI test configuration */
+    requireCITests?: boolean;
 }
 export interface RequirementPattern {
     /** Name of the requirement category */

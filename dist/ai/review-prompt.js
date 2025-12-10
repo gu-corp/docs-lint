@@ -279,6 +279,62 @@ export function generateCodeReviewPrompt(options) {
 \`\`\`
 
 ---`);
+    // Test coverage requirements
+    sections.push(`## テストカバレッジ評価基準
+
+### カテゴリ別カバレッジ目標
+
+| カテゴリ | パターン | 目標 | 理由 |
+|---------|---------|------|------|
+| **コアロジック** | \`src/domain/\`, \`src/lib/\`, \`src/core/\`, \`src/rules/\`, \`src/services/\`, \`src/usecases/\` | **100%** | ビジネス価値の源泉。バグ許容度ゼロ |
+| **ユーティリティ** | \`src/utils/\`, \`src/helpers/\`, \`src/shared/\` | **90%** | 再利用されるため影響範囲大 |
+| **API/コントローラ** | \`src/api/\`, \`src/controllers/\`, \`src/routes/\` | **80%** | Integrationテストと併用 |
+| **UI/プレゼンテーション** | \`src/components/\`, \`src/pages/\`, \`src/views/\` | **60%** | E2Eでカバー |
+
+### プロジェクト種別による要件
+
+| 種別 | UT必須 | 最低カバレッジ | Integration | E2E |
+|------|--------|--------------|-------------|-----|
+| **library** | Yes | 80% | - | - |
+| **api** | Yes | 70% | Yes | - |
+| **web-app** | Yes | 60% | Yes | Yes |
+| **cli** | Yes | 60% | - | - |
+| **critical** (金融/決済) | Yes | 90% | Yes | Yes |
+
+### テスト品質チェック
+
+以下を確認してください：
+
+1. **テストファイルの存在**
+   - [ ] 各ソースファイルに対応するテストファイルがあるか
+   - [ ] テストファイル命名規則: \`*.test.ts\`, \`*.spec.ts\`
+
+2. **テストの種類**
+   - [ ] Unit テスト: \`tests/unit/\` または \`src/**/__tests__/\`
+   - [ ] Integration テスト: \`tests/integration/\` （API/DB連携がある場合）
+   - [ ] E2E テスト: \`tests/e2e/\` （Webアプリの場合）
+
+3. **CI設定**
+   - [ ] \`.github/workflows/\` でテストが自動実行されるか
+   - [ ] カバレッジレポートが生成されるか
+   - [ ] カバレッジ閾値が設定されているか
+
+4. **テストの質**
+   - [ ] AAA パターン (Arrange-Act-Assert) に従っているか
+   - [ ] 正常系・異常系の両方がテストされているか
+   - [ ] 境界値がテストされているか
+   - [ ] モックが適切に使用されているか（過剰でないか）
+
+### 🔴 テスト不足の重大問題
+
+以下の場合は🔴重大として報告：
+
+- コアロジックにテストがない
+- カバレッジが50%未満
+- テストはあるが実際には何も検証していない（形骸化）
+- CIでテストが実行されていない
+
+---`);
     // Output format
     sections.push(`## 出力形式
 

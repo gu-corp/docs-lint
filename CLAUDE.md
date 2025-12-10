@@ -177,9 +177,46 @@ This approach ensures:
   },
   "terminology": [
     { "preferred": "ドキュメント", "variants": ["文書"] }
-  ]
+  ],
+  "testing": {
+    "projectType": "api",
+    "coreLogicPatterns": [
+      "src/domain/**/*.ts",
+      "src/rules/**/*.ts"
+    ],
+    "coverageThresholds": {
+      "coreLogic": 100,
+      "utilities": 90,
+      "api": 80,
+      "ui": 60,
+      "overall": 70
+    },
+    "requireIntegrationTests": ["src/api/**/*.ts"],
+    "requireE2ETests": false,
+    "requireCITests": true
+  }
 }
 ```
+
+### Testing Configuration
+
+`testing` セクションで、コードレビュー時のテスト評価基準をカスタマイズできます。
+
+| プロパティ | 説明 | デフォルト |
+|-----------|------|-----------|
+| `projectType` | プロジェクト種別 (`library`, `api`, `web-app`, `cli`, `critical`) | `api` |
+| `coreLogicPatterns` | コアロジックのGlobパターン（100%カバレッジ目標） | `src/domain/**`, `src/lib/**` 等 |
+| `coverageThresholds` | カテゴリ別カバレッジ閾値 | 下記参照 |
+| `requireIntegrationTests` | Integrationテスト必須のパターン | `src/api/**` 等 |
+| `requireE2ETests` | E2Eテスト必須か | `false` |
+| `requireCITests` | CIでのテスト設定必須か | `true` |
+
+**デフォルトカバレッジ閾値**:
+- コアロジック: 100%
+- ユーティリティ: 90%
+- API/コントローラ: 80%
+- UI: 60%
+- 全体: 70%
 
 ## Testing
 

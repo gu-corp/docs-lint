@@ -80,5 +80,57 @@ export const defaultConfig = {
     terminology: [],
     requiredFiles: [],
     requirementPatterns: [],
+    testing: {
+        projectType: 'api',
+        coreLogicPatterns: [
+            'src/domain/**/*.ts',
+            'src/lib/**/*.ts',
+            'src/core/**/*.ts',
+            'src/rules/**/*.ts',
+            'src/services/**/*.ts',
+            'src/usecases/**/*.ts',
+        ],
+        utilityPatterns: [
+            'src/utils/**/*.ts',
+            'src/helpers/**/*.ts',
+            'src/shared/**/*.ts',
+        ],
+        apiPatterns: [
+            'src/api/**/*.ts',
+            'src/controllers/**/*.ts',
+            'src/routes/**/*.ts',
+            'src/handlers/**/*.ts',
+        ],
+        uiPatterns: [
+            'src/components/**/*.tsx',
+            'src/pages/**/*.tsx',
+            'src/views/**/*.tsx',
+        ],
+        excludePatterns: [
+            '**/*.test.ts',
+            '**/*.spec.ts',
+            '**/*.test.tsx',
+            '**/*.spec.tsx',
+            '**/index.ts',
+            '**/*.d.ts',
+            '**/types.ts',
+            '**/__mocks__/**',
+            '**/__fixtures__/**',
+        ],
+        coverageThresholds: {
+            coreLogic: 100,
+            utilities: 90,
+            api: 80,
+            ui: 60,
+            overall: 70,
+        },
+        requireIntegrationTests: [
+            'src/api/**/*.ts',
+            'src/controllers/**/*.ts',
+        ],
+        requireE2ETests: false,
+        minTestFileCoverage: 80,
+        requireCITests: true,
+    },
 };
 //# sourceMappingURL=types.js.map

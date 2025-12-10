@@ -25,6 +25,9 @@ export interface DocsLintConfig {
 
   /** i18n configuration for multilingual documents */
   i18n?: I18nConfig;
+
+  /** Testing configuration for code review and quality assessment */
+  testing?: TestingConfig;
 }
 
 export interface RulesConfig {
@@ -264,6 +267,55 @@ export interface I18nConfig {
   checkSync?: boolean;
 }
 
+/**
+ * Testing configuration for code review and quality assessment
+ */
+export interface TestingConfig {
+  /** Project type affects default thresholds and requirements */
+  projectType?: 'library' | 'api' | 'web-app' | 'cli' | 'critical';
+
+  /** Glob patterns for core logic files (should have 100% coverage) */
+  coreLogicPatterns?: string[];
+
+  /** Glob patterns for utility files */
+  utilityPatterns?: string[];
+
+  /** Glob patterns for API/controller files */
+  apiPatterns?: string[];
+
+  /** Glob patterns for UI/presentation files */
+  uiPatterns?: string[];
+
+  /** Glob patterns to exclude from coverage analysis */
+  excludePatterns?: string[];
+
+  /** Coverage thresholds by category (percentage) */
+  coverageThresholds?: {
+    /** Core business logic - default: 100 */
+    coreLogic?: number;
+    /** Utility functions - default: 90 */
+    utilities?: number;
+    /** API/controllers - default: 80 */
+    api?: number;
+    /** UI/presentation - default: 60 */
+    ui?: number;
+    /** Overall minimum - default: 70 */
+    overall?: number;
+  };
+
+  /** Require integration tests for these patterns */
+  requireIntegrationTests?: string[];
+
+  /** Require E2E tests (default: based on projectType) */
+  requireE2ETests?: boolean;
+
+  /** Minimum test file coverage (percentage of source files with tests) */
+  minTestFileCoverage?: number;
+
+  /** Require CI test configuration */
+  requireCITests?: boolean;
+}
+
 export interface RequirementPattern {
   /** Name of the requirement category */
   name: string;
@@ -411,4 +463,56 @@ export const defaultConfig: DocsLintConfig = {
   terminology: [],
   requiredFiles: [],
   requirementPatterns: [],
+  testing: {
+    projectType: 'api',
+    coreLogicPatterns: [
+      'src/domain/**/*.ts',
+      'src/lib/**/*.ts',
+      'src/core/**/*.ts',
+      'src/rules/**/*.ts',
+      'src/services/**/*.ts',
+      'src/usecases/**/*.ts',
+    ],
+    utilityPatterns: [
+      'src/utils/**/*.ts',
+      'src/helpers/**/*.ts',
+      'src/shared/**/*.ts',
+    ],
+    apiPatterns: [
+      'src/api/**/*.ts',
+      'src/controllers/**/*.ts',
+      'src/routes/**/*.ts',
+      'src/handlers/**/*.ts',
+    ],
+    uiPatterns: [
+      'src/components/**/*.tsx',
+      'src/pages/**/*.tsx',
+      'src/views/**/*.tsx',
+    ],
+    excludePatterns: [
+      '**/*.test.ts',
+      '**/*.spec.ts',
+      '**/*.test.tsx',
+      '**/*.spec.tsx',
+      '**/index.ts',
+      '**/*.d.ts',
+      '**/types.ts',
+      '**/__mocks__/**',
+      '**/__fixtures__/**',
+    ],
+    coverageThresholds: {
+      coreLogic: 100,
+      utilities: 90,
+      api: 80,
+      ui: 60,
+      overall: 70,
+    },
+    requireIntegrationTests: [
+      'src/api/**/*.ts',
+      'src/controllers/**/*.ts',
+    ],
+    requireE2ETests: false,
+    minTestFileCoverage: 80,
+    requireCITests: true,
+  },
 };
