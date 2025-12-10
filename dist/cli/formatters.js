@@ -3,6 +3,17 @@
  */
 import chalk from 'chalk';
 /**
+ * Get icon for issue-level severity
+ */
+function getIssueSeverityIcon(severity) {
+    switch (severity) {
+        case 'error': return chalk.red('✗');
+        case 'warn': return chalk.yellow('⚠');
+        case 'info': return chalk.blue('ℹ');
+        default: return ' ';
+    }
+}
+/**
  * Print lint results in human-readable format
  */
 export function printResults(result, verbose) {
@@ -26,7 +37,8 @@ export function printResults(result, verbose) {
             if (verbose) {
                 for (const issue of rule.issues) {
                     const location = issue.line ? `${issue.file}:${issue.line}` : issue.file;
-                    console.log(`    ${chalk.gray(location)} ${issue.message}`);
+                    const issueIcon = getIssueSeverityIcon(issue.severity);
+                    console.log(`    ${issueIcon} ${chalk.gray(location)} ${issue.message}`);
                     if (issue.suggestion) {
                         console.log(`      ${chalk.blue('→')} ${issue.suggestion}`);
                     }
@@ -35,7 +47,8 @@ export function printResults(result, verbose) {
             else {
                 for (const issue of rule.issues.slice(0, 3)) {
                     const location = issue.line ? `${issue.file}:${issue.line}` : issue.file;
-                    console.log(`    ${chalk.gray(location)} ${issue.message}`);
+                    const issueIcon = getIssueSeverityIcon(issue.severity);
+                    console.log(`    ${issueIcon} ${chalk.gray(location)} ${issue.message}`);
                 }
                 if (rule.issues.length > 3) {
                     console.log(`    ${chalk.gray(`... and ${rule.issues.length - 3} more`)}`);

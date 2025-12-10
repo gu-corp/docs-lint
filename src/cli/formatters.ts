@@ -7,6 +7,18 @@ import type { CheckResult } from '../code/types.js';
 import type { CoverageReport, SpecReviewReport } from '../ai/types.js';
 
 /**
+ * Get icon for issue-level severity
+ */
+function getIssueSeverityIcon(severity?: 'info' | 'warn' | 'error'): string {
+  switch (severity) {
+    case 'error': return chalk.red('✗');
+    case 'warn': return chalk.yellow('⚠');
+    case 'info': return chalk.blue('ℹ');
+    default: return ' ';
+  }
+}
+
+/**
  * Print lint results in human-readable format
  */
 export function printResults(
@@ -38,7 +50,8 @@ export function printResults(
       if (verbose) {
         for (const issue of rule.issues) {
           const location = issue.line ? `${issue.file}:${issue.line}` : issue.file;
-          console.log(`    ${chalk.gray(location)} ${issue.message}`);
+          const issueIcon = getIssueSeverityIcon(issue.severity);
+          console.log(`    ${issueIcon} ${chalk.gray(location)} ${issue.message}`);
           if (issue.suggestion) {
             console.log(`      ${chalk.blue('→')} ${issue.suggestion}`);
           }
@@ -46,7 +59,8 @@ export function printResults(
       } else {
         for (const issue of rule.issues.slice(0, 3)) {
           const location = issue.line ? `${issue.file}:${issue.line}` : issue.file;
-          console.log(`    ${chalk.gray(location)} ${issue.message}`);
+          const issueIcon = getIssueSeverityIcon(issue.severity);
+          console.log(`    ${issueIcon} ${chalk.gray(location)} ${issue.message}`);
         }
         if (rule.issues.length > 3) {
           console.log(`    ${chalk.gray(`... and ${rule.issues.length - 3} more`)}`);

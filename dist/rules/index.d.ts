@@ -1,4 +1,4 @@
-import type { LintIssue, RuleSeverity, LegacyFileNamesConfig, VersionInfoConfig, RelatedDocumentsConfig, StandardsDriftConfig, RequirementTestMappingConfig, MarkdownLintConfig } from '../types.js';
+import type { LintIssue, RuleSeverity, LegacyFileNamesConfig, VersionInfoConfig, RelatedDocumentsConfig, StandardsDriftConfig, RequirementTestMappingConfig, MarkdownLintConfig, TodoCommentsConfig } from '../types.js';
 /**
  * Check for broken markdown links
  */
@@ -19,10 +19,7 @@ export declare function checkRelatedDocuments(docsDir: string, files: string[], 
  * Check heading hierarchy
  */
 export declare function checkHeadingHierarchy(docsDir: string, files: string[]): Promise<LintIssue[]>;
-/**
- * Check for TODO/FIXME comments
- */
-export declare function checkTodoComments(docsDir: string, files: string[]): Promise<LintIssue[]>;
+export declare function checkTodoComments(docsDir: string, files: string[], config: TodoCommentsConfig | RuleSeverity): Promise<LintIssue[]>;
 /**
  * Check for code block language specifiers
  */

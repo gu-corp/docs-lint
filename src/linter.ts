@@ -130,7 +130,9 @@ export class DocsLinter {
     // TODO Comments
     if (this.shouldRun('todoComments')) {
       ruleResults.push(
-        await this.runRule('todoComments', () => checkTodoComments(docsDir, files))
+        await this.runRule('todoComments', () =>
+          checkTodoComments(docsDir, files, this.config.rules.todoComments)
+        )
       );
     }
 

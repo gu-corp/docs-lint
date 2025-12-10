@@ -218,10 +218,45 @@ Some rules support advanced configuration:
         "MD013": false,
         "MD033": false
       }
+    },
+    "todoComments": {
+      "severity": "warn",
+      "tags": {
+        "TODO": { "severity": "info", "message": "実装予定" },
+        "FIXME": { "severity": "warn", "message": "要修正" },
+        "BUG": { "severity": "error", "message": "バグ" },
+        "NOTE": { "severity": "off" }
+      },
+      "ignoreInlineCode": true,
+      "ignoreCodeBlocks": true
     }
   }
 }
 ```
+
+### TODO Comments Configuration (v1.15.0)
+
+The `todoComments` rule now supports tag-specific severity levels:
+
+| Tag | Default Severity | Description |
+|-----|------------------|-------------|
+| `TODO` | info | 実装予定のタスク |
+| `FIXME` | warn | 要修正の問題 |
+| `XXX` | warn | 要注意箇所 |
+| `HACK` | warn | 回避策・一時実装 |
+| `BUG` | error | 既知のバグ |
+| `NOTE` | off | 補足説明（デフォルト無視） |
+| `REVIEW` | info | レビュー対象 |
+| `OPTIMIZE` | info | 最適化候補 |
+| `WARNING` | warn | 警告 |
+| `QUESTION` | info | 要確認 |
+
+Options:
+- `ignoreInlineCode`: Ignore TODO in \`inline code\` (default: true)
+- `ignoreCodeBlocks`: Ignore TODO in code blocks (default: true)
+- `ignoreInTables`: Ignore TODO in table cells (default: false)
+- `customTags`: Add custom tags to detect
+- `excludePatterns`: Regex patterns to exclude
 
 ## Standard Folder Structure (v1.7.0)
 

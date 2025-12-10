@@ -13,6 +13,7 @@ import type {
   StandardsDriftConfig,
   RequirementTestMappingConfig,
   MarkdownLintConfig,
+  TodoCommentsConfig,
 } from '../types.js';
 
 /**
@@ -235,12 +236,93 @@ export async function checkHeadingHierarchy(
 /**
  * Check for TODO/FIXME comments
  */
+/** Built-in todo comment tags */
+const BUILTIN_TAGS = ['TODO', 'FIXME', 'XXX', 'HACK', 'BUG', 'NOTE', 'REVIEW', 'OPTIMIZE', 'WARNING', 'QUESTION'];
+
+/** Default tag configuration */
+const DEFAULT_TAG_CONFIG: Record<string, { severity: 'off' | 'info' | 'warn' | 'error'; message: string }> = {
+  TODO: { severity: 'info', message: '実装予定' },
+  FIXME: { severity: 'warn', message: '要修正' },
+  XXX: { severity: 'warn', message: '要注意' },
+  HACK: { severity: 'warn', message: '回避策' },
+  BUG: { severity: 'error', message: 'バグ' },
+  NOTE: { severity: 'off', message: '補足' },
+  REVIEW: { severity: 'info', message: 'レビュー対象' },
+  OPTIMIZE: { severity: 'info', message: '最適化候補' },
+  WARNING: { severity: 'warn', message: '警告' },
+  QUESTION: { severity: 'info', message: '要確認' },
+};
+
+/**
+ * Check if position is inside inline code (`code`)
+ */
+function isInInlineCode(line: string, position: number): boolean {
+  let inCode = false;
+  let i = 0;
+  while (i < position && i < line.length) {
+    if (line[i] === '`' && (i === 0 || line[i - 1] !== '\\')) {
+      // Check for triple backtick (code block start) - not inline
+      if (line.substring(i, i + 3) === '```') {
+        return false;
+      }
+      inCode = !inCode;
+    }
+    i++;
+  }
+  return inCode;
+}
+
+/**
+ * Check if line is inside a table
+ */
+function isTableLine(line: string): boolean {
+  const trimmed = line.trim();
+  return trimmed.startsWith('|') && trimmed.endsWith('|');
+}
+
 export async function checkTodoComments(
   docsDir: string,
-  files: string[]
+  files: string[],
+  config: TodoCommentsConfig | RuleSeverity
 ): Promise<LintIssue[]> {
   const issues: LintIssue[] = [];
-  const todoPattern = /\b(TODO|FIXME|XXX|HACK|BUG)[:：]?\s*(.+)/gi;
+
+  // Parse config
+  const isSimpleConfig = typeof config === 'string';
+  const baseSeverity = isSimpleConfig ? config : config.severity;
+
+  if (baseSeverity === 'off') {
+    return issues;
+  }
+
+  const tagConfigs = isSimpleConfig ? DEFAULT_TAG_CONFIG : { ...DEFAULT_TAG_CONFIG };
+
+  // Override with user-specified tag configs
+  if (!isSimpleConfig && config.tags) {
+    for (const [tag, tagConfig] of Object.entries(config.tags)) {
+      if (tagConfig) {
+        tagConfigs[tag] = {
+          severity: tagConfig.severity,
+          message: tagConfig.message || DEFAULT_TAG_CONFIG[tag]?.message || tag,
+        };
+      }
+    }
+  }
+
+  // Build tag list
+  const customTags = (!isSimpleConfig && config.customTags) || [];
+  const allTags = [...BUILTIN_TAGS, ...customTags];
+
+  // Build regex pattern
+  const tagPattern = allTags.join('|');
+  const todoPattern = new RegExp(`\\b(${tagPattern})[:：]?\\s*(.*)`, 'gi');
+
+  // Options
+  const ignoreInlineCode = isSimpleConfig ? true : (config.ignoreInlineCode ?? true);
+  const ignoreCodeBlocks = isSimpleConfig ? true : (config.ignoreCodeBlocks ?? true);
+  const ignoreInTables = isSimpleConfig ? false : (config.ignoreInTables ?? false);
+  const excludePatterns = (!isSimpleConfig && config.excludePatterns) || [];
+  const excludeRegexes = excludePatterns.map(p => new RegExp(p, 'i'));
 
   for (const file of files) {
     const content = fs.readFileSync(path.join(docsDir, file), 'utf-8');
@@ -249,18 +331,59 @@ export async function checkTodoComments(
     let inCodeBlock = false;
 
     lines.forEach((line, lineNum) => {
+      // Track code block state
       if (line.trim().startsWith('```')) {
         inCodeBlock = !inCodeBlock;
         return;
       }
-      if (inCodeBlock) return;
+
+      // Skip if in code block and ignoreCodeBlocks is true
+      if (inCodeBlock && ignoreCodeBlocks) {
+        return;
+      }
+
+      // Skip table lines if ignoreInTables is true
+      if (ignoreInTables && isTableLine(line)) {
+        return;
+      }
+
+      // Reset regex lastIndex for each line
+      todoPattern.lastIndex = 0;
 
       let match;
       while ((match = todoPattern.exec(line)) !== null) {
+        const tag = match[1].toUpperCase();
+        const description = match[2].trim();
+        const matchPosition = match.index;
+
+        // Skip if inside inline code
+        if (ignoreInlineCode && isInInlineCode(line, matchPosition)) {
+          continue;
+        }
+
+        // Skip if matches exclude pattern
+        const fullMatch = match[0];
+        if (excludeRegexes.some(re => re.test(fullMatch))) {
+          continue;
+        }
+
+        // Get tag config
+        const tagConfig = tagConfigs[tag] || { severity: baseSeverity as 'info' | 'warn' | 'error', message: tag };
+
+        // Skip if this tag is turned off
+        if (tagConfig.severity === 'off') {
+          continue;
+        }
+
+        // Build message
+        const truncatedDesc = description.length > 50 ? description.substring(0, 50) + '...' : description;
+        const messagePrefix = tagConfig.message || tag;
+
         issues.push({
           file,
           line: lineNum + 1,
-          message: `Unresolved ${match[1]}: ${match[2].substring(0, 50)}`,
+          message: `[${tag}] ${messagePrefix}: ${truncatedDesc || '(説明なし)'}`,
+          severity: tagConfig.severity,
         });
       }
     });

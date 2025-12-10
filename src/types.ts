@@ -44,7 +44,7 @@ export interface RulesConfig {
   headingHierarchy: RuleSeverity;
 
   /** Check for TODO/FIXME comments */
-  todoComments: RuleSeverity;
+  todoComments: RuleSeverity | TodoCommentsConfig;
 
   /** Check for code block language specifiers */
   codeBlockLanguage: RuleSeverity;
@@ -156,6 +156,64 @@ export interface MarkdownLintConfig {
 
 export type RuleSeverity = 'off' | 'warn' | 'error';
 
+/** Severity levels for todo comment types */
+export type TodoSeverity = 'off' | 'info' | 'warn' | 'error';
+
+/** Configuration for a single todo tag type */
+export interface TodoTagConfig {
+  /** Severity level for this tag */
+  severity: TodoSeverity;
+  /** Custom message prefix (optional) */
+  message?: string;
+}
+
+export interface TodoCommentsConfig {
+  /** Base severity (used if tag-specific config not provided) */
+  severity: RuleSeverity;
+
+  /** Tag-specific configuration */
+  tags?: {
+    /** TODO: 今後実装すべきタスク */
+    TODO?: TodoTagConfig;
+    /** FIXME: 修正が必要なバグ・問題（高優先度） */
+    FIXME?: TodoTagConfig;
+    /** XXX: 危険なコード・要注意箇所 */
+    XXX?: TodoTagConfig;
+    /** HACK: 回避策・一時的な実装 */
+    HACK?: TodoTagConfig;
+    /** BUG: 既知のバグ */
+    BUG?: TodoTagConfig;
+    /** NOTE: 補足・設計意図の説明 */
+    NOTE?: TodoTagConfig;
+    /** REVIEW: コードレビュー対象 */
+    REVIEW?: TodoTagConfig;
+    /** OPTIMIZE: 最適化が必要な箇所 */
+    OPTIMIZE?: TodoTagConfig;
+    /** WARNING: 警告・注意が必要 */
+    WARNING?: TodoTagConfig;
+    /** QUESTION: 疑問点・判断保留 */
+    QUESTION?: TodoTagConfig;
+  };
+
+  /** Custom tags to detect (in addition to built-in tags) */
+  customTags?: string[];
+
+  /** Ignore TODO comments in inline code (`code`) */
+  ignoreInlineCode?: boolean;
+
+  /** Ignore TODO comments in code blocks (```code```) */
+  ignoreCodeBlocks?: boolean;
+
+  /** Ignore TODO comments in tables */
+  ignoreInTables?: boolean;
+
+  /** Patterns to exclude from detection (regex strings) */
+  excludePatterns?: string[];
+
+  /** File patterns to exclude from this check */
+  exclude?: string[];
+}
+
 export interface LegacyFileNamesConfig {
   severity: RuleSeverity;
   /** Pattern to detect legacy file names (regex) */
@@ -260,6 +318,9 @@ export interface LintIssue {
 
   /** Suggested fix (optional) */
   suggestion?: string;
+
+  /** Issue-specific severity (for rules with mixed severities like todoComments) */
+  severity?: 'info' | 'warn' | 'error';
 }
 
 export interface LintSummary {
@@ -281,7 +342,24 @@ export const defaultConfig: DocsLintConfig = {
     versionInfo: 'warn',
     relatedDocuments: 'warn',
     headingHierarchy: 'warn',
-    todoComments: 'warn',
+    todoComments: {
+      severity: 'warn',
+      tags: {
+        TODO: { severity: 'info', message: '実装予定' },
+        FIXME: { severity: 'warn', message: '要修正' },
+        XXX: { severity: 'warn', message: '要注意' },
+        HACK: { severity: 'warn', message: '回避策' },
+        BUG: { severity: 'error', message: 'バグ' },
+        NOTE: { severity: 'off' },
+        REVIEW: { severity: 'info', message: 'レビュー対象' },
+        OPTIMIZE: { severity: 'info', message: '最適化候補' },
+        WARNING: { severity: 'warn', message: '警告' },
+        QUESTION: { severity: 'info', message: '要確認' },
+      },
+      ignoreInlineCode: true,
+      ignoreCodeBlocks: true,
+      ignoreInTables: false,
+    },
     codeBlockLanguage: 'warn',
     orphanDocuments: 'warn',
     terminology: 'warn',

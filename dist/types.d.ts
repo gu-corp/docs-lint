@@ -31,7 +31,7 @@ export interface RulesConfig {
     /** Check heading hierarchy */
     headingHierarchy: RuleSeverity;
     /** Check for TODO/FIXME comments */
-    todoComments: RuleSeverity;
+    todoComments: RuleSeverity | TodoCommentsConfig;
     /** Check for code block language specifiers */
     codeBlockLanguage: RuleSeverity;
     /** Check for orphan documents */
@@ -120,6 +120,54 @@ export interface MarkdownLintConfig {
     exclude?: string[];
 }
 export type RuleSeverity = 'off' | 'warn' | 'error';
+/** Severity levels for todo comment types */
+export type TodoSeverity = 'off' | 'info' | 'warn' | 'error';
+/** Configuration for a single todo tag type */
+export interface TodoTagConfig {
+    /** Severity level for this tag */
+    severity: TodoSeverity;
+    /** Custom message prefix (optional) */
+    message?: string;
+}
+export interface TodoCommentsConfig {
+    /** Base severity (used if tag-specific config not provided) */
+    severity: RuleSeverity;
+    /** Tag-specific configuration */
+    tags?: {
+        /** TODO: 今後実装すべきタスク */
+        TODO?: TodoTagConfig;
+        /** FIXME: 修正が必要なバグ・問題（高優先度） */
+        FIXME?: TodoTagConfig;
+        /** XXX: 危険なコード・要注意箇所 */
+        XXX?: TodoTagConfig;
+        /** HACK: 回避策・一時的な実装 */
+        HACK?: TodoTagConfig;
+        /** BUG: 既知のバグ */
+        BUG?: TodoTagConfig;
+        /** NOTE: 補足・設計意図の説明 */
+        NOTE?: TodoTagConfig;
+        /** REVIEW: コードレビュー対象 */
+        REVIEW?: TodoTagConfig;
+        /** OPTIMIZE: 最適化が必要な箇所 */
+        OPTIMIZE?: TodoTagConfig;
+        /** WARNING: 警告・注意が必要 */
+        WARNING?: TodoTagConfig;
+        /** QUESTION: 疑問点・判断保留 */
+        QUESTION?: TodoTagConfig;
+    };
+    /** Custom tags to detect (in addition to built-in tags) */
+    customTags?: string[];
+    /** Ignore TODO comments in inline code (`code`) */
+    ignoreInlineCode?: boolean;
+    /** Ignore TODO comments in code blocks (```code```) */
+    ignoreCodeBlocks?: boolean;
+    /** Ignore TODO comments in tables */
+    ignoreInTables?: boolean;
+    /** Patterns to exclude from detection (regex strings) */
+    excludePatterns?: string[];
+    /** File patterns to exclude from this check */
+    exclude?: string[];
+}
 export interface LegacyFileNamesConfig {
     severity: RuleSeverity;
     /** Pattern to detect legacy file names (regex) */
@@ -206,6 +254,8 @@ export interface LintIssue {
     message: string;
     /** Suggested fix (optional) */
     suggestion?: string;
+    /** Issue-specific severity (for rules with mixed severities like todoComments) */
+    severity?: 'info' | 'warn' | 'error';
 }
 export interface LintSummary {
     errors: number;
