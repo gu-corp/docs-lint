@@ -313,9 +313,9 @@ export async function checkTodoComments(
   const customTags = (!isSimpleConfig && config.customTags) || [];
   const allTags = [...BUILTIN_TAGS, ...customTags];
 
-  // Build regex pattern
+  // Build regex pattern - require colon to avoid false positives like "Review Status"
   const tagPattern = allTags.join('|');
-  const todoPattern = new RegExp(`\\b(${tagPattern})[:：]?\\s*(.*)`, 'gi');
+  const todoPattern = new RegExp(`\\b(${tagPattern})[:：]\\s*(.*)`, 'gi');
 
   // Options
   const ignoreInlineCode = isSimpleConfig ? true : (config.ignoreInlineCode ?? true);
