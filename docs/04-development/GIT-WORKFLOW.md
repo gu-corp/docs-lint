@@ -172,50 +172,50 @@ v{MAJOR}.{MINOR}.{PATCH}[-{prerelease}]
 | MINOR | 機能追加 | v1.1.0 |
 | PATCH | バグ修正 | v1.0.1 |
 
-### 4.2 プレリリースタグ
+### 4.2 タグとブランチの対応
 
-開発段階に応じたプレリリース識別子を使用:
-
-| 段階 | 用途 | 例 |
-|------|------|-----|
-| alpha | 開発初期、不安定 | v2.0.0-alpha.1 |
-| beta | 機能完成、テスト中 | v2.0.0-beta.1 |
-| rc | リリース候補 | v2.0.0-rc.1 |
-| (なし) | 本番リリース | v2.0.0 |
+| ブランチ | 環境 | タグ | マージ時の必須タグ |
+|---------|------|------|-------------------|
+| dev | Development | build.N (自動), alpha.N (任意) | - |
+| test | Test/QA | beta.N (手動) | beta |
+| stage | Staging | rc.N (手動) | rc |
+| main | Production | vX.Y.Z (手動) | release |
 
 ```text
-開発からリリースまでの流れ:
+リリースフロー:
 
-v2.0.0-alpha.1 → v2.0.0-alpha.2 → ...
-    ↓
-v2.0.0-beta.1 → v2.0.0-beta.2 → ...
-    ↓
-v2.0.0-rc.1 → v2.0.0-rc.2 → ...
-    ↓
-v2.0.0 (本番リリース)
+feature/* ──► dev ──[beta]──► test ──[rc]──► stage ──[vX.Y.Z]──► main
+              │                │               │                  │
+         build.N/alpha.N    beta.N           rc.N             release
+           (自動/任意)       (手動)          (手動)            (手動)
 ```
 
-### 4.3 タグとビルド番号の分離
+### 4.3 タグの意味
 
-| 種類 | 目的 | 管理方法 |
-|------|------|----------|
-| Git タグ | リリース管理 | 人間が意味あるマイルストーンで作成 |
-| ビルド番号 | CI/CD 識別 | GitHub Actions run number 等で自動付与 |
+| タグ | 意味 | 作成タイミング |
+|------|------|---------------|
+| build.N | CI/CD ビルド識別子 | dev push 時に自動 |
+| alpha.N | 開発中マイルストーン | dev で任意に手動 |
+| beta.N | テスト環境へ移行OK | dev → test マージ前に手動 |
+| rc.N | ステージング環境へ移行OK | test → stage マージ前に手動 |
+| vX.Y.Z | 本番リリース | stage → main マージ前に手動 |
 
-**重要**: ビルド番号（`-build.N`）は Git タグにしない。CI/CD 内部の識別子として使用。
-
-### 4.4 リリースフロー
+### 4.4 タグ作成コマンド
 
 ```bash
-# 1. プレリリースタグ（開発中）
+# alpha タグ（dev で任意）
 git tag -a v2.0.0-alpha.1 -m "v2.0.0 Alpha 1"
 git push origin v2.0.0-alpha.1
 
-# 2. RC タグ（リリース候補）
+# beta タグ（test 環境へのマージ前）
+git tag -a v2.0.0-beta.1 -m "v2.0.0 Beta 1"
+git push origin v2.0.0-beta.1
+
+# rc タグ（stage 環境へのマージ前）
 git tag -a v2.0.0-rc.1 -m "v2.0.0 Release Candidate 1"
 git push origin v2.0.0-rc.1
 
-# 3. 本番リリースタグ
+# 本番リリースタグ（main へのマージ前）
 git tag -a v2.0.0 -m "Release v2.0.0"
 git push origin v2.0.0
 ```
