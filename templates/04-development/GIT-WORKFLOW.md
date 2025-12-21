@@ -171,16 +171,61 @@ v{MAJOR}.{MINOR}.{PATCH}[-{prerelease}]
 | MAJOR | 破壊的変更 | v2.0.0 |
 | MINOR | 機能追加 | v1.1.0 |
 | PATCH | バグ修正 | v1.0.1 |
-| prerelease | プレリリース | v1.0.0-beta.1 |
 
-### 4.2 リリースフロー
+### 4.2 プレリリースタグ
+
+開発段階に応じたプレリリース識別子を使用:
+
+| 段階 | 用途 | 例 |
+|------|------|-----|
+| alpha | 開発初期、不安定 | v2.0.0-alpha.1 |
+| beta | 機能完成、テスト中 | v2.0.0-beta.1 |
+| rc | リリース候補 | v2.0.0-rc.1 |
+| (なし) | 本番リリース | v2.0.0 |
+
+```text
+開発からリリースまでの流れ:
+
+v2.0.0-alpha.1 → v2.0.0-alpha.2 → ...
+    ↓
+v2.0.0-beta.1 → v2.0.0-beta.2 → ...
+    ↓
+v2.0.0-rc.1 → v2.0.0-rc.2 → ...
+    ↓
+v2.0.0 (本番リリース)
+```
+
+### 4.3 タグとビルド番号の分離
+
+| 種類 | 目的 | 管理方法 |
+|------|------|----------|
+| Git タグ | リリース管理 | 人間が意味あるマイルストーンで作成 |
+| ビルド番号 | CI/CD 識別 | GitHub Actions run number 等で自動付与 |
+
+**重要**: ビルド番号（`-build.N`）は Git タグにしない。CI/CD 内部の識別子として使用。
+
+### 4.4 リリースフロー
 
 ```bash
-# バージョン更新
-npm version patch  # or minor, major
+# 1. プレリリースタグ（開発中）
+git tag -a v2.0.0-alpha.1 -m "v2.0.0 Alpha 1"
+git push origin v2.0.0-alpha.1
 
-# タグ作成・プッシュ
-git push origin main --tags
+# 2. RC タグ（リリース候補）
+git tag -a v2.0.0-rc.1 -m "v2.0.0 Release Candidate 1"
+git push origin v2.0.0-rc.1
+
+# 3. 本番リリースタグ
+git tag -a v2.0.0 -m "Release v2.0.0"
+git push origin v2.0.0
+```
+
+### 4.5 GitHub Release
+
+本番リリース時は GitHub Release を作成:
+
+```bash
+gh release create v2.0.0 --title "v2.0.0" --notes "Release notes here"
 ```
 
 ---
