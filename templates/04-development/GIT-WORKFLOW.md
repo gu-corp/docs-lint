@@ -1,7 +1,7 @@
 # Git ワークフロー規約
 
-**バージョン**: 1.0
-**更新日**: 2025-12-07
+**バージョン**: 1.1
+**更新日**: 2025-12-21
 
 ---
 
@@ -13,24 +13,72 @@
 
 ## 1. ブランチ戦略
 
-### 1.1 メインブランチ
+### 1.1 環境ブランチ
 
-| ブランチ | 用途 | 保護 |
-|----------|------|------|
-| `main` | 本番環境 | 必須 |
-| `develop` | 開発統合（オプション） | 推奨 |
+環境に紐づく保護されたブランチ:
+
+| ブランチ | 環境 | 用途 | 保護 |
+|----------|------|------|------|
+| `main` | Production | 本番環境 | 必須（承認必須） |
+| `stage` | Staging | ステージング・本番前検証 | 必須 |
+| `test` | Test | QA・検証用 | 推奨 |
+| `dev` | Development | 開発環境 | 推奨 |
+
+```text
+環境ブランチの流れ:
+
+dev → test → stage → main
+ │      │       │       │
+ ▼      ▼       ▼       ▼
+Dev   Test   Staging  Prod
+環境    環境     環境    環境
+```
 
 ### 1.2 作業ブランチ
 
-| プレフィックス | 用途 | 例 |
-|----------------|------|-----|
-| `feature/` | 新機能 | `feature/user-auth` |
-| `fix/` | バグ修正 | `fix/login-error` |
-| `hotfix/` | 緊急修正 | `hotfix/security-patch` |
-| `refactor/` | リファクタリング | `refactor/api-client` |
-| `docs/` | ドキュメント | `docs/api-reference` |
+| プレフィックス | 用途 | マージ先 | 例 |
+|----------------|------|---------|-----|
+| `feature/` | 新機能 | dev | `feature/user-auth` |
+| `fix/` | バグ修正 | dev | `fix/login-error` |
+| `hotfix/` | 緊急修正 | main (直接) | `hotfix/security-patch` |
+| `refactor/` | リファクタリング | dev | `refactor/api-client` |
+| `docs/` | ドキュメント | dev | `docs/api-reference` |
+| `develop/` | メジャーバージョン開発 | dev (完成時) | `develop/v2` |
 
-### 1.3 命名規則
+### 1.3 開発フロー
+
+```text
+dev ─────────────────────────────────────────────────────►
+  │
+  ├─ feature/user-auth ──┐
+  │                       │ PR to dev
+  │  ┌────────────────────┘
+  │  │ (Review & CI)
+  ├──┴─ (Merge to dev)
+  │
+  ├─────────────────────────────► test (PR/Merge)
+  │
+  ├─────────────────────────────► stage (PR/Merge)
+  │
+  └─────────────────────────────► main (PR/Merge + Approval)
+```
+
+### 1.4 メジャーバージョン開発
+
+大規模な破壊的変更を伴う場合:
+
+```text
+develop/v2 ─────────────────────────────────────────►
+  │
+  ├─ feature/v2-new-api ──┐
+  │                        │ PR to develop/v2
+  │  ┌─────────────────────┘
+  ├──┴─ (Merge)
+  │
+  └─────────────────────────► dev (リリース時にマージ)
+```
+
+### 1.5 命名規則
 
 ```text
 {type}/{short-description}
