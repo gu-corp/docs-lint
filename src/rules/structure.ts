@@ -9,18 +9,19 @@ export const STANDARD_FOLDER_STRUCTURE: FolderDefinition[] = [
   // Top-level required folders
   { path: '01-plan', required: true, description: 'Planning & Proposals / 企画・提案', optionalFiles: ['PROPOSAL.md', 'MVP.md', 'ROADMAP.md'] },
   { path: '02-spec', required: true, description: 'Specifications / 仕様書' },
-  { path: '03-guide', required: true, description: 'Guides & Manuals (SysOps) / ガイド・マニュアル・運用', optionalFiles: ['OPERATION-GUIDE.md', 'DEPLOYMENT-GUIDE.md'] },
+  { path: '03-guide', required: true, description: 'Guides & Manuals / ガイド・マニュアル' },
   { path: '04-development', required: true, description: 'Development (DevOps, CI/CD, IaC) / 開発・DevOps', optionalFiles: ['SETUP.md', 'CODING-STANDARDS.md', 'TESTING.md', 'GIT-WORKFLOW.md', 'CI-CD.md'] },
-  // Optional folders
-  { path: '05-operations', required: false, description: 'Operations (SRE, Monitoring) / 運用・監視' },
-  { path: '05-business', required: false, description: 'Business Strategy (optional) / ビジネス戦略' },
-  { path: '06-reference', required: false, description: 'Research & References (optional) / リサーチ・参考資料' },
+  // Optional top-level folders
+  { path: '05-reference', required: false, description: 'Research & References (optional) / リサーチ・参考資料' },
   // 02-spec subfolders
   { path: '02-spec/01-requirements', required: true, description: 'Requirements / 要件定義', files: ['REQUIREMENTS.md'] },
   { path: '02-spec/02-architecture', required: true, description: 'Architecture / アーキテクチャ', optionalFiles: ['ARCHITECTURE.md', 'DATABASE-DESIGN.md', 'API-DESIGN.md', 'SECURITY.md', 'PERFORMANCE.md'] },
   { path: '02-spec/03-specifications', required: true, description: 'Specifications / 仕様書 (screens, API, database)' },
   { path: '02-spec/04-testing', required: true, description: 'Test Specifications / テスト仕様', optionalFiles: ['TEST-CASES.md', 'TEST.md', 'E2E.md'] },
   { path: '02-spec/05-reference', required: false, description: 'Reference / 参照資料' },
+  // 03-guide subfolders
+  { path: '03-guide/01-operation', required: false, description: 'Operation Guide / 運用ガイド（デプロイ、監視、障害対応）' },
+  { path: '03-guide/02-user', required: false, description: 'User Guide / ユーザーガイド' },
 ];
 
 export interface DocsLanguageConfig {
