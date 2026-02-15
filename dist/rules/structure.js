@@ -14,9 +14,10 @@ export const STANDARD_FOLDER_STRUCTURE = [
     { path: '06-reference', required: false, description: 'Research & References (optional) / リサーチ・参考資料' },
     // 02-spec subfolders
     { path: '02-spec/01-requirements', required: true, description: 'Requirements / 要件定義', files: ['REQUIREMENTS.md'] },
-    { path: '02-spec/02-design', required: true, description: 'Design / 設計', files: ['ARCHITECTURE.md', 'CLASS.md', 'ERROR-HANDLING.md', 'UML.md'], optionalFiles: ['API.md', 'DATABASE.md', 'SCREEN.md'] },
-    { path: '02-spec/03-infrastructure', required: false, description: 'Infrastructure, Deployment, Security / インフラ', files: ['INFRASTRUCTURE.md'], optionalFiles: ['DEPLOYMENT.md', 'SECURITY.md'] },
-    { path: '02-spec/04-testing', required: true, description: 'Test Specifications / テスト仕様', files: ['TEST-CASES.md'], optionalFiles: ['TEST.md', 'E2E.md'] },
+    { path: '02-spec/02-architecture', required: true, description: 'Architecture / アーキテクチャ', optionalFiles: ['ARCHITECTURE.md', 'DATABASE-DESIGN.md', 'API-DESIGN.md', 'SECURITY.md', 'PERFORMANCE.md'] },
+    { path: '02-spec/03-specifications', required: true, description: 'Specifications / 仕様書 (screens, API, database)' },
+    { path: '02-spec/04-testing', required: true, description: 'Test Specifications / テスト仕様', optionalFiles: ['TEST-CASES.md', 'TEST.md', 'E2E.md'] },
+    { path: '02-spec/05-reference', required: false, description: 'Reference / 参照資料' },
 ];
 /**
  * Check folder structure matches expected configuration
