@@ -1,6 +1,6 @@
 # テストケース
 
-**バージョン**: 1.18.0
+**バージョン**: 2.0.0
 **更新日**: 2026-02-18
 
 ---
@@ -63,18 +63,23 @@ docs-lint のテストケースを定義します。
 
 | ID | 対象要件 | テスト内容 | 期待結果 |
 |----|---------|-----------|---------|
-| TC-I001 | FR-CLI-001 | docs-lint lint 実行 | 結果出力 |
-| TC-I002 | FR-CLI-002 | docs-lint init 実行 | 設定ファイル生成 |
-| TC-I003 | FR-CLI-003 | docs-lint init-standards 実行 | DOCUMENT_STANDARDS.md生成 |
-| TC-I013 | FR-CLI-004 | docs-lint show-standards 実行 | 標準表示 |
-| TC-I014 | FR-CLI-005 | docs-lint check-structure 実行 | 構成チェック |
-| TC-I015 | FR-CLI-006 | docs-lint scaffold 実行 | フォルダ生成 |
-| TC-I016 | FR-CLI-007 | `docs-lint review:spec` 実行 | AIレビュー |
-| TC-I004 | FR-CLI-008 | --verbose オプション | 詳細出力 |
-| TC-I005 | FR-CLI-009 | --json オプション | JSON出力 |
-| TC-I006 | FR-CLI-010 | --ai-prompt オプション | プロンプト生成 |
-| TC-I007 | FR-CLI-011 | --only brokenLinks | 指定ルールのみ実行 |
+| TC-I001 | FR-CLI-001 | `docs-lint lint` 実行 | 結果出力 |
+| TC-I002 | FR-CLI-002 | `docs-lint init` 実行 | 設定ファイル生成 |
+| TC-I003 | FR-CLI-003 | `docs-lint init --standards` 実行 | DOCUMENT_STANDARDS.md生成 |
+| TC-I013 | FR-CLI-004 | `docs-lint show standards` 実行 | 標準表示 |
+| TC-I014 | FR-CLI-005 | `docs-lint check spec` 実行 | 仕様書構成チェック |
+| TC-I015 | FR-CLI-006 | `docs-lint init --scaffold` 実行 | フォルダ生成 |
+| TC-I016 | FR-CLI-007 | `docs-lint review spec` 実行 | AIレビュー（MECE含む） |
+| TC-I004 | FR-CLI-008 | `--verbose` オプション | 詳細出力 |
+| TC-I005 | FR-CLI-009 | `--json` オプション | JSON出力 |
+| TC-I006 | FR-CLI-010 | `--ai-prompt` オプション | プロンプト生成 |
+| TC-I007 | FR-CLI-011 | `--only brokenLinks` | 指定ルールのみ実行 |
 | TC-I008 | FR-CLI-012 | `--skip todoComments` | 指定ルールをスキップ |
+| TC-I040 | FR-CLI-013 | `docs-lint check code` 実行 | コードチェック |
+| TC-I041 | FR-CLI-014 | `docs-lint review code` 実行 | コードレビュー |
+| TC-I042 | FR-CLI-015 | `docs-lint show config` 実行 | 設定表示 |
+| TC-I043 | FR-CLI-016 | `docs-lint show rules` 実行 | ルール一覧表示 |
+| TC-I044 | FR-CLI-017 | `docs-lint lint --fix` 実行 | Markdown自動修正 |
 
 ### API
 
