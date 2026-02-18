@@ -197,6 +197,8 @@ docs-lint review spec [オプション]
 - **相互排他性**: 仕様の重複、矛盾がないか
 - **完全網羅性**: 機能、状態、エラーが網羅されているか
 
+詳細は[MECEチェック仕様](../02-spec/03-specifications/MECE-CHECK.md)を参照してください。
+
 ### show standards
 
 現在のドキュメント標準を表示します。
