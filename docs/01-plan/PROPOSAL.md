@@ -1,7 +1,7 @@
 # docs-lint プロジェクト提案書
 
-**バージョン**: 1.0
-**更新日**: 2025-12-10
+**バージョン**: 1.18.0
+**更新日**: 2026-02-18
 
 ---
 
@@ -104,6 +104,6 @@ G.U.Corp の全プロジェクト（90以上のリポジトリ）において、
 
 ## 関連ドキュメント
 
-- [要件定義](../02-spec/01-requirements/REQUIREMENTS.md)
-- [アーキテクチャ設計](../02-spec/02-design/ARCHITECTURE.md)
+- [要件定義](../02-spec/01-requirements/README.md)
+- [アーキテクチャ設計](../02-spec/02-architecture/ARCHITECTURE.md)
 - [ロードマップ](./ROADMAP.md)

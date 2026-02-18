@@ -1,7 +1,7 @@
 # テストケース
 
-**バージョン**: 1.0
-**更新日**: 2025-12-10
+**バージョン**: 1.18.0
+**更新日**: 2026-02-18
 
 ---
 
@@ -141,5 +141,5 @@ npm test -- --grep "brokenLinks"
 
 ## 関連ドキュメント
 
-- [要件定義](../01-requirements/REQUIREMENTS.md)
-- [アーキテクチャ設計](../02-design/ARCHITECTURE.md)
+- [要件定義](../01-requirements/README.md)
+- [アーキテクチャ設計](../02-architecture/ARCHITECTURE.md)

@@ -1,6 +1,8 @@
 {
   "docsDir": "./docs",
   "rules": {
+    "requirementTestMapping": "warn",
+    "codeBlockLanguage": "warn",
     "todoComments": {
       "severity": "warn",
       "tags": {

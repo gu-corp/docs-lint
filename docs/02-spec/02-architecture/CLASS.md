@@ -1,7 +1,7 @@
 # クラス設計
 
-**バージョン**: 1.0
-**更新日**: 2025-12-10
+**バージョン**: 1.18.0
+**更新日**: 2026-02-18
 
 ---
 
@@ -272,4 +272,4 @@ export const DEFAULT_CONFIG: DocsLintConfig = {
 - [アーキテクチャ設計](./ARCHITECTURE.md)
 - [UML設計図](./UML.md)
 - [API仕様](./API.md)
-- [要件定義](../01-requirements/REQUIREMENTS.md)
+- [要件定義](../01-requirements/README.md)
