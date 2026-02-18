@@ -50,13 +50,13 @@ npm install github:gu-corp/docs-lint#v1.14.1 --save-dev
 > - `github:gu-corp/docs-lint` の形式でインストールしてください
 > - 常にローカルのdevDependencyとしてインストールし、グローバルインストールは避けてください
 
-## CLI Usage
+## CLI Usage (v2.0)
 
 ```bash
 # Basic linting
 docs-lint lint
 
-# Auto-fix markdown formatting issues (v1.14.0)
+# Auto-fix markdown formatting issues
 docs-lint lint --fix
 
 # Specify docs directory
@@ -68,32 +68,24 @@ docs-lint lint --json
 # Generate AI assessment prompt
 docs-lint lint --ai-prompt
 
-# Check folder structure
-docs-lint check-structure --numbered --upper-case
+# Initialize configuration (unified command)
+docs-lint init                    # Interactive setup
+docs-lint init -y                 # Use defaults
+docs-lint init --standards        # Also create DOCUMENT_STANDARDS.md
+docs-lint init --scaffold         # Also create folder structure
 
-# Initialize configuration
-docs-lint init
+# Static checks
+docs-lint check code -s ./src     # Code checks (test files, coverage)
+docs-lint check spec -d ./docs    # Spec checks (structure, references)
 
-# Create standard folder structure (v1.7.0)
-docs-lint scaffold -d ./docs
-docs-lint scaffold -d ./docs --with-templates  # Include template files
-docs-lint scaffold -d ./docs --dry-run         # Preview without creating
-```
+# AI-powered reviews (generates prompt or calls API with --api)
+docs-lint review code             # Code review for requirement coverage
+docs-lint review spec             # Spec review (includes MECE check)
 
-### Code Review Commands (v1.2.0+)
-
-```bash
-# Static code checks (test file existence, coverage)
-docs-lint check:code -s ./src
-
-# Static specification checks (structure, references)
-docs-lint check:spec -d ./docs
-
-# AI-powered requirement coverage analysis (requires ANTHROPIC_API_KEY)
-docs-lint review:code -d ./docs -s ./src
-
-# AI-powered spec review (requires ANTHROPIC_API_KEY)
-docs-lint review:spec -d ./docs
+# Display information
+docs-lint show standards          # Show document standards
+docs-lint show config             # Show current configuration
+docs-lint show rules              # Show available lint rules
 ```
 
 #### Environment Variables for AI Commands
@@ -103,19 +95,18 @@ docs-lint review:spec -d ./docs
 ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
 
-### CLI Options
+### CLI Options (lint command)
 
 | Option | Description |
 |--------|-------------|
 | `-d, --docs-dir <path>` | Documentation directory (default: `./docs`) |
-| `-s, --src-dir <path>` | Source directory (default: `./src`) |
 | `-c, --config <path>` | Configuration file path |
 | `--only <rules>` | Only run specific rules (comma-separated) |
 | `--skip <rules>` | Skip specific rules (comma-separated) |
 | `-v, --verbose` | Verbose output |
 | `--json` | Output as JSON |
 | `--ai-prompt` | Generate AI-friendly assessment prompt |
-| `--fix` | Auto-fix markdown formatting issues (v1.14.0) |
+| `--fix` | Auto-fix markdown formatting issues |
 
 ## Programmatic Usage
 

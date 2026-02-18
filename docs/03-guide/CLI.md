@@ -1,28 +1,31 @@
 # CLIリファレンス
 
-**バージョン**: 1.18.0
+**バージョン**: 2.0.0
 **更新日**: 2026-02-18
 
 ---
 
 ## 概要
 
-docs-lint のコマンドラインインターフェースについて説明します。
+docs-lint v2.0 のコマンドラインインターフェースについて説明します。
 
-## コマンド一覧
+## コマンド構造
 
-| コマンド | 説明 |
-|----------|------|
-| `lint` | ドキュメントのリントを実行 |
-| `init` | 設定ファイルを対話形式で生成 |
-| `init-standards` | DOCUMENT_STANDARDS.mdを生成 |
-| `show-standards` | 現在の標準を表示 |
-| `check-structure` | フォルダ構成をチェック |
-| `scaffold` | 標準フォルダ構成を生成 |
-| `check:code` | ソースコードの静的チェック |
-| `check:spec` | 仕様書の静的チェック |
-| `review:code` | AIによるコードレビュー |
-| `review:spec` | AIによる仕様書レビュー |
+```text
+docs-lint
+├── lint [options]           # リント実行
+├── init [options]           # 初期化（統合）
+├── check <target>           # 静的チェック
+│   ├── code                 # コードチェック
+│   └── spec                 # 仕様チェック
+├── review <target>          # AIレビュー
+│   ├── code                 # コードレビュー
+│   └── spec                 # 仕様レビュー（MECE含む）
+└── show <what>              # 情報表示
+    ├── standards            # 標準表示
+    ├── config               # 設定表示
+    └── rules                # ルール一覧
+```
 
 ## コマンド詳細
 
@@ -31,7 +34,7 @@ docs-lint のコマンドラインインターフェースについて説明し�
 ドキュメントのリントを実行します。
 
 ```bash
-npx docs-lint lint [オプション]
+docs-lint lint [オプション]
 ```
 
 **オプション**:
@@ -45,52 +48,42 @@ npx docs-lint lint [オプション]
 | `-v, --verbose` | 詳細出力 |
 | `--json` | JSON形式で出力 |
 | `--ai-prompt` | AI向け評価プロンプトを生成 |
-| `--fix` | マークダウンフォーマットを自動修正（v1.14.0+） |
+| `--fix` | マークダウンフォーマットを自動修正 |
 
 **使用例**:
 
 ```bash
 # 基本的なリント
-npx docs-lint lint
+docs-lint lint
 
 # ディレクトリ指定
-npx docs-lint lint -d ./documentation
+docs-lint lint -d ./documentation
 
 # 詳細出力
-npx docs-lint lint -v
+docs-lint lint -v
 
 # 特定ルールのみ実行
-npx docs-lint lint --only brokenLinks,todoComments
+docs-lint lint --only brokenLinks,todoComments
 
 # 特定ルールをスキップ
-npx docs-lint lint --skip terminology,orphanDocuments
+docs-lint lint --skip terminology,orphanDocuments
 
 # JSON出力
-npx docs-lint lint --json
+docs-lint lint --json
 
 # AIプロンプト生成
-npx docs-lint lint --ai-prompt > report.md
+docs-lint lint --ai-prompt > report.md
 
 # 自動修正
-npx docs-lint lint --fix
+docs-lint lint --fix
 ```
-
-**ユースケース**:
-
-| シナリオ | コマンド |
-|----------|----------|
-| PR前のクイックチェック | `npx docs-lint lint` |
-| CI/CDパイプライン | `npx docs-lint lint --json` |
-| AIレビュー準備 | `npx docs-lint lint --ai-prompt > report.md` |
-| フォーマット修正 | `npx docs-lint lint --fix` |
-| デバッグ時 | `npx docs-lint lint -v --only brokenLinks` |
 
 ### init
 
-対話形式で設定ファイルを生成します。
+設定ファイルと関連リソースを初期化します。
 
 ```bash
-npx docs-lint init [オプション]
+docs-lint init [オプション]
 ```
 
 **オプション**:
@@ -99,125 +92,41 @@ npx docs-lint init [オプション]
 |-----------|------|
 | `-d, --docs-dir <path>` | ドキュメントディレクトリ（デフォルト: `./docs`） |
 | `-y, --yes` | ウィザードをスキップ、デフォルト値を使用 |
+| `--standards` | DOCUMENT_STANDARDS.mdも生成 |
+| `--scaffold` | 標準フォルダ構成も生成 |
 
 **使用例**:
 
 ```bash
 # 対話形式セットアップ
-npx docs-lint init
+docs-lint init
 
 # デフォルト値で作成
-npx docs-lint init -y
+docs-lint init -y
+
+# 標準ファイルも生成
+docs-lint init --standards
+
+# フォルダ構成も生成
+docs-lint init --scaffold
+
+# すべて生成
+docs-lint init -y --standards --scaffold
 ```
 
-**生成されるファイル**:
+**生成されるもの**:
 
 - `docs-lint.config.json` - リントルール設定
 - `docs/docs.config.json` - 言語設定
+- `--standards`: `docs/DOCUMENT_STANDARDS.md`
+- `--scaffold`: 標準フォルダ構成
 
-### init-standards
-
-G.U.Corp標準テンプレートからDOCUMENT_STANDARDS.mdを生成します。
-
-```bash
-npx docs-lint init-standards [オプション]
-```
-
-**オプション**:
-
-| オプション | 説明 |
-|-----------|------|
-| `-d, --docs-dir <path>` | ドキュメントディレクトリ（デフォルト: `./docs`） |
-| `-f, --force` | 既存ファイルを上書き |
-
-**使用例**:
-
-```bash
-# 標準ファイル作成
-npx docs-lint init-standards
-
-# 上書き
-npx docs-lint init-standards --force
-```
-
-### show-standards
-
-現在のドキュメント標準を表示します。
-
-```bash
-npx docs-lint show-standards [オプション]
-```
-
-**オプション**:
-
-| オプション | 説明 |
-|-----------|------|
-| `-d, --docs-dir <path>` | ドキュメントディレクトリ（デフォルト: `./docs`） |
-
-### check-structure
-
-フォルダ構成と命名規則をチェックします。
-
-```bash
-npx docs-lint check-structure [オプション]
-```
-
-**オプション**:
-
-| オプション | 説明 |
-|-----------|------|
-| `-d, --docs-dir <path>` | ドキュメントディレクトリ（デフォルト: `./docs`） |
-| `--numbered` | 番号付きフォルダ（01-, 02-等）を期待 |
-| `--upper-case` | UPPER_CASE.md形式を期待 |
-
-**使用例**:
-
-```bash
-# 番号付きフォルダチェック
-npx docs-lint check-structure --numbered
-
-# 大文字ファイル名チェック
-npx docs-lint check-structure --upper-case
-
-# 両方チェック
-npx docs-lint check-structure --numbered --upper-case
-```
-
-### scaffold
-
-標準フォルダ構成を生成します。
-
-```bash
-npx docs-lint scaffold [オプション]
-```
-
-**オプション**:
-
-| オプション | 説明 |
-|-----------|------|
-| `-d, --docs-dir <path>` | ドキュメントディレクトリ（デフォルト: `./docs`） |
-| `--with-templates` | テンプレートファイルを含める |
-| `--dry-run` | 実行せずプレビューのみ |
-
-**使用例**:
-
-```bash
-# 標準構成を生成
-npx docs-lint scaffold -d ./docs
-
-# テンプレート込みで生成
-npx docs-lint scaffold -d ./docs --with-templates
-
-# プレビュー
-npx docs-lint scaffold -d ./docs --dry-run
-```
-
-### check:code
+### check code
 
 ソースコードの静的チェック（テストファイル存在、カバレッジ）を実行します。
 
 ```bash
-npx docs-lint check:code [オプション]
+docs-lint check code [オプション]
 ```
 
 **オプション**:
@@ -225,13 +134,15 @@ npx docs-lint check:code [オプション]
 | オプション | 説明 |
 |-----------|------|
 | `-s, --src-dir <path>` | ソースディレクトリ（デフォルト: `./src`） |
+| `-v, --verbose` | 詳細出力 |
+| `--json` | JSON形式で出力 |
 
-### check:spec
+### check spec
 
 仕様書の静的チェック（構造、参照）を実行します。
 
 ```bash
-npx docs-lint check:spec [オプション]
+docs-lint check spec [オプション]
 ```
 
 **オプション**:
@@ -239,13 +150,15 @@ npx docs-lint check:spec [オプション]
 | オプション | 説明 |
 |-----------|------|
 | `-d, --docs-dir <path>` | ドキュメントディレクトリ（デフォルト: `./docs`） |
+| `-v, --verbose` | 詳細出力 |
+| `--json` | JSON形式で出力 |
 
-### review:code
+### review code
 
-AIによるコードレビューを実行します。`ANTHROPIC_API_KEY`環境変数が必要です。
+AIによるコードレビュー（要件カバレッジ分析）のプロンプトを生成します。
 
 ```bash
-npx docs-lint review:code [オプション]
+docs-lint review code [オプション]
 ```
 
 **オプション**:
@@ -254,20 +167,72 @@ npx docs-lint review:code [オプション]
 |-----------|------|
 | `-d, --docs-dir <path>` | ドキュメントディレクトリ |
 | `-s, --src-dir <path>` | ソースディレクトリ |
+| `--api` | Anthropic APIを直接呼び出す |
+| `--model <model>` | 使用するAIモデル（--api使用時） |
+| `-v, --verbose` | 詳細出力 |
+| `--json` | JSON形式で出力 |
 
-### review:spec
+### review spec
 
-AIによる仕様書レビューを実行します。`ANTHROPIC_API_KEY`環境変数が必要です。
+AIによる仕様書レビュー（MECEチェック含む）のプロンプトを生成します。
 
 ```bash
-npx docs-lint review:spec <file> [オプション]
+docs-lint review spec [オプション]
 ```
 
 **オプション**:
 
 | オプション | 説明 |
 |-----------|------|
-| `--type <type>` | ドキュメントタイプ（requirements, design, test等） |
+| `-d, --docs-dir <path>` | ドキュメントディレクトリ |
+| `-s, --src-dir <path>` | ソースディレクトリ（設計・実装整合性チェック用） |
+| `--design` | 設計・実装整合性に焦点を当てる |
+| `--api` | Anthropic APIを直接呼び出す |
+| `--model <model>` | 使用するAIモデル（--api使用時） |
+| `-v, --verbose` | 詳細出力 |
+| `--json` | JSON形式で出力 |
+
+**MECEチェック**: v2.0で追加されたMECE（相互排他・完全網羅）チェックが含まれます。
+
+- **相互排他性**: 仕様の重複、矛盾がないか
+- **完全網羅性**: 機能、状態、エラーが網羅されているか
+
+### show standards
+
+現在のドキュメント標準を表示します。
+
+```bash
+docs-lint show standards [オプション]
+```
+
+**オプション**:
+
+| オプション | 説明 |
+|-----------|------|
+| `-d, --docs-dir <path>` | ドキュメントディレクトリ（デフォルト: `./docs`） |
+
+### show config
+
+現在の設定を表示します。
+
+```bash
+docs-lint show config [オプション]
+```
+
+**オプション**:
+
+| オプション | 説明 |
+|-----------|------|
+| `-c, --config <path>` | 設定ファイルパス |
+| `-d, --docs-dir <path>` | ドキュメントディレクトリ（デフォルト: `./docs`） |
+
+### show rules
+
+利用可能なルール一覧を表示します。
+
+```bash
+docs-lint show rules
+```
 
 ## 終了コード
 
@@ -314,13 +279,23 @@ Summary:
 }
 ```
 
-### AIプロンプト（--ai-prompt）
+## v1.x からの移行
 
-AI評価用の構造化マークダウンを生成します：
+v2.0で以下のコマンドが変更されました：
 
-- ドキュメント標準
-- リント結果
-- 品質チェックリスト
+| v1.x | v2.0 | 備考 |
+|------|------|------|
+| `init-standards` | `init --standards` | 統合 |
+| `scaffold` | `init --scaffold` | 統合 |
+| `show-standards` | `show standards` | サブコマンド化 |
+| `check-structure` | `lint` | 統合（standardFolderStructureルール） |
+| `check:code` | `check code` | スペース区切り |
+| `check:spec` | `check spec` | スペース区切り |
+| `review:code` | `review code` | スペース区切り |
+| `review:spec` | `review spec` | スペース区切り |
+| `sync` | 削除 | 不要と判断 |
+
+**後方互換性**: v1.x形式のコマンドは非推奨警告を表示しつつ動作します（v3.0で削除予定）。
 
 ## トラブルシューティング
 
@@ -331,23 +306,19 @@ AI評価用の構造化マークダウンを生成します：
 ls -la docs-lint.config.json
 
 # 明示的に設定ファイルを指定
-npx docs-lint lint -c ./docs-lint.config.json
+docs-lint lint -c ./docs-lint.config.json
+
+# 現在の設定を確認
+docs-lint show config
 ```
 
 ### ESMエラーが発生する
 
 ```bash
-# package.jsonに"type": "module"があるか確認
-# Node.js 18以上を使用しているか確認
+# Node.jsバージョン確認（18以上が必要）
 node --version
-```
 
-### 特定のファイルを除外したい
-
-```json
-{
-  "exclude": ["**/drafts/**", "**/archive/**", "**/_*.md"]
-}
+# package.jsonに"type": "module"があるか確認
 ```
 
 ---

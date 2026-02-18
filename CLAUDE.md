@@ -15,7 +15,7 @@ This file provides guidance to Claude Code when working with the docs-lint packa
 npm install github:gu-corp/docs-lint --save-dev
 
 # 特定バージョンをインストール
-npm install github:gu-corp/docs-lint#v1.14.1 --save-dev
+npm install github:gu-corp/docs-lint#v2.0.0 --save-dev
 ```
 
 ## Development Commands
@@ -28,13 +28,14 @@ npm run lint         # Run ESLint
 npm test             # Run Vitest tests
 ```
 
-## CLI Usage
+## CLI Usage (v2.0)
 
 ```bash
 # Initialize configuration
 docs-lint init                    # Interactive setup wizard
 docs-lint init -y                 # Use defaults
-docs-lint init-standards          # Generate DOCUMENT_STANDARDS.md
+docs-lint init --standards        # Also generate DOCUMENT_STANDARDS.md
+docs-lint init --scaffold         # Also create folder structure
 
 # Linting
 docs-lint lint                    # Run all linting rules
@@ -46,12 +47,18 @@ docs-lint lint --ai-prompt        # Generate AI-friendly assessment
 # AIへの指示: lintで警告/エラーが出たら、まず --fix を試してください
 # 自動修正可能な問題は --fix で解決できます。効率的です。
 
-# Structure checks
-docs-lint check-structure         # Check folder structure
-docs-lint check-structure --numbered --upper-case
+# Static checks
+docs-lint check code              # Code checks (test files, coverage)
+docs-lint check spec              # Spec checks (structure, references)
 
-# Standards
-docs-lint show-standards          # Show current standards
+# AI reviews (generates prompt, use --api for direct API call)
+docs-lint review code             # Code review prompt
+docs-lint review spec             # Spec review prompt (includes MECE check)
+
+# Display information
+docs-lint show standards          # Show current standards
+docs-lint show config             # Show current configuration
+docs-lint show rules              # Show available lint rules
 ```
 
 ## Project Architecture
@@ -132,18 +139,17 @@ Translations are stored in `src/templates/translations/`:
 
 Standards can be generated in different languages.
 
-### Standards Synchronization (Planned)
+### Standards Drift Detection
 
-The package embeds development standards templates that can be synchronized to projects:
+The package includes `standardsDrift` rule that detects when project standards differ from embedded templates:
 
 1. **Templates**: Canonical standards stored in `templates/04-development/`
-2. **Sync Command**: `docs-lint sync --standards` (planned)
-3. **Drift Detection**: Lint rule to detect when project standards differ from templates
+2. **Drift Detection**: Lint rule alerts when project files differ from templates
 
 This approach ensures:
 - AI can read standards from project's own docs
 - Engineers have local copies to reference
-- Central updates can be pushed via docs-lint upgrades
+- Differences are visible (but not auto-synced to preserve customizations)
 
 ## Configuration
 
@@ -257,13 +263,18 @@ npm test -- --watch   # Watch mode
 
 1. Update version in `package.json`
 2. Commit and push to main
-3. Create tag: `git tag v1.x.x`
+3. Create tag: `git tag v2.x.x`
 4. Push tag: `git push origin --tags`
 5. GitHub Actions automatically creates release
 
 ## Pending Features
 
-- [ ] `sync` command for standards synchronization
-- [ ] `standardsDrift` lint rule to detect differences
-- [ ] `--with-standards` option for `init` command
 - [ ] Additional templates (CODING-STANDARDS.md, TESTING.md)
+
+## v2.0 Changes
+
+- Unified `init` command with `--standards` and `--scaffold` options
+- Subcommand structure: `check code/spec`, `review code/spec`, `show standards/config/rules`
+- Added MECE (Mutually Exclusive, Collectively Exhaustive) check to `review spec`
+- Removed `sync` command (decided not to auto-sync to preserve customizations)
+- Legacy commands still work with deprecation warnings (will be removed in v3.0)

@@ -20,7 +20,7 @@ import { defaultConfig as codeDefaultConfig } from './code/types.js';
 
 // CLI utilities
 import { loadConfig } from './cli/config.js';
-import { prompt, selectOption, getTemplatesDir } from './cli/utils.js';
+import { prompt, selectOption } from './cli/utils.js';
 import { printResults, printCodeCheckResults, printCoverageReport, printSpecReviewReport } from './cli/formatters.js';
 import { createSpecAnalyzer } from './ai/spec-analyzer.js';
 import { generateSpecReviewPrompt, generateDesignReviewPrompt, generateCodeReviewPrompt } from './ai/review-prompt.js';
@@ -37,6 +37,9 @@ program
   .description('Lint and validate documentation structure and quality')
   .version(packageJson.version);
 
+// ============================================
+// lint - Main linting command
+// ============================================
 program
   .command('lint')
   .description('Run documentation linting')
@@ -106,11 +109,16 @@ program
     }
   });
 
+// ============================================
+// init - Initialize configuration (unified)
+// ============================================
 program
   .command('init')
-  .description('Initialize docs-lint configuration with interactive wizard')
+  .description('Initialize docs-lint configuration')
   .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
   .option('-y, --yes', 'Skip wizard, use defaults', false)
+  .option('--standards', 'Also generate DOCUMENT_STANDARDS.md', false)
+  .option('--scaffold', 'Also create standard folder structure', false)
   .action(async (options) => {
     const configPath = path.join(process.cwd(), 'docs-lint.config.json');
     const docsConfigPath = path.join(options.docsDir, 'docs.config.json');
@@ -121,7 +129,7 @@ program
       process.exit(1);
     }
 
-    console.log(chalk.bold('\n📚 docs-lint Setup Wizard\n'));
+    console.log(chalk.bold('\n📚 docs-lint Setup\n'));
 
     let commonLang = 'en';
     let draftLangs: string[] = [];
@@ -199,6 +207,43 @@ program
     fs.writeFileSync(docsConfigPath, JSON.stringify(docsConfig, null, 2));
     console.log(chalk.green('✓ Created:'), docsConfigPath);
 
+    // Handle --standards option
+    if (options.standards) {
+      const standardsPath = path.join(options.docsDir, 'DOCUMENT_STANDARDS.md');
+      if (!fs.existsSync(standardsPath)) {
+        fs.writeFileSync(standardsPath, getDefaultStandards());
+        console.log(chalk.green('✓ Created:'), standardsPath);
+      } else {
+        console.log(chalk.gray('○ Standards file already exists'));
+      }
+    }
+
+    // Handle --scaffold option
+    if (options.scaffold) {
+      console.log(chalk.bold('\n📁 Creating folder structure\n'));
+      const folders = [
+        '01-plan',
+        '02-spec',
+        '02-spec/01-requirements',
+        '02-spec/02-architecture',
+        '02-spec/03-specifications',
+        '02-spec/04-testing',
+        '02-spec/05-reference',
+        '03-guide',
+        '04-development',
+      ];
+
+      for (const folder of folders) {
+        const folderPath = path.join(options.docsDir, folder);
+        if (!fs.existsSync(folderPath)) {
+          fs.mkdirSync(folderPath, { recursive: true });
+          console.log(chalk.green('✓'), folder + '/');
+        } else {
+          console.log(chalk.gray('○'), folder + '/ (exists)');
+        }
+      }
+    }
+
     // Summary
     console.log(chalk.bold('\n📋 Configuration Summary:\n'));
     console.log(`  Common language: ${chalk.cyan(commonLang)}`);
@@ -213,326 +258,25 @@ program
     }
 
     console.log(chalk.gray('\nNext steps:'));
-    console.log(chalk.gray('  1. Run "docs-lint init-standards" to create DOCUMENT_STANDARDS.md'));
-    console.log(chalk.gray('  2. Run "docs-lint lint" to check your documentation'));
-    console.log(chalk.gray('  3. Run "docs-lint lint --fix" to auto-fix markdown formatting issues'));
-
-    console.log(chalk.bold('\n📦 Installation & AI Setup:\n'));
-    console.log(chalk.gray('  For AI assistants (Claude Code, etc.), add to your CLAUDE.md:'));
-    console.log(chalk.cyan(`
-  ## docs-lint Configuration
-
-  This project uses @gu-corp/docs-lint for documentation quality.
-
-  ### Install (local to project - NOT global)
-  \`\`\`bash
-  npm install @gu-corp/docs-lint --save-dev
-  \`\`\`
-
-  ### Usage
-  \`\`\`bash
-  npx docs-lint lint           # Check documentation
-  npx docs-lint lint --fix     # Auto-fix markdown issues
-  npx docs-lint review:spec    # Generate spec review prompt
-  \`\`\`
-`));
-    console.log(chalk.yellow('  ⚠️  Always install as devDependency, never globally.'));
-    console.log(chalk.gray('     This ensures consistent versions across the team.\n'));
-  });
-
-program
-  .command('init-standards')
-  .description('Generate DOCUMENT_STANDARDS.md from G.U.Corp default template')
-  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
-  .option('-f, --force', 'Overwrite existing file', false)
-  .action((options) => {
-    const standardsPath = path.join(options.docsDir, 'DOCUMENT_STANDARDS.md');
-
-    if (fs.existsSync(standardsPath) && !options.force) {
-      console.error(chalk.yellow('Standards file already exists:', standardsPath));
-      console.log(chalk.gray('Use --force to overwrite'));
-      process.exit(1);
+    console.log(chalk.gray('  1. Run "docs-lint lint" to check your documentation'));
+    console.log(chalk.gray('  2. Run "docs-lint lint --fix" to auto-fix markdown formatting issues'));
+    if (!options.standards) {
+      console.log(chalk.gray('  3. Run "docs-lint init --standards" to create DOCUMENT_STANDARDS.md'));
     }
-
-    // Ensure docs directory exists
-    if (!fs.existsSync(options.docsDir)) {
-      fs.mkdirSync(options.docsDir, { recursive: true });
-    }
-
-    fs.writeFileSync(standardsPath, getDefaultStandards());
-    console.log(chalk.green('Created standards file:'), standardsPath);
-    console.log(chalk.gray('\nThis file defines document quality standards for your project.'));
-    console.log(chalk.gray('Customize it to match your project requirements.'));
-    console.log(chalk.gray('\nWhen running "docs-lint lint --ai-prompt", this file will be'));
-    console.log(chalk.gray('included in the output to guide AI evaluation.'));
-  });
-
-program
-  .command('show-standards')
-  .description('Show current document standards (project-specific or G.U.Corp default)')
-  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
-  .action((options) => {
-    const standards = readStandardsFile(options.docsDir);
-
-    if (standards.isDefault) {
-      console.log(chalk.yellow('Using G.U.Corp default standards'));
-      console.log(chalk.gray('Run "docs-lint init-standards" to create a project-specific standards file.\n'));
-    } else {
-      console.log(chalk.green('Using project-specific standards\n'));
-    }
-
-    console.log(standards.content);
-  });
-
-program
-  .command('check-structure')
-  .description('Check folder structure and naming conventions')
-  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
-  .option('--numbered', 'Expect numbered folders (01-, 02-, etc.)', false)
-  .option('--upper-case', 'Expect UPPER_CASE.md file names', false)
-  .action(async (options) => {
-    try {
-      const config = await loadConfig(undefined, options.docsDir);
-      const linter = createLinter(config);
-
-      const results = await linter.lintStructure({
-        folders: [],
-        numberedFolders: options.numbered,
-        upperCaseFiles: options.upperCase,
-      });
-
-      let hasErrors = false;
-      for (const result of results) {
-        if (result.issues.length > 0) {
-          console.log(chalk.yellow(`\n${result.rule}:`));
-          for (const issue of result.issues) {
-            console.log(`  ${chalk.gray(issue.file)} ${issue.message}`);
-            if (issue.suggestion) {
-              console.log(`    ${chalk.blue('→')} ${issue.suggestion}`);
-            }
-          }
-          if (result.severity === 'error') hasErrors = true;
-        }
-      }
-
-      if (!hasErrors) {
-        console.log(chalk.green('\n✓ Structure checks passed'));
-      }
-      process.exit(hasErrors ? 1 : 0);
-    } catch (error) {
-      console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
-      process.exit(1);
+    if (!options.scaffold) {
+      console.log(chalk.gray('  4. Run "docs-lint init --scaffold" to create standard folder structure'));
     }
   });
-
-program
-  .command('sync')
-  .description('Sync development standards templates to project docs')
-  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
-  .option('-f, --force', 'Overwrite existing files', false)
-  .option('--check', 'Check for differences without syncing', false)
-  .option('--category <name>', 'Sync specific category (e.g., 04-development)', '04-development')
-  .action(async (options) => {
-    const templatesDir = getTemplatesDir(__dirname);
-    const categoryPath = path.join(templatesDir, options.category);
-    const targetDir = path.join(options.docsDir, options.category);
-
-    if (!fs.existsSync(categoryPath)) {
-      console.error(chalk.red(`Template category not found: ${options.category}`));
-      console.log(chalk.gray('Available categories:'));
-      const categories = fs.readdirSync(templatesDir).filter(f =>
-        fs.statSync(path.join(templatesDir, f)).isDirectory()
-      );
-      categories.forEach(c => console.log(chalk.gray(`  - ${c}`)));
-      process.exit(1);
-    }
-
-    const templateFiles = fs.readdirSync(categoryPath).filter(f => f.endsWith('.md'));
-
-    if (templateFiles.length === 0) {
-      console.log(chalk.yellow('No templates found in category:', options.category));
-      process.exit(0);
-    }
-
-    console.log(chalk.bold(`\n📋 Syncing ${options.category} templates\n`));
-
-    let synced = 0;
-    let skipped = 0;
-    let different = 0;
-
-    for (const file of templateFiles) {
-      const sourcePath = path.join(categoryPath, file);
-      const targetPath = path.join(targetDir, file);
-      const sourceContent = fs.readFileSync(sourcePath, 'utf-8');
-
-      if (fs.existsSync(targetPath)) {
-        const targetContent = fs.readFileSync(targetPath, 'utf-8');
-        const isDifferent = sourceContent !== targetContent;
-
-        if (options.check) {
-          if (isDifferent) {
-            console.log(`${chalk.yellow('⚠')} ${file} - differs from template`);
-            different++;
-          } else {
-            console.log(`${chalk.green('✓')} ${file} - up to date`);
-          }
-        } else if (options.force) {
-          if (isDifferent) {
-            fs.writeFileSync(targetPath, sourceContent);
-            console.log(`${chalk.green('✓')} ${file} - updated`);
-            synced++;
-          } else {
-            console.log(`${chalk.gray('○')} ${file} - already up to date`);
-            skipped++;
-          }
-        } else {
-          console.log(`${chalk.yellow('⚠')} ${file} - exists (use --force to overwrite)`);
-          skipped++;
-        }
-      } else {
-        if (options.check) {
-          console.log(`${chalk.red('✗')} ${file} - missing`);
-          different++;
-        } else {
-          // Ensure target directory exists
-          if (!fs.existsSync(targetDir)) {
-            fs.mkdirSync(targetDir, { recursive: true });
-          }
-          fs.writeFileSync(targetPath, sourceContent);
-          console.log(`${chalk.green('✓')} ${file} - created`);
-          synced++;
-        }
-      }
-    }
-
-    console.log('');
-    if (options.check) {
-      if (different > 0) {
-        console.log(chalk.yellow(`${different} file(s) need syncing`));
-        console.log(chalk.gray('Run without --check to sync'));
-        process.exit(1);
-      } else {
-        console.log(chalk.green('All files are up to date'));
-      }
-    } else {
-      console.log(chalk.green(`Synced: ${synced}`), chalk.gray(`Skipped: ${skipped}`));
-    }
-  });
-
-program
-  .command('scaffold')
-  .description('Create G.U.Corp standard folder structure')
-  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
-  .option('--with-templates', 'Include template files (README, REQUIREMENTS, etc.)', false)
-  .option('--dry-run', 'Show what would be created without creating', false)
-  .action(async (options) => {
-    const docsDir = path.resolve(options.docsDir);
-
-    console.log(chalk.bold('\n📁 Creating G.U.Corp Standard Structure\n'));
-
-    const folders = [
-      { path: '01-plan', desc: 'Planning & proposals' },
-      { path: '02-spec', desc: 'Specifications' },
-      { path: '02-spec/01-requirements', desc: 'Requirements' },
-      { path: '02-spec/02-design', desc: 'Design (API, Architecture, Database, Screen)' },
-      { path: '02-spec/03-infrastructure', desc: 'Infrastructure, deployment, security' },
-      { path: '02-spec/04-testing', desc: 'Test specifications' },
-      { path: '03-guide', desc: 'Guides & manuals (SysOps)' },
-      { path: '04-development', desc: 'Development standards (DevOps)' },
-    ];
-
-    const templates: Array<{ path: string; content: string }> = [
-      {
-        path: 'README.md',
-        content: `# Documentation\n\nThis folder contains project documentation.\n\n## Structure\n\n- \`01-plan/\` - Planning & proposals\n- \`02-spec/\` - Specifications\n- \`03-guide/\` - Guides & manuals\n- \`04-development/\` - Development standards\n`,
-      },
-      {
-        path: '01-plan/PROPOSAL.md',
-        content: `# Project Proposal\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\n[Project overview and objectives]\n\n## Goals\n\n- [Goal 1]\n- [Goal 2]\n\n## Scope\n\n### In Scope\n\n- [Feature 1]\n\n### Out of Scope\n\n- [Excluded feature]\n\n---\n\n## Related Documents\n\n- [Requirements](../02-spec/01-requirements/REQUIREMENTS.md)\n`,
-      },
-      {
-        path: '02-spec/01-requirements/REQUIREMENTS.md',
-        content: `# Requirements\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\nThis document defines functional requirements.\n\n## Functional Requirements\n\n| ID | Requirement | Priority | Version |\n|----|-------------|----------|--------|\n| FR-001 | [Description] | High | v1 |\n| FR-002 | [Description] | Medium | v1 |\n\n---\n\n## Related Documents\n\n- [Architecture](../02-design/ARCHITECTURE.md)\n`,
-      },
-      {
-        path: '02-spec/02-design/ARCHITECTURE.md',
-        content: `# Architecture\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\n[System architecture overview]\n\n## Components\n\n### [Component 1]\n\n[Description]\n\n## Technology Stack\n\n- [Technology 1]\n- [Technology 2]\n\n---\n\n## Related Documents\n\n- [Requirements](../01-requirements/REQUIREMENTS.md)\n- [API](./API.md)\n`,
-      },
-      {
-        path: '02-spec/04-testing/TEST-CASES.md',
-        content: `# Test Cases\n\n**Version**: 1.0\n**Updated**: ${new Date().toISOString().split('T')[0]}\n\n---\n\n## Overview\n\nThis document defines test cases for requirements coverage.\n\n## Test Cases\n\n| ID | Requirement | Description | Expected |\n|----|-------------|-------------|----------|\n| TC-U001 | FR-001 | [Test description] | [Expected result] |\n\n---\n\n## Related Documents\n\n- [Requirements](../01-requirements/REQUIREMENTS.md)\n`,
-      },
-    ];
-
-    let created = 0;
-    let skipped = 0;
-
-    // Create folders
-    for (const folder of folders) {
-      const folderPath = path.join(docsDir, folder.path);
-      const exists = fs.existsSync(folderPath);
-
-      if (options.dryRun) {
-        console.log(`${exists ? chalk.gray('○') : chalk.green('+')} ${folder.path}/`);
-      } else {
-        if (!exists) {
-          fs.mkdirSync(folderPath, { recursive: true });
-          console.log(`${chalk.green('✓')} ${folder.path}/`);
-          created++;
-        } else {
-          console.log(`${chalk.gray('○')} ${folder.path}/ (exists)`);
-          skipped++;
-        }
-      }
-    }
-
-    // Create template files
-    if (options.withTemplates) {
-      console.log(chalk.bold('\n📄 Creating template files\n'));
-
-      for (const template of templates) {
-        const filePath = path.join(docsDir, template.path);
-        const exists = fs.existsSync(filePath);
-
-        if (options.dryRun) {
-          console.log(`${exists ? chalk.gray('○') : chalk.green('+')} ${template.path}`);
-        } else {
-          if (!exists) {
-            // Ensure parent directory exists
-            const dir = path.dirname(filePath);
-            if (!fs.existsSync(dir)) {
-              fs.mkdirSync(dir, { recursive: true });
-            }
-            fs.writeFileSync(filePath, template.content);
-            console.log(`${chalk.green('✓')} ${template.path}`);
-            created++;
-          } else {
-            console.log(`${chalk.gray('○')} ${template.path} (exists)`);
-            skipped++;
-          }
-        }
-      }
-    }
-
-    console.log('');
-    if (options.dryRun) {
-      console.log(chalk.yellow('Dry run - no changes made'));
-      console.log(chalk.gray('Run without --dry-run to create'));
-    } else {
-      console.log(chalk.green(`Created: ${created}`), chalk.gray(`Skipped: ${skipped}`));
-      if (!options.withTemplates) {
-        console.log(chalk.gray('\nTip: Use --with-templates to also create template files'));
-      }
-    }
-  });
-
 
 // ============================================
-// Code & Spec Check/Review Commands
+// check - Static checks (subcommands)
 // ============================================
+const checkCmd = program
+  .command('check')
+  .description('Run static checks');
 
-program
-  .command('check:code')
+checkCmd
+  .command('code')
   .description('Static code checks (test file existence, coverage)')
   .option('-s, --src-dir <path>', 'Source directory', './src')
   .option('-v, --verbose', 'Verbose output')
@@ -563,8 +307,8 @@ program
     }
   });
 
-program
-  .command('check:spec')
+checkCmd
+  .command('spec')
   .description('Static specification checks (structure, references)')
   .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
   .option('-v, --verbose', 'Verbose output')
@@ -593,8 +337,15 @@ program
     }
   });
 
-program
-  .command('review:code')
+// ============================================
+// review - AI review (subcommands)
+// ============================================
+const reviewCmd = program
+  .command('review')
+  .description('AI-powered review (generates prompt or calls API)');
+
+reviewCmd
+  .command('code')
   .description('Generate code review prompt for requirement coverage')
   .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
   .option('-s, --src-dir <path>', 'Source directory', './src')
@@ -657,9 +408,9 @@ program
     }
   });
 
-program
-  .command('review:spec')
-  .description('Generate specification review prompt for chat AI')
+reviewCmd
+  .command('spec')
+  .description('Generate specification review prompt (includes MECE check)')
   .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
   .option('-s, --src-dir <path>', 'Source directory (for design-implementation check)', './src')
   .option('--design', 'Focus on design-implementation consistency', false)
@@ -725,6 +476,246 @@ program
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
       process.exit(1);
     }
+  });
+
+// ============================================
+// show - Display information (subcommands)
+// ============================================
+const showCmd = program
+  .command('show')
+  .description('Display information');
+
+showCmd
+  .command('standards')
+  .description('Show current document standards')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .action((options) => {
+    const standards = readStandardsFile(options.docsDir);
+
+    if (standards.isDefault) {
+      console.log(chalk.yellow('Using G.U.Corp default standards'));
+      console.log(chalk.gray('Run "docs-lint init --standards" to create a project-specific standards file.\n'));
+    } else {
+      console.log(chalk.green('Using project-specific standards\n'));
+    }
+
+    console.log(standards.content);
+  });
+
+showCmd
+  .command('config')
+  .description('Show current configuration')
+  .option('-c, --config <path>', 'Configuration file path')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .action(async (options) => {
+    try {
+      const config = await loadConfig(options.config, options.docsDir);
+      console.log(chalk.bold('\n📋 Current Configuration\n'));
+      console.log(JSON.stringify(config, null, 2));
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+showCmd
+  .command('rules')
+  .description('Show available lint rules')
+  .action(() => {
+    console.log(chalk.bold('\n📋 Available Lint Rules\n'));
+
+    const rules = [
+      { name: 'brokenLinks', default: 'error', desc: 'Detect broken internal links' },
+      { name: 'legacyFileNames', default: 'error', desc: 'Detect legacy file naming patterns' },
+      { name: 'versionInfo', default: 'warn', desc: 'Check for version information' },
+      { name: 'relatedDocuments', default: 'warn', desc: 'Check for related documents section' },
+      { name: 'headingHierarchy', default: 'warn', desc: 'Check heading hierarchy (H1→H2→H3)' },
+      { name: 'todoComments', default: 'warn', desc: 'Detect TODO/FIXME/BUG comments' },
+      { name: 'codeBlockLanguage', default: 'warn', desc: 'Check code block language specifiers' },
+      { name: 'orphanDocuments', default: 'warn', desc: 'Detect documents not linked from anywhere' },
+      { name: 'terminology', default: 'warn', desc: 'Check terminology consistency' },
+      { name: 'bidirectionalRefs', default: 'off', desc: 'Check bidirectional references' },
+      { name: 'markdownLint', default: 'warn', desc: 'Markdown formatting (markdownlint)' },
+      { name: 'standardFolderStructure', default: 'error', desc: 'Check G.U.Corp folder structure' },
+      { name: 'folderNumbering', default: 'warn', desc: 'Check folder numbering sequence' },
+      { name: 'fileNaming', default: 'warn', desc: 'Check UPPER-CASE.md naming' },
+      { name: 'standardFileNames', default: 'warn', desc: 'Check standard file names exist' },
+      { name: 'requirementTestMapping', default: 'warn', desc: 'Check FR-XXX ↔ TC-XXX mapping' },
+      { name: 'requirementsCoverage', default: 'warn', desc: 'Check requirements coverage' },
+      { name: 'standardsDrift', default: 'warn', desc: 'Check drift from templates' },
+    ];
+
+    console.log('| Rule | Default | Description |');
+    console.log('|------|---------|-------------|');
+    for (const rule of rules) {
+      const defaultColor = rule.default === 'error' ? chalk.red : rule.default === 'warn' ? chalk.yellow : chalk.gray;
+      console.log(`| ${rule.name} | ${defaultColor(rule.default)} | ${rule.desc} |`);
+    }
+
+    console.log(chalk.gray('\nSeverity levels: error (fails CI), warn (passes CI), off (disabled)'));
+    console.log(chalk.gray('Configure in docs-lint.config.json'));
+  });
+
+// ============================================
+// Legacy command aliases (for backward compatibility - will be removed in v3)
+// ============================================
+program
+  .command('init-standards', { hidden: true })
+  .description('[DEPRECATED] Use "init --standards" instead')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('-f, --force', 'Overwrite existing file', false)
+  .action((options) => {
+    console.log(chalk.yellow('⚠️  This command is deprecated. Use "docs-lint init --standards" instead.\n'));
+    const standardsPath = path.join(options.docsDir, 'DOCUMENT_STANDARDS.md');
+
+    if (fs.existsSync(standardsPath) && !options.force) {
+      console.error(chalk.yellow('Standards file already exists:', standardsPath));
+      console.log(chalk.gray('Use --force to overwrite'));
+      process.exit(1);
+    }
+
+    if (!fs.existsSync(options.docsDir)) {
+      fs.mkdirSync(options.docsDir, { recursive: true });
+    }
+
+    fs.writeFileSync(standardsPath, getDefaultStandards());
+    console.log(chalk.green('Created standards file:'), standardsPath);
+  });
+
+program
+  .command('show-standards', { hidden: true })
+  .description('[DEPRECATED] Use "show standards" instead')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .action((options) => {
+    console.log(chalk.yellow('⚠️  This command is deprecated. Use "docs-lint show standards" instead.\n'));
+    const standards = readStandardsFile(options.docsDir);
+
+    if (standards.isDefault) {
+      console.log(chalk.yellow('Using G.U.Corp default standards\n'));
+    } else {
+      console.log(chalk.green('Using project-specific standards\n'));
+    }
+
+    console.log(standards.content);
+  });
+
+program
+  .command('scaffold', { hidden: true })
+  .description('[DEPRECATED] Use "init --scaffold" instead')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .action((options) => {
+    console.log(chalk.yellow('⚠️  This command is deprecated. Use "docs-lint init --scaffold" instead.\n'));
+    const folders = [
+      '01-plan',
+      '02-spec',
+      '02-spec/01-requirements',
+      '02-spec/02-architecture',
+      '02-spec/03-specifications',
+      '02-spec/04-testing',
+      '02-spec/05-reference',
+      '03-guide',
+      '04-development',
+    ];
+
+    for (const folder of folders) {
+      const folderPath = path.join(options.docsDir, folder);
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath, { recursive: true });
+        console.log(chalk.green('✓'), folder + '/');
+      } else {
+        console.log(chalk.gray('○'), folder + '/ (exists)');
+      }
+    }
+  });
+
+program
+  .command('check-structure', { hidden: true })
+  .description('[DEPRECATED] Use "lint" instead (includes structure checks)')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .action(async (options) => {
+    console.log(chalk.yellow('⚠️  This command is deprecated. Use "docs-lint lint" instead.\n'));
+    console.log(chalk.gray('Structure checks are included in the lint command via standardFolderStructure rule.\n'));
+
+    const config = await loadConfig(undefined, options.docsDir);
+    const linter = createLinter(config, {
+      only: ['standardFolderStructure', 'folderNumbering', 'fileNaming'],
+    });
+
+    const result = await linter.lint();
+    printResults(result, false);
+    process.exit(result.passed ? 0 : 1);
+  });
+
+// Legacy colon-style commands
+program
+  .command('check:code', { hidden: true })
+  .description('[DEPRECATED] Use "check code" instead')
+  .option('-s, --src-dir <path>', 'Source directory', './src')
+  .option('-v, --verbose', 'Verbose output')
+  .option('--json', 'Output as JSON')
+  .action(async (options) => {
+    console.log(chalk.yellow('⚠️  This command is deprecated. Use "docs-lint check code" instead.\n'));
+    const config = { ...codeDefaultConfig, srcDir: options.srcDir };
+    const checker = createChecker(config, { verbose: options.verbose });
+    const result = await checker.check();
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      printCodeCheckResults(result, options.verbose);
+    }
+    process.exit(result.passed ? 0 : 1);
+  });
+
+program
+  .command('check:spec', { hidden: true })
+  .description('[DEPRECATED] Use "check spec" instead')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('-v, --verbose', 'Verbose output')
+  .option('--json', 'Output as JSON')
+  .action(async (options) => {
+    console.log(chalk.yellow('⚠️  This command is deprecated. Use "docs-lint check spec" instead.\n'));
+    const config = await loadConfig(undefined, options.docsDir);
+    const linter = createLinter(config, {
+      verbose: options.verbose,
+      only: ['structureCheck', 'crossReferences', 'brokenLinks'],
+    });
+    const result = await linter.lint();
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      printResults(result, options.verbose);
+    }
+    process.exit(result.passed ? 0 : 1);
+  });
+
+program
+  .command('review:code', { hidden: true })
+  .description('[DEPRECATED] Use "review code" instead')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('-s, --src-dir <path>', 'Source directory', './src')
+  .action(async (options) => {
+    console.log(chalk.yellow('⚠️  This command is deprecated. Use "docs-lint review code" instead.\n'));
+    const prompt = generateCodeReviewPrompt({
+      docsDir: options.docsDir,
+      srcDir: options.srcDir,
+      specPatterns: ['**/*SPEC*.md', '**/*REQUIREMENTS*.md'],
+      sourcePatterns: ['**/*.ts', '**/*.tsx'],
+    });
+    console.log(prompt);
+  });
+
+program
+  .command('review:spec', { hidden: true })
+  .description('[DEPRECATED] Use "review spec" instead')
+  .option('-d, --docs-dir <path>', 'Documentation directory', './docs')
+  .option('-s, --src-dir <path>', 'Source directory', './src')
+  .action(async (options) => {
+    console.log(chalk.yellow('⚠️  This command is deprecated. Use "docs-lint review spec" instead.\n'));
+    const prompt = generateSpecReviewPrompt({
+      docsDir: options.docsDir,
+      srcDir: options.srcDir,
+    });
+    console.log(prompt);
   });
 
 program.parse();
