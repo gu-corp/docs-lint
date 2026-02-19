@@ -21,9 +21,14 @@ export interface DocsLintConfig {
     /** Testing configuration for code review and quality assessment */
     testing?: TestingConfig;
 }
+export interface BrokenLinksConfig {
+    severity: RuleSeverity;
+    /** Paths to exclude from broken link checks (glob patterns) */
+    excludePaths?: string[];
+}
 export interface RulesConfig {
     /** Check for broken markdown links */
-    brokenLinks: RuleSeverity;
+    brokenLinks: RuleSeverity | BrokenLinksConfig;
     /** Check for legacy file name patterns */
     legacyFileNames: RuleSeverity | LegacyFileNamesConfig;
     /** Check for version info in documents */

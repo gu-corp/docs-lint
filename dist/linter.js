@@ -35,7 +35,7 @@ export class DocsLinter {
         const ruleResults = [];
         // Broken Links
         if (this.shouldRun('brokenLinks')) {
-            ruleResults.push(await this.runRule('brokenLinks', () => checkBrokenLinks(docsDir, files)));
+            ruleResults.push(await this.runRule('brokenLinks', () => checkBrokenLinks(docsDir, files, this.config.rules.brokenLinks)));
         }
         // Legacy File Names
         if (this.shouldRun('legacyFileNames')) {
