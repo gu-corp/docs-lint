@@ -14,6 +14,7 @@ import type {
   RequirementTestMappingConfig,
   MarkdownLintConfig,
   TodoCommentsConfig,
+  BrokenLinksConfig,
 } from '../types.js';
 
 /**
@@ -34,28 +35,64 @@ function isInCodeBlock(lines: string[], lineIndex: number): boolean {
  */
 export async function checkBrokenLinks(
   docsDir: string,
-  files: string[]
+  files: string[],
+  config?: BrokenLinksConfig | RuleSeverity
 ): Promise<LintIssue[]> {
   const issues: LintIssue[] = [];
-  const linkRegex = /\[([^\]]+)\]\(([^)]+\.md)\)/g;
+  // Match markdown links, capturing the path part (may include anchor)
+  const linkRegex = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+
+  // Parse exclude paths from config
+  const excludePaths = (typeof config === 'object' && config?.excludePaths) || [];
 
   for (const file of files) {
+    // Skip files matching exclude patterns
+    if (excludePaths.some(pattern => {
+      const globPattern = pattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*');
+      return new RegExp(globPattern).test(file);
+    })) {
+      continue;
+    }
+
     const content = fs.readFileSync(path.join(docsDir, file), 'utf-8');
     let match;
 
     while ((match = linkRegex.exec(content)) !== null) {
-      const linkPath = match[2];
-      if (linkPath.startsWith('http')) continue;
+      let linkPath = match[2];
+
+      // Skip external links
+      if (linkPath.startsWith('http://') || linkPath.startsWith('https://')) continue;
+
+      // Skip mailto and tel links
+      if (linkPath.startsWith('mailto:') || linkPath.startsWith('tel:')) continue;
+
+      // Skip absolute paths (start with /)
+      if (linkPath.startsWith('/')) continue;
+
+      // Skip non-markdown links (images, etc.)
+      if (!linkPath.includes('.md')) continue;
+
+      // Remove anchor from path (#section)
+      const anchorIndex = linkPath.indexOf('#');
+      if (anchorIndex !== -1) {
+        linkPath = linkPath.substring(0, anchorIndex);
+      }
+
+      // Skip if path is empty after removing anchor
+      if (!linkPath || linkPath === '.md') continue;
 
       const absolutePath = path.resolve(
         path.dirname(path.join(docsDir, file)),
         linkPath
       );
 
-      if (!fs.existsSync(absolutePath)) {
+      // Normalize path for comparison
+      const normalizedPath = path.normalize(absolutePath);
+
+      if (!fs.existsSync(normalizedPath)) {
         issues.push({
           file,
-          message: `Broken link to "${linkPath}"`,
+          message: `Broken link to "${match[2]}"`,
           suggestion: `Verify the file exists or update the link`,
         });
       }

@@ -87,7 +87,9 @@ export class DocsLinter {
     // Broken Links
     if (this.shouldRun('brokenLinks')) {
       ruleResults.push(
-        await this.runRule('brokenLinks', () => checkBrokenLinks(docsDir, files))
+        await this.runRule('brokenLinks', () =>
+          checkBrokenLinks(docsDir, files, this.config.rules.brokenLinks)
+        )
       );
     }
 

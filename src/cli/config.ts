@@ -29,12 +29,9 @@ export async function loadConfig(configPath?: string, docsDir?: string): Promise
     }
   }
 
-  // Override docsDir if specified
-  if (docsDir) {
-    config.docsDir = docsDir;
-  }
-
-  return {
+  // Build final config - config file takes precedence over defaults
+  // docsDir CLI option overrides config file only if explicitly provided (not default)
+  const finalConfig = {
     ...defaultConfig,
     ...config,
     rules: {
@@ -42,4 +39,12 @@ export async function loadConfig(configPath?: string, docsDir?: string): Promise
       ...config.rules,
     },
   };
+
+  // Only override docsDir if explicitly provided and different from default
+  // This allows config file's docsDir to take precedence over CLI default
+  if (docsDir && docsDir !== './docs') {
+    finalConfig.docsDir = docsDir;
+  }
+
+  return finalConfig;
 }
