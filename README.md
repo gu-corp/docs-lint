@@ -1,560 +1,128 @@
-# @gu-corp/docs-lint
+# @gu-corp/docs-lint v3
 
-A comprehensive documentation linting tool for validating structure, quality, and consistency of markdown documentation.
+文書構造、必須セクション、内部リンク、用語、要件とテストの対応を検証し、組織ごとの文書テンプレートを配布するためのツールです。
 
-## Features
+v3 は v2 の互換改修ではなく、設計を再構築したメジャーバージョンです。ルールエンジンから G.U. 固有の文書規約と AI ベンダー依存を分離し、JSON と Markdown だけで構成する **Document Standard Pack** を導入しています。
 
-### Documentation Linting
-- **Broken Link Detection**: Find and report broken internal links
-- **Legacy File Name Detection**: Flag deprecated file naming patterns
-- **Version Info Validation**: Ensure documents have version information
-- **Related Documents Check**: Validate presence of related documents sections
-- **Heading Hierarchy**: Check for proper heading structure (h1 → h2 → h3)
-- **TODO/FIXME Detection**: Find unresolved TODO comments
-- **Code Block Language**: Ensure code blocks have language specifiers
-- **Orphan Document Detection**: Find documents not referenced anywhere
-- **Terminology Consistency**: Enforce consistent terminology usage
-- **Bidirectional References**: Check for missing back-references
-- **Folder Structure Validation**: Verify expected folder organization
-- **Standard Folder Structure (v1.7.0)**: Enforce G.U.Corp standard structure (01-plan, 02-spec, etc.)
-- **Requirement-Test Mapping (v1.4.0)**: Validate FR-XXX requirements have corresponding TC-XXX test cases
-- **Document Standards**: Built-in G.U.Corp document standards with project-level customization
-- **Markdown Lint (v1.14.0)**: Integrated markdownlint for formatting/syntax checks with auto-fix support
+## 設計原則
 
-### Code Review (v1.2.0+)
-- **Test File Existence**: Check if source files have corresponding test files
-- **Test Coverage Analysis**: Analyze unit/integration/E2E test coverage
-- **Critical Path E2E**: Ensure critical paths have E2E tests
-- **AI Requirement Coverage**: AI-powered analysis of requirement implementation
-- **AI Spec Review**: AI-powered specification consistency and terminology check
+- lint の判定ロジックは副作用を持たないルールとして実装する。
+- ファイル探索、設定読込、書込は Node アダプターへ隔離する。
+- 組織・プロダクト固有の構造と雛形は Standard Pack で管理する。
+- 設定・診断レポート・Pack manifest はバージョン付きスキーマとする。
+- AI は将来のアダプターとし、lint コアから外部 API を呼ばない。
+- v2 の暗黙動作や別名は引き継がず、移行失敗を明示する。
 
-## Installation
+## 必要環境
 
-このパッケージはnpm registryには公開されていません。GitHubリポジトリから直接インストールしてください。
+- Node.js 20 以上
+- npm 10 以上を推奨
+
+このパッケージは private repository から利用します。
 
 ```bash
-# Install from GitHub (recommended)
-npm install github:gu-corp/docs-lint --save-dev
-
-# Or add to package.json manually
-# "devDependencies": {
-#   "@gu-corp/docs-lint": "github:gu-corp/docs-lint"
-# }
-
-# Install specific version
-npm install github:gu-corp/docs-lint#v1.14.1 --save-dev
+npm install --save-dev github:gu-corp/docs-lint#v3.0.0
 ```
 
-> ⚠️ **Important**:
-> - このパッケージはGitHub npm registryやnpmjs.comには公開されていません
-> - `github:gu-corp/docs-lint` の形式でインストールしてください
-> - 常にローカルのdevDependencyとしてインストールし、グローバルインストールは避けてください
-
-## CLI Usage (v2.0)
+## 最短の利用方法
 
 ```bash
-# Basic linting
-docs-lint lint
-
-# Auto-fix markdown formatting issues
-docs-lint lint --fix
-
-# Specify docs directory
-docs-lint lint -d ./documentation
-
-# Output as JSON
-docs-lint lint --json
-
-# Generate AI assessment prompt
-docs-lint lint --ai-prompt
-
-# Initialize configuration (unified command)
-docs-lint init                    # Interactive setup
-docs-lint init -y                 # Use defaults
-docs-lint init --standards        # Also create DOCUMENT_STANDARDS.md
-docs-lint init --scaffold         # Also create folder structure
-
-# Static checks
-docs-lint check code -s ./src     # Code checks (test files, coverage)
-docs-lint check spec -d ./docs    # Spec checks (structure, references)
-
-# AI-powered reviews (generates prompt or calls API with --api)
-docs-lint review code             # Code review for requirement coverage
-docs-lint review spec             # Spec review (includes MECE check)
-
-# Display information
-docs-lint show standards          # Show document standards
-docs-lint show config             # Show current configuration
-docs-lint show rules              # Show available lint rules
+npx docs-lint init --root ./docs --pack builtin:gu-corp-software --profile web-application
+npx docs-lint lint
 ```
 
-#### Environment Variables for AI Commands
+文書を Standard Pack から作成する例です。
 
 ```bash
-# Set in .env file or export
-ANTHROPIC_API_KEY=sk-ant-api03-...
+npx docs-lint create customer-requirements \
+  --var productName="Example Product" documentOwner="Product Owner"
 ```
 
-### CLI Options (lint command)
+既存ファイルは `--force` を指定しない限り上書きしません。
 
-| Option | Description |
-|--------|-------------|
-| `-d, --docs-dir <path>` | Documentation directory (default: `./docs`) |
-| `-c, --config <path>` | Configuration file path |
-| `--only <rules>` | Only run specific rules (comma-separated) |
-| `--skip <rules>` | Skip specific rules (comma-separated) |
-| `-v, --verbose` | Verbose output |
-| `--json` | Output as JSON |
-| `--ai-prompt` | Generate AI-friendly assessment prompt |
-| `--fix` | Auto-fix markdown formatting issues |
+## 主なコマンド
 
-## Programmatic Usage
+| コマンド | 用途 |
+| --- | --- |
+| `docs-lint lint [--json]` | 文書を検証し、error があれば終了コード 1 を返す |
+| `docs-lint init` | v3 設定を新規作成する |
+| `docs-lint migrate` | v2 設定の変換案を別ファイルに出力する |
+| `docs-lint create <document-type>` | Standard Pack の雛形から文書を作る |
+| `docs-lint pack list` | 組み込み Pack を一覧する |
+| `docs-lint pack validate <path>` | Pack manifest とテンプレートを検証する |
+| `docs-lint pack show <path>` | 継承解決後の profile を表示する |
 
-```typescript
-import { createLinter, DocsLintConfig } from '@gu-corp/docs-lint';
+## 設定
 
-const config: Partial<DocsLintConfig> = {
-  docsDir: './docs',
-  include: ['**/*.md'],
-  exclude: ['node_modules/**'],
-  rules: {
-    brokenLinks: 'error',
-    legacyFileNames: 'error',
-    versionInfo: 'warn',
-    relatedDocuments: 'warn',
-    headingHierarchy: 'warn',
-    todoComments: 'warn',
-    codeBlockLanguage: 'warn',
-    orphanDocuments: 'warn',
-    terminology: 'warn',
-    bidirectionalRefs: 'off',
-    requirementsCoverage: 'warn',
-  },
-  terminology: [
-    {
-      preferred: 'ドキュメント',
-      variants: ['文書', 'ドキュメンテーション'],
-    },
-  ],
-  requiredFiles: ['README.md'],
-};
-
-const linter = createLinter(config);
-const result = await linter.lint();
-
-console.log(`Passed: ${result.passed}`);
-console.log(`Errors: ${result.summary.errors}`);
-console.log(`Warnings: ${result.summary.warnings}`);
-```
-
-## Configuration
-
-Create a `docs-lint.config.json` file in your project root:
+`docs-lint.config.json`:
 
 ```json
 {
-  "docsDir": "./docs",
-  "include": ["**/*.md"],
-  "exclude": ["node_modules/**", "**/archive/**"],
-  "rules": {
-    "brokenLinks": "error",
-    "legacyFileNames": "error",
-    "versionInfo": "warn",
-    "relatedDocuments": "warn",
-    "headingHierarchy": "warn",
-    "todoComments": "warn",
-    "codeBlockLanguage": "warn",
-    "orphanDocuments": "warn",
-    "terminology": "warn",
-    "bidirectionalRefs": "off",
-    "requirementsCoverage": "warn"
+  "$schema": "./node_modules/@gu-corp/docs-lint/schemas/docs-lint-v3.schema.json",
+  "schemaVersion": 3,
+  "root": "./docs",
+  "standard": {
+    "pack": "builtin:gu-corp-software",
+    "profile": "web-application"
   },
-  "terminology": [
-    {
-      "preferred": "API",
-      "variants": ["api", "Api"]
-    },
-    {
-      "preferred": "ドキュメント",
-      "variants": ["文書"],
-      "exceptions": ["ドキュメンテーション"]
-    }
-  ],
-  "requiredFiles": ["README.md", "CHANGELOG.md"]
-}
-```
-
-### Rule Severity
-
-Each rule can be set to:
-- `"off"`: Disable the rule
-- `"warn"`: Report as warning (doesn't fail CI)
-- `"error"`: Report as error (fails CI)
-
-### Advanced Rule Configuration
-
-Some rules support advanced configuration:
-
-```json
-{
   "rules": {
-    "legacyFileNames": {
+    "links/internal": "error",
+    "document/required-sections": "warning",
+    "traceability/requirements-tests": {
       "severity": "error",
-      "pattern": "\\d{2}-[A-Z][A-Z0-9-]+\\.md",
-      "exclude": ["archive/**"]
-    },
-    "versionInfo": {
-      "severity": "warn",
-      "patterns": ["**バージョン**:", "**Version**:"],
-      "include": ["**/spec/**"]
-    },
-    "markdownLint": {
-      "severity": "warn",
-      "rules": {
-        "MD013": false,
-        "MD033": false
-      }
-    },
-    "todoComments": {
-      "severity": "warn",
-      "tags": {
-        "TODO": { "severity": "info", "message": "実装予定" },
-        "FIXME": { "severity": "warn", "message": "要修正" },
-        "BUG": { "severity": "error", "message": "バグ" },
-        "NOTE": { "severity": "off" }
-      },
-      "ignoreInlineCode": true,
-      "ignoreCodeBlocks": true
+      "options": {}
     }
+  },
+  "traceability": {
+    "requiredCoverage": 1
   }
 }
 ```
 
-### TODO Comments Configuration (v1.15.0)
-
-The `todoComments` rule now supports tag-specific severity levels:
-
-| Tag | Default Severity | Description |
-|-----|------------------|-------------|
-| `TODO` | info | 実装予定のタスク |
-| `FIXME` | warn | 要修正の問題 |
-| `XXX` | warn | 要注意箇所 |
-| `HACK` | warn | 回避策・一時実装 |
-| `BUG` | error | 既知のバグ |
-| `NOTE` | off | 補足説明（デフォルト無視） |
-| `REVIEW` | info | レビュー対象 |
-| `OPTIMIZE` | info | 最適化候補 |
-| `WARNING` | warn | 警告 |
-| `QUESTION` | info | 要確認 |
-
-Options:
-- `ignoreInlineCode`: Ignore TODO in \`inline code\` (default: true)
-- `ignoreCodeBlocks`: Ignore TODO in code blocks (default: true)
-- `ignoreInTables`: Ignore TODO in table cells (default: false)
-- `customTags`: Add custom tags to detect
-- `excludePatterns`: Regex patterns to exclude
-
-### Terminology Configuration (v1.18.0)
-
-Configure terminology consistency checks with exception patterns:
+Standard Pack の選択は、文書ルートにある Lunascape Doc Editor の `lunascape-docs.json` でも共有できます。
 
 ```json
 {
-  "terminology": [
-    {
-      "preferred": "ドキュメント",
-      "variants": ["文書"],
-      "exceptions": ["ドキュメンテーション"],
-      "wordBoundary": false
-    },
-    {
-      "preferred": "API",
-      "variants": ["api", "Api"],
-      "wordBoundary": true
-    }
-  ]
-}
-```
-
-Options:
-- `preferred`: The preferred term to use
-- `variants`: Terms that should be replaced with the preferred term
-- `exceptions`: Patterns that should not be flagged (e.g., "ドキュメンテーション" contains "ドキュメント" but should not be flagged)
-- `wordBoundary`: Use word boundary matching (default: false)
-
-### Testing Configuration (v1.16.0)
-
-Configure test coverage evaluation criteria for `review:code`:
-
-```json
-{
-  "testing": {
-    "projectType": "api",
-    "coreLogicPatterns": [
-      "src/domain/**/*.ts",
-      "src/rules/**/*.ts"
-    ],
-    "coverageThresholds": {
-      "coreLogic": 100,
-      "utilities": 90,
-      "api": 80,
-      "ui": 60,
-      "overall": 70
-    },
-    "requireIntegrationTests": ["src/api/**/*.ts"],
-    "requireE2ETests": false,
-    "requireCITests": true
+  "documentStandards": {
+    "pack": "builtin:gu-corp-software",
+    "profile": "regulated-financial-product"
   }
 }
 ```
 
-#### Project Types
+`docs-lint.config.json` の `standard` が存在する場合は、そちらを優先します。
 
-| Type | Unit Tests | Min Coverage | Integration | E2E |
-|------|------------|--------------|-------------|-----|
-| `library` | Required | 80% | - | - |
-| `api` | Required | 70% | Required | - |
-| `web-app` | Required | 60% | Required | Required |
-| `cli` | Required | 60% | - | - |
-| `critical` | Required | 90% | Required | Required |
+## ルール
 
-#### Coverage Thresholds by Category
+| Rule ID | 既定 | 内容 |
+| --- | --- | --- |
+| `links/internal` | error | 存在しない内部 Markdown リンク |
+| `markdown/headings` | warning | H1 の欠落・重複、見出し階層の飛び |
+| `markdown/code-fence-language` | warning | 言語指定のない fenced code block |
+| `content/terminology` | warning | Pack または設定で定義した非推奨語 |
+| `structure/standard-pack` | error | 必須フォルダ・必須文書 |
+| `document/required-sections` | warning | 文書種別ごとの必須見出し |
+| `traceability/requirements-tests` | warning | テストから参照されない要件 ID とカバレッジ |
 
-| Category | Default | Description |
-|----------|---------|-------------|
-| `coreLogic` | 100% | Business logic (domain, services, usecases) |
-| `utilities` | 90% | Shared utilities and helpers |
-| `api` | 80% | API controllers and routes |
-| `ui` | 60% | UI components (covered by E2E) |
-| `overall` | 70% | Minimum overall coverage |
+設定値は `off`、`info`、`warning`、`error` のいずれかです。profile、Pack、ルール既定値の順で標準値を決め、プロジェクト設定が常に最優先されます。
 
-## Standard Folder Structure (v1.7.0)
+## Programmatic API
 
-docs-lint enforces the G.U.Corp standard folder structure:
+```ts
+import { loadConfig, lintWorkspace } from '@gu-corp/docs-lint';
 
-```text
-docs/
-├── 01-plan/              # Planning & proposals (required)
-├── 02-spec/              # Specifications (required)
-│   ├── 01-requirements/  # Requirements (required)
-│   ├── 02-architecture/  # Architecture design
-│   ├── 03-detail-design/ # Detail design
-│   ├── 04-infrastructure/# Infrastructure specs
-│   └── 05-testing/       # Test specs (required)
-├── 03-guide/             # Guides & manuals (required)
-├── 04-development/       # Development standards (required)
-├── 05-business/          # Business strategy (optional)
-└── 06-reference/         # Reference materials (optional)
+const config = loadConfig();
+const report = await lintWorkspace(config);
+if (!report.passed) process.exitCode = 1;
 ```
 
-Use `docs-lint scaffold` to create this structure automatically.
+独自ルールは `DocsLintEngine#register()` で登録できます。Rule ID は `domain/name` 形式にします。
 
-### Archive Folders (v1.17.0)
+## 文書
 
-Folders and files starting with `_` are treated as archives and excluded from linting:
+- [v3 要件](docs/02-spec/01-requirements/REQUIREMENTS.md)
+- [v3 アーキテクチャ](docs/02-spec/02-architecture/ARCHITECTURE.md)
+- [Standard Pack ガイド](docs/03-guide/STANDARD-PACKS.md)
+- [v2 からの移行](docs/03-guide/MIGRATION-V3.md)
 
-```text
-docs/
-├── 01-plan/
-├── 02-spec/
-├── _archive/           # Excluded - old documents
-│   └── old-spec.md
-├── _drafts/            # Excluded - work in progress
-│   └── WIP.md
-└── _OLD-README.md      # Excluded - archived file
-```
-
-Default exclude patterns:
-- `**/_*/**` - All folders starting with `_`
-- `**/_*.md` - All markdown files starting with `_`
-
-## Requirement-Test Mapping (v1.4.0+)
-
-Validates that all functional requirements have corresponding test cases:
-
-### Requirement ID Format
-
-```markdown
-| ID | Requirement | Priority | Version |
-|----|-------------|----------|---------|
-| FR-001 | User can login | High | v1 |
-| FR-AUTH-001 | Two-factor auth | Medium | v2 |
-| FR-AUTH-LOGIN-001 | SSO login | Low | - |
-```
-
-Supported formats: `FR-XXX`, `FR-CATEGORY-XXX`, `FR-CAT-SUB-XXX`
-
-### Test Case ID Format
-
-```markdown
-| ID | Requirement | Description | Expected |
-|----|-------------|-------------|----------|
-| TC-U001 | FR-001 | Valid login test | Success |
-| TC-D001 | FR-AUTH-001 | Deferred to v2 | - |
-| TC-X001 | FR-EXT-001 | Out of scope | - |
-```
-
-| Prefix | Category | Description |
-|--------|----------|-------------|
-| TC-U | Unit | Unit tests |
-| TC-I | Integration | Integration tests |
-| TC-E | E2E | End-to-end tests |
-| TC-P | Performance | Performance tests |
-| TC-S | Security | Security tests |
-| TC-D | Deferred | Deferred to future version |
-| TC-X | Excluded | Out of scope |
-
-## Document Standards
-
-docs-lint includes built-in G.U.Corp document standards. If your project has a `DOCUMENT_STANDARDS.md` file, it will be used instead.
-
-### View Current Standards
-
-```bash
-# Show which standards are being used
-npx docs-lint show-standards
-```
-
-### Create Project-Specific Standards
-
-```bash
-# Generate DOCUMENT_STANDARDS.md from default template
-npx docs-lint init-standards
-
-# Overwrite existing file
-npx docs-lint init-standards --force
-```
-
-### How Standards Work
-
-1. **Project-specific**: If `docs/DOCUMENT_STANDARDS.md` exists, it's used
-2. **Default fallback**: Otherwise, G.U.Corp default standards are applied
-3. **AI Prompt**: When using `--ai-prompt`, standards are included with instructions for AI to read them first
-
-Supported file names:
-
-- `DOCUMENT_STANDARDS.md`
-- `DOCUMENT-STANDARDS.md`
-- `DOC_STANDARDS.md`
-- `STANDARDS.md`
-
-## AI-Friendly Output
-
-Generate prompts suitable for AI-based document quality assessment:
-
-```bash
-npx docs-lint lint --ai-prompt > quality-report.md
-```
-
-This generates a structured markdown report that includes:
-
-1. **AI Instructions**: Guidance for the AI on how to evaluate
-2. **Document Standards**: The evaluation criteria (project-specific or G.U.Corp default)
-3. **Lint Results**: Automated check results
-4. **Quality Metrics**: Checklist for manual evaluation
-
-The report can be fed to Claude or other AI assistants for detailed quality evaluation.
-
-## Folder Structure Validation
-
-Check that your documentation follows expected folder structure:
-
-```typescript
-import { createLinter } from '@gu-corp/docs-lint';
-
-const linter = createLinter({ docsDir: './docs' });
-
-const results = await linter.lintStructure({
-  folders: [
-    { path: '01-plan', required: true, description: 'Planning documents' },
-    { path: '02-spec', required: true, description: 'Specifications' },
-    { path: '03-guide', required: false, description: 'User guides' },
-  ],
-  numberedFolders: true,
-  upperCaseFiles: true,
-});
-```
-
-## Individual Rule Functions
-
-Use individual rule functions for custom integrations:
-
-```typescript
-import {
-  checkBrokenLinks,
-  checkHeadingHierarchy,
-  checkTodoComments,
-} from '@gu-corp/docs-lint';
-
-const issues = await checkBrokenLinks('./docs', ['README.md', 'guide/intro.md']);
-```
-
-## Integration with CI/CD
-
-Add to your `package.json`:
-
-```json
-{
-  "scripts": {
-    "lint:docs": "docs-lint lint",
-    "lint:docs:ci": "docs-lint lint --json > docs-lint-report.json"
-  }
-}
-```
-
-### GitHub Actions
-
-Create `.github/workflows/docs-lint.yml`:
-
-```yaml
-name: Docs Lint
-
-on:
-  push:
-    paths:
-      - 'docs/**'
-      - 'docs-lint.config.json'
-  pull_request:
-    paths:
-      - 'docs/**'
-      - 'docs-lint.config.json'
-  workflow_dispatch:
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install docs-lint
-        run: npm install github:gu-corp/docs-lint
-
-      - name: Run docs-lint
-        run: npx docs-lint lint -v
-
-      - name: Generate AI prompt (on failure)
-        if: failure()
-        run: npx docs-lint lint --ai-prompt > docs-lint-report.md
-
-      - name: Upload report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs-lint-report
-          path: docs-lint-report.md
-```
-
-This workflow:
-
-- Runs on docs changes only
-- Generates AI-friendly report on failure
-- Uploads report as artifact for debugging
-
-## License
-
-MIT © G.U.Corp
+旧 v2 は Git の `v2.0.0` tag と履歴から参照できます。v3 の作業ツリー、ビルド、テスト、配布物には互換コードを残していません。

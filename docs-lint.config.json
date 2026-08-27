@@ -1,25 +1,16 @@
 {
-  "docsDir": "./docs",
+  "$schema": "./schemas/docs-lint-v3.schema.json",
+  "schemaVersion": 3,
+  "root": "./docs",
+  "include": ["**/*.md", "**/*.mdx"],
+  "exclude": ["**/node_modules/**", "**/99-archive/**"],
   "rules": {
-    "requirementTestMapping": "warn",
-    "codeBlockLanguage": "warn",
-    "todoComments": {
-      "severity": "warn",
-      "tags": {
-        "TODO": { "severity": "info" },
-        "FIXME": { "severity": "warn" },
-        "XXX": { "severity": "warn" },
-        "HACK": { "severity": "warn" },
-        "BUG": { "severity": "error" },
-        "NOTE": { "severity": "off" },
-        "REVIEW": { "severity": "info" },
-        "OPTIMIZE": { "severity": "info" },
-        "WARNING": { "severity": "warn" },
-        "QUESTION": { "severity": "info" }
-      },
-      "ignoreInlineCode": true,
-      "ignoreCodeBlocks": true,
-      "ignoreInTables": true
-    }
+    "links/internal": "error",
+    "markdown/headings": "warning",
+    "markdown/code-fence-language": "warning",
+    "content/terminology": "warning",
+    "structure/standard-pack": "off",
+    "document/required-sections": "off",
+    "traceability/requirements-tests": "off"
   }
 }

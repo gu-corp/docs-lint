@@ -1,36 +1,47 @@
 {
   "name": "@gu-corp/docs-lint",
-  "version": "2.0.0",
-  "description": "Documentation consistency and quality linting tool",
+  "version": "3.0.0",
+  "description": "Standard Pack based documentation validation and authoring toolkit",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schemas/docs-lint": "./schemas/docs-lint-v3.schema.json",
+    "./schemas/standard-pack": "./schemas/standard-pack.schema.json"
+  },
   "bin": {
     "docs-lint": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "node ./scripts/clean.mjs && tsc && node ./scripts/postbuild.mjs",
+    "check": "tsc --noEmit",
     "dev": "tsc --watch",
-    "lint": "eslint src",
-    "test": "vitest run",
-    "prepublishOnly": "npm run build"
+    "test": "vitest run --dir src",
+    "prepublishOnly": "npm run check && npm test && npm run smoke",
+    "smoke": "npm run build && node scripts/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "keywords": [
     "documentation",
     "lint",
     "markdown",
-    "consistency",
-    "quality"
+    "mdx",
+    "requirements",
+    "standard-pack"
   ],
   "author": "G.U.Corp",
   "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.2",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
-    "dotenv": "^17.2.3",
     "glob": "^11.0.0",
-    "markdownlint": "^0.40.0"
+    "minimatch": "^10.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
@@ -39,8 +50,10 @@
   },
   "files": [
     "dist",
-    "templates",
-    "README.md"
+    "packs",
+    "schemas",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "repository": {
     "type": "git",

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gu-corp.github.io/docs-lint/schemas/docs-lint-v3.schema.json",
+  "title": "docs-lint v3 configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "root"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 3 },
+    "root": { "type": "string", "minLength": 1, "default": "./docs" },
+    "include": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "default": ["**/*.md", "**/*.mdx"]
+    },
+    "exclude": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "standard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pack"],
+      "properties": {
+        "pack": { "type": "string", "minLength": 1 },
+        "profile": { "type": "string", "minLength": 1 }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/$defs/severity" },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["severity"],
+            "properties": {
+              "severity": { "$ref": "#/$defs/severity" },
+              "options": { "type": "object" }
+            }
+          }
+        ]
+      }
+    },
+    "terminology": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["preferred", "variants"],
+        "properties": {
+          "preferred": { "type": "string", "minLength": 1 },
+          "variants": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+          "locale": { "type": "string" }
+        }
+      }
+    },
+    "traceability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requirementPattern": { "type": "string" },
+        "testCasePattern": { "type": "string" },
+        "requirementFiles": { "type": "array", "items": { "type": "string" } },
+        "testFiles": { "type": "array", "items": { "type": "string" } },
+        "requiredCoverage": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "severity": { "enum": ["off", "info", "warning", "error"] }
+  }
+}

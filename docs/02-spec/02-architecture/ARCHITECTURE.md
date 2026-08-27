@@ -1,162 +1,97 @@
-# アーキテクチャ設計
-
-**バージョン**: 2.0.0
-**更新日**: 2026-02-18
-
+---
+documentType: architecture
+version: 3.0.0
+status: Approved for implementation
+canonicalLocale: ja
 ---
 
-## 概要
+# docs-lint v3 アーキテクチャ設計書
 
-docs-lint のシステムアーキテクチャを定義します。
-
-## 技術選定
-
-| 項目 | 選定 | 理由 |
-|------|------|------|
-| 言語 | TypeScript | 型安全性、IDE補完、G.U.Corp標準 |
-| ランタイム | Node.js 18+ | LTS、ESM対応 |
-| モジュール形式 | ESM | 将来標準、Tree-shaking対応 |
-| CLIフレームワーク | Commander.js | 軽量、広く採用 |
-| ファイルグロブ | glob | 標準的、高機能 |
-| 出力装飾 | chalk | ターミナルカラー |
-
-## システム構成
-
-```text
-┌──────────────────────────────────────────────────────────────────────────┐
-│                              CLI Layer (v2.0)                            │
-│  ┌──────────┐ ┌──────────┐ ┌─────────────┐ ┌─────────────┐ ┌──────────┐ │
-│  │   lint   │ │   init   │ │    check    │ │   review    │ │   show   │ │
-│  │          │ │--standards│ │  code/spec  │ │  code/spec  │ │standards │ │
-│  │  --fix   │ │--scaffold │ │             │ │  (MECE)     │ │config    │ │
-│  └────┬─────┘ └────┬─────┘ └──────┬──────┘ └──────┬──────┘ │rules     │ │
-│       │            │              │               │        └────┬─────┘ │
-└───────┼────────────┼──────────────┼───────────────┼─────────────┼───────┘
-        │            │              │               │             │
-┌───────▼────────────▼──────────────▼───────────────▼─────────────▼───────┐
-│                            Core Layer                                    │
-│  ┌─────────────────┐  ┌────────────────┐  ┌─────────────┐  ┌──────────┐ │
-│  │     Linter      │  │  ConfigLoader  │  │  Templates  │  │ AIPrompt │ │
-│  │  (main engine)  │  │                │  │             │  │  (MECE)  │ │
-│  └────────┬────────┘  └────────────────┘  └─────────────┘  └──────────┘ │
-└───────────┼─────────────────────────────────────────────────────────────┘
-            │
-┌───────────▼─────────────────────────────────────────────────────────────┐
-│                            Rules Layer                                   │
-│  ┌──────────┐ ┌──────────┐ ┌───────────┐ ┌──────────────┐ ┌───────────┐│
-│  │ content  │ │structure │ │terminology│ │requirements  │ │ markdown  ││
-│  │  rules   │ │  rules   │ │   rules   │ │   rules      │ │   lint    ││
-│  └──────────┘ └──────────┘ └───────────┘ └──────────────┘ └───────────┘│
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-## コンポーネント詳細
-
-### CLI Layer
-
-| コンポーネント | 責務 | ファイル |
-|---------------|------|----------|
-| lint | リントの実行、結果表示、`--fix`で自動修正 | src/cli.ts |
-| init | 設定ファイル生成（`--standards`, `--scaffold`オプション） | src/cli.ts |
-| check code | コードチェック（テストファイル存在、カバレッジ） | src/cli.ts |
-| check spec | 仕様書チェック（構造、参照） | src/cli.ts |
-| review code | AIコードレビュー（要件カバレッジ分析） | src/cli.ts |
-| review spec | AI仕様書レビュー（MECEチェック含む） | src/cli.ts |
-| show standards | ドキュメント標準の表示 | src/cli.ts |
-| show config | 現在の設定表示 | src/cli.ts |
-| show rules | 利用可能なルール一覧表示 | src/cli.ts |
-
-### Core Layer
-
-| コンポーネント | 責務 | ファイル |
-|---------------|------|----------|
-| Linter | ルールの実行、結果集約 | src/linter.ts |
-| ConfigLoader | 設定ファイルの読み込み・マージ | src/cli/config.ts |
-| Templates | 標準テンプレートの提供 | src/templates/standards.ts |
-| AIPrompt | AI向けプロンプト生成 | src/ai-prompt.ts |
-
-### Rules Layer
-
-| コンポーネント | 責務 | ファイル |
-|---------------|------|----------|
-| content rules | コンテンツ品質チェック | src/rules/content.ts |
-| structure rules | フォルダ構成チェック | src/rules/structure.ts |
-| terminology rules | 用語統一チェック | src/rules/terminology.ts |
-
-## データフロー
+## システムコンテキスト
 
 ```mermaid
-sequenceDiagram
-    participant User
-    participant CLI
-    participant Config
-    participant Linter
-    participant Rules
-    participant FileSystem
-
-    User->>CLI: docs-lint lint
-    CLI->>Config: loadConfig()
-    Config->>FileSystem: read config file
-    FileSystem-->>Config: config data
-    Config-->>CLI: DocsLintConfig
-    CLI->>Linter: createLinter(config)
-    CLI->>Linter: lint()
-
-    loop For each enabled rule
-        Linter->>Rules: execute rule
-        Rules->>FileSystem: read files
-        FileSystem-->>Rules: file contents
-        Rules-->>Linter: RuleResult[]
-    end
-
-    Linter-->>CLI: LintResult
-    CLI-->>User: formatted output
+flowchart LR
+  Author[文書作成者] --> CLI[docs-lint CLI]
+  CI[CI] --> CLI
+  Editor[Lunascape Doc Editor] --> API[v3 TypeScript API]
+  CLI --> Node[Node Adapter]
+  API --> Engine[Rule Engine]
+  Node --> Engine
+  Node --> Docs[Markdown / MDX]
+  Node --> Config[docs-lint.config.json]
+  Node --> Pack[Document Standard Pack]
+  Engine --> Report[LintReport v1]
 ```
 
-## ディレクトリ構成
+## 設計方針
+
+| ID | 決定 | 理由 |
+| --- | --- | --- |
+| ADR-001 | v2 互換層を v3 実行経路に置かない | 暗黙変換と分岐の増殖を止めるため |
+| ADR-002 | rule engine を registry 方式にする | ルール追加時に巨大な条件分岐を変更しないため |
+| ADR-003 | filesystem を Node adapter に隔離する | core を Editor、CLI、将来の browser worker から再利用するため |
+| ADR-004 | 組織規約を Standard Pack とする | G.U. 固有構造を汎用コアから分離するため |
+| ADR-005 | Pack は JSON/Markdown のみとする | 配布 Pack に任意コード実行権限を与えないため |
+| ADR-006 | AI provider をコア依存にしない | 機密文書の外部送信境界と provider 選択を明示するため |
+| ADR-007 | 設定と report を schema version で識別する | Editor、CI、CLI の段階的更新を安全にするため |
+
+## 構成要素
 
 ```text
 src/
-├── cli.ts                 # CLIエントリーポイント（v2.0コマンド構造）
-├── linter.ts              # メインリンターエンジン
-├── types.ts               # TypeScript型定義
-├── index.ts               # パブリックAPI
-├── ai/
-│   ├── review-prompt.ts   # AI向けレビュープロンプト生成（MECE含む）
-│   └── ...                # その他AIプロンプト関連
-├── cli/
-│   └── config.ts          # 設定ローダー
-├── code/
-│   └── ...                # コードチェック関連
-├── rules/
-│   ├── content.ts         # コンテンツルール
-│   └── structure.ts       # 構造ルール
-└── templates/
-    ├── standards.ts       # 標準テンプレート
-    └── translations/      # 多言語対応
-        ├── ja/
-        └── en/
+├── core/
+│   ├── engine.ts          # rule registry、優先順位、診断集約
+│   ├── config.ts          # 純粋な既定値・正規化
+│   ├── types.ts           # public contracts
+│   └── rules/             # 副作用を持たない built-in rules
+├── standards/
+│   ├── types.ts           # Standard Pack contracts
+│   └── manifest.ts        # manifest validation/profile resolution
+├── node/
+│   ├── config.ts          # config discovery、Editor config bridge
+│   ├── workspace.ts       # glob、front matter、safe write
+│   ├── standard-pack.ts   # Pack I/O、safe template rendering
+│   └── run.ts             # Node adapter composition root
+└── cli/
+    ├── program.ts         # command registration
+    └── commands/          # lint/init/migrate/create/pack
 ```
 
-## 拡張ポイント
+依存方向は `CLI → Node adapter → Core/Standards` とする。Core は CLI、Commander、filesystem、外部 AI SDK を import しない。
 
-### カスタムルールの追加
+## データ設計
 
-1. `src/rules/` に新しいルールファイルを作成
-2. `RuleResult` 型に準拠した関数をエクスポート
-3. `src/linter.ts` でルールを登録
+### 設定優先順位
 
-### 新しい出力フォーマットの追加
+```mermaid
+flowchart LR
+  Rule[Rule default] --> Pack[Pack rules]
+  Pack --> Profile[Resolved profile rules]
+  Profile --> Project[Project rules]
+  Project --> Effective[Effective setting]
+```
 
-1. `src/formatters/` ディレクトリを作成
-2. フォーマッター関数を実装
-3. CLIに `--format` オプションを追加
+より右側を優先する。`standard` は `docs-lint.config.json` を優先し、未指定の場合だけ文書ルートの `lunascape-docs.json.documentStandards` を読む。
 
----
+### 診断契約
 
-## 関連ドキュメント
+`LintReport.schemaVersion` は診断 JSON 自体の互換性を表す。各診断には rule ID、severity、message を必須とし、file、line/column、fix、data は必要な場合だけ付与する。ルールの例外は `Rule failed:` 診断へ変換する。
 
-- [要件定義](../01-requirements/README.md)
-- [クラス設計](./CLASS.md)
-- [エラー処理設計](./ERROR-HANDLING.md)
-- [API仕様](./API.md)
+### Standard Pack
+
+Pack は `pack.json` と Markdown template からなる。profile は複数 profile を継承できる。継承は宣言順に親をマージし、最後に子を適用する。配列は順序を維持して重複を除去する。
+
+## セキュリティ設計
+
+- project 文書 path と Pack template path は root からの相対パスとして解決する。
+- `..`、absolute path、root 外 symlink を拒否する。
+- `{{variable}}` の置換だけを許し、式や JavaScript を評価しない。
+- 文書作成は exclusive create を既定とし、上書きは明示的な `--force` に限定する。
+- v3 コアは network API を呼ばず、秘密情報を要求しない。
+
+## 運用設計
+
+- CI は `npm run check`、`npm test`、`npm run build`、`npm audit --omit=dev` を実行する。
+- Pack と docs-lint package は独立して version を持つ。
+- breaking change は config schema または report schema の version 更新として扱う。
+- v2 は Git tag と履歴で保全し、v3 の作業ツリー、build、test、package files に互換コードを置かない。

@@ -1,114 +1,106 @@
-# 要件インデックス
-
-**バージョン**: 2.0.0
-**更新日**: 2026-02-18
-
+---
+documentType: system-requirements
+version: 3.0.0
+status: Approved for implementation
+canonicalLocale: ja
 ---
 
-## 概要
+# docs-lint v3 要件定義書
 
-docs-lint の全要件を一覧で管理するインデックスです。
+## 目的
 
-## 要件サマリー
+複数プロダクトの Markdown/MDX 文書を、プロダクト固有の事情と組織共通の文書標準を分離したまま検証・生成できる仕組みを提供する。CI、Lunascape Doc Editor、将来の AI review が同じ設定と診断契約を利用できる状態を作る。
 
-| カテゴリ | 件数 | ステータス |
-|----------|------|----------|
-| ビジネス要件 (BR) | 3 | 定義済み |
-| 機能要件 (FR) | 35 | 定義済み |
-| 非機能要件 (NFR) | 4 | 定義済み |
-| 統合要件 (IR) | 2 | 定義済み |
+## 対象範囲
 
-## ビジネス要件 (BR)
+### 対象
 
-| ID | 要件 | 優先度 | 詳細 |
-|----|------|--------|------|
-| BR-001 | G.U.Corpの90+リポジトリのドキュメント品質を標準化する | 高 | [詳細](./00-business/REQUIREMENTS.md) |
-| BR-002 | AIによるドキュメントレビューを支援する | 中 | [詳細](./00-business/REQUIREMENTS.md) |
-| BR-003 | CI/CDパイプラインでの自動チェックを可能にする | 高 | [詳細](./00-business/REQUIREMENTS.md) |
+- Markdown/MDX 文書の探索と読込
+- 登録型ルールエンジンによる決定的な検証
+- Document Standard Pack の読込、profile 継承、テンプレート生成
+- CLI と TypeScript API
+- Lunascape Doc Editor と共有できる Standard Pack 選択
 
-## 機能要件 (FR)
+### 対象外
 
-### コンテンツチェック (FR-CONTENT)
+- WYSIWYG/Markdown の描画と編集
+- Git commit、push、Issue 登録
+- v3 コアからの外部 AI API 呼出し
+- v2 CLI/API の互換レイヤー
 
-| ID | 要件 | 優先度 | 実装Ver |
-|----|------|--------|---------|
-| FR-CONTENT-001 | 内部リンク切れを検出できる | 高 | v1.0 |
-| FR-CONTENT-002 | レガシーファイル名を検出できる | 高 | v1.0 |
-| FR-CONTENT-003 | バージョン情報の有無をチェックできる | 中 | v1.0 |
-| FR-CONTENT-004 | 関連ドキュメントセクションの有無をチェックできる | 中 | v1.0 |
-| FR-CONTENT-005 | 見出し階層の妥当性をチェックできる | 中 | v1.0 |
-| FR-CONTENT-006 | TODO/FIXME/XXXコメントを検出できる | 中 | v1.0 |
-| FR-CONTENT-007 | コードブロックの言語指定有無をチェックできる | 低 | v1.0 |
-| FR-CONTENT-008 | 孤立ドキュメントを検出できる | 低 | v1.0 |
-| FR-CONTENT-009 | 用語の不統一を検出できる | 低 | v1.0 |
+## ステークホルダー
 
-### 構造チェック (FR-STRUCT)
+| 役割 | 主な関心 |
+| --- | --- |
+| 文書責任者 | 要件・仕様の完全性、正本、承認状態 |
+| 開発者 | 高速なローカル検証、明確な修正箇所 |
+| 品質保証 | 要件とテストの追跡、CI の安定性 |
+| 標準管理者 | Pack の版管理、組織規約とプロダクト設定の分離 |
+| Editor 利用者 | 同一 config、保存時検証、生成テンプレート |
 
-| ID | 要件 | 優先度 | 実装Ver |
-|----|------|--------|---------|
-| FR-STRUCT-001 | 標準フォルダ構成をチェックできる | 高 | v1.5 |
-| FR-STRUCT-002 | 必須フォルダの存在をチェックできる | 高 | v1.5 |
-| FR-STRUCT-003 | 必須ファイルの存在をチェックできる | 高 | v1.5 |
-| FR-STRUCT-004 | フォルダ番号付けの連番をチェックできる | 中 | v1.5 |
-| FR-STRUCT-005 | ファイル命名規則をチェックできる | 中 | v1.5 |
-| FR-STRUCT-006 | 標準テンプレートとの差分を検出できる | 低 | v2.0 |
+## 機能要件
 
-### 要件・テスト追跡 (FR-TRACE)
+| ID | 要件 | 受入条件 |
+| --- | --- | --- |
+| SR-CORE-001 | ルールを `domain/name` ID で登録できる | 重複 ID と非 namespaced ID を拒否する |
+| SR-CORE-002 | 各ルールの失敗を他ルールから隔離する | 例外を診断へ変換し、残りのルールを実行する |
+| SR-CORE-003 | 診断レポートを安定した JSON schema で返す | schemaVersion、件数、severity、file、location を含む |
+| SR-CFG-001 | v3 設定を明示的に識別する | `schemaVersion: 3` がない v2 設定をエラーにする |
+| SR-CFG-002 | 設定、profile、Pack、rule default の優先順位を固定する | project > profile > Pack > rule default の順になる |
+| SR-CFG-003 | Editor と Standard Pack 選択を共有できる | `lunascape-docs.json.documentStandards` を読める |
+| SR-PACK-001 | JSON manifest と Markdown template から Pack を構成できる | executable code を Pack に要求しない |
+| SR-PACK-002 | profile の多重継承を解決できる | 参照欠落と循環を検出する |
+| SR-PACK-003 | template の変数を安全に展開できる | eval を使わず、必須・未解決変数を拒否する |
+| SR-PACK-004 | Pack 外のファイル参照を拒否する | path traversal と symlink escape を拒否する |
+| SR-PACK-005 | 既存文書を暗黙に上書きしない | `create` は既存 target で失敗し、`--force` のみ許可する |
+| SR-LINT-001 | 内部文書リンク切れを検出する | 相対 Markdown link の欠落と root escape を報告する |
+| SR-LINT-002 | 見出し構造を検証する | H1 欠落・重複と階層飛びを報告する |
+| SR-LINT-003 | fenced code block の言語指定を検証する | 未指定 fence の file と line を報告する |
+| SR-LINT-004 | 非推奨語を検出する | Pack と project terminology を統合する |
+| SR-LINT-005 | Pack が要求する構造と文書を検証する | 必須 folder と requiredDocuments の欠落を報告する |
+| SR-LINT-006 | 文書種別の必須セクションを検証する | front matter または suggestedPath から種別を決める |
+| SR-TRACE-001 | 要件 ID とテスト参照を検証する | 未参照要件と test case ID 欠落を報告する |
+| SR-TRACE-002 | 最低カバレッジを設定できる | 0〜1 の閾値未満を診断する |
+| SR-CLI-001 | lint を人間向け・JSON で出力できる | error があれば exit code 1 にする |
+| SR-CLI-002 | Pack を一覧・検証・表示できる | `pack list/validate/show` が動く |
+| SR-CLI-003 | v2 設定の変換案を生成できる | 元ファイルを上書きせず、要レビューの v3 ファイルを作る |
 
-| ID | 要件 | 優先度 | 実装Ver |
-|----|------|--------|---------|
-| FR-TRACE-001 | FR-XXX形式の要件IDを認識できる | 高 | v1.7 |
-| FR-TRACE-002 | TC-XXX形式のテストケースIDを認識できる | 高 | v1.7 |
-| FR-TRACE-003 | 要件とテストケースの対応関係をチェックできる | 高 | v1.7 |
-| FR-TRACE-004 | 要件カバレッジを報告できる | 中 | v1.7 |
+## 非機能要件
 
-### CLI (FR-CLI)
+| ID | 分類 | 要件 | 検証 |
+| --- | --- | --- | --- |
+| SR-NFR-001 | Runtime | Node.js 20 以上の ESM として動作する | CI matrix と package engines |
+| SR-NFR-002 | Security | Pack path を root 内へ制限し、テンプレートを実行しない | traversal/symlink test |
+| SR-NFR-003 | Determinism | 同一入力・設定から診断内容と順序が安定する | fixture snapshot/test |
+| SR-NFR-004 | Maintainability | CLI command、rule、filesystem adapter を分離する | architecture boundary review |
+| SR-NFR-005 | Dependency | runtime dependency の既知脆弱性を残さない | `npm audit --omit=dev` |
+| SR-NFR-006 | Compatibility | v3 の schema と report を version field で識別する | schema validation test |
 
-| ID | 要件 | 優先度 | 実装Ver |
-|----|------|--------|---------|
-| FR-CLI-001 | lintコマンドで全ルールを実行できる | 高 | v1.0 |
-| FR-CLI-002 | initコマンドで設定ファイルを生成できる | 高 | v1.0 |
-| FR-CLI-003 | init-standardsコマンドでDOCUMENT_STANDARDS.mdを生成できる | 高 | v1.0 |
-| FR-CLI-004 | show-standardsコマンドで現在の標準を表示できる | 中 | v1.0 |
-| FR-CLI-005 | check-structureコマンドでフォルダ構成をチェックできる | 中 | v1.5 |
-| FR-CLI-006 | scaffoldコマンドで標準フォルダ構成を生成できる | 中 | v1.8 |
-| FR-CLI-007 | review:specコマンドでAIレビューを実行できる | 低 | v1.8 |
-| FR-CLI-008 | --verboseオプションで詳細出力できる | 中 | v1.0 |
-| FR-CLI-009 | --jsonオプションでJSON形式出力できる | 中 | v1.0 |
-| FR-CLI-010 | --ai-promptオプションでAI向けプロンプトを生成できる | 中 | v1.0 |
-| FR-CLI-011 | --onlyオプションで特定ルールのみ実行できる | 低 | v1.0 |
-| FR-CLI-012 | --skipオプションで特定ルールをスキップできる | 低 | v1.0 |
-| FR-CLI-013 | --fixオプションでマークダウンフォーマットを自動修正できる | 中 | v1.14 |
+## セキュリティ要件
 
-### API (FR-API)
+| ID | 要件 |
+| --- | --- |
+| SR-SEC-001 | project root および Pack root を越える相対パスを拒否する |
+| SR-SEC-002 | symlink の実体が Pack root 外なら template として読まない |
+| SR-SEC-003 | template 展開で式評価、shell 実行、任意 module load を行わない |
+| SR-SEC-004 | AI 連携をコアへ内蔵せず、外部送信は将来 adapter で明示する |
+| SR-SEC-005 | 診断に環境変数や文書本文全体を暗黙に含めない |
 
-| ID | 要件 | 優先度 | 実装Ver |
-|----|------|--------|---------|
-| FR-API-001 | createLinter()でリンターインスタンスを作成できる | 高 | v1.0 |
-| FR-API-002 | linter.lint()で全ルールを実行できる | 高 | v1.0 |
-| FR-API-003 | 個別ルール関数をエクスポートする | 中 | v1.0 |
-| FR-API-004 | TypeScript型定義を提供する | 中 | v1.0 |
+## 外部インターフェース
 
-## 非機能要件 (NFR)
+| ID | Interface | 契約 |
+| --- | --- | --- |
+| IF-001 | `docs-lint.config.json` | docs-lint v3 JSON Schema |
+| IF-002 | `pack.json` | Document Standard Pack schema v1 |
+| IF-003 | `lunascape-docs.json` | `documentStandards.pack/profile` |
+| IF-004 | CLI JSON | LintReport schemaVersion 1 |
+| IF-005 | TypeScript API | package exports に明示した v3 API |
 
-| ID | 要件 | 基準 | 実装Ver |
-|----|------|------|---------|
-| NFR-001 | 100ファイルのリントが10秒以内に完了する | 性能 | v1.0 |
-| NFR-002 | Node.js 18以上で動作する | 互換性 | v1.0 |
-| NFR-003 | ESMモジュールとして提供する | 互換性 | v1.0 |
-| NFR-004 | 依存パッケージを最小限に保つ | 保守性 | v1.0 |
+## 業務要件との対応
 
-## 統合要件 (IR)
-
-| ID | 要件 | 優先度 | 実装Ver |
-|----|------|--------|---------|
-| IR-001 | GitHub Actionsで実行可能 | 高 | v1.0 |
-| IR-002 | Anthropic APIと連携してAIレビューを実行できる | 中 | v1.8 |
-
----
-
-## 関連ドキュメント
-
-- [機能要件詳細](./01-functional/REQUIREMENTS.md)
-- [非機能要件詳細](./02-non-functional/REQUIREMENTS.md)
-- [テストケース](../04-testing/TEST-CASES.md)
+| システム要件 | 利用価値 | テスト |
+| --- | --- | --- |
+| SR-PACK-001〜005 | プロダクト横断で規約と雛形を再利用できる | Standard Pack tests |
+| SR-LINT-001〜006 | 顧客提示前の構造・記述不備を自動検出できる | Engine/workspace tests |
+| SR-TRACE-001〜002 | 要件から検証証跡まで追跡できる | Traceability rule tests |
+| SR-CFG-003 | Editor と CI の設定差異を減らせる | Config integration tests |

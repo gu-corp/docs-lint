@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "id": "gu-corp/software-standard",
+  "version": "1.0.0",
+  "title": {
+    "ja": "G.U. ソフトウェア文書標準",
+    "en": "G.U. Software Documentation Standard"
+  },
+  "description": {
+    "ja": "顧客提示可能な要件、設計、テスト文書を一貫した構造で管理するための標準パック。",
+    "en": "A standard pack for consistent, customer-ready requirements, architecture, and test documentation."
+  },
+  "defaultProfile": "web-application",
+  "profiles": {
+    "base": {
+      "title": { "ja": "基本", "en": "Base" },
+      "documentTypes": [
+        "customer-requirements",
+        "business-requirements",
+        "system-requirements",
+        "architecture",
+        "test-plan"
+      ],
+      "requiredDocuments": [
+        "customer-requirements",
+        "business-requirements",
+        "system-requirements",
+        "architecture",
+        "test-plan"
+      ],
+      "variables": {
+        "organization": "G.U. Group",
+        "canonicalLocale": "ja"
+      }
+    },
+    "web-application": {
+      "title": { "ja": "Web アプリケーション", "en": "Web Application" },
+      "extends": ["base"]
+    },
+    "api-service": {
+      "title": { "ja": "API サービス", "en": "API Service" },
+      "extends": ["base"]
+    },
+    "regulated-financial-product": {
+      "title": { "ja": "規制対象金融プロダクト", "en": "Regulated Financial Product" },
+      "extends": ["web-application"],
+      "rules": {
+        "document/required-sections": {
+          "severity": "error"
+        },
+        "traceability/requirements-tests": {
+          "severity": "error"
+        }
+      }
+    },
+    "smart-contract": {
+      "title": { "ja": "スマートコントラクト", "en": "Smart Contract" },
+      "extends": ["base"]
+    }
+  },
+  "structure": [
+    { "path": "01-plan", "title": { "ja": "計画", "en": "Planning" }, "required": true },
+    { "path": "02-spec", "title": { "ja": "仕様", "en": "Specification" }, "required": true },
+    { "path": "02-spec/01-requirements", "title": { "ja": "要件", "en": "Requirements" }, "required": true },
+    { "path": "02-spec/02-architecture", "title": { "ja": "アーキテクチャ", "en": "Architecture" }, "required": true },
+    { "path": "02-spec/03-testing", "title": { "ja": "テスト", "en": "Testing" }, "required": true },
+    { "path": "03-guide", "title": { "ja": "ガイド", "en": "Guides" } },
+    { "path": "04-development", "title": { "ja": "開発", "en": "Development" } },
+    { "path": "05-operations", "title": { "ja": "運用", "en": "Operations" } },
+    { "path": "06-reference", "title": { "ja": "参照資料", "en": "Reference" } }
+  ],
+  "documentTypes": {
+    "customer-requirements": {
+      "title": { "ja": "顧客向け要件定義書", "en": "Customer Requirements Specification" },
+      "description": { "ja": "顧客と合意する目的、範囲、制約、受入条件。", "en": "Customer-agreed purpose, scope, constraints, and acceptance criteria." },
+      "template": "templates/customer-requirements.md",
+      "suggestedPath": "02-spec/01-requirements/REQUIREMENTS.md",
+      "canonicalLocale": "ja",
+      "variables": {
+        "productName": { "description": "Product or system name", "required": true },
+        "documentOwner": { "description": "Document owner", "required": true },
+        "organization": { "description": "Owning organization", "default": "G.U. Group" }
+      },
+      "sections": [
+        { "id": "document-control", "title": { "ja": "文書管理", "en": "Document Control" }, "required": true, "level": 2 },
+        { "id": "purpose", "title": { "ja": "目的", "en": "Purpose" }, "required": true, "level": 2 },
+        { "id": "scope", "title": { "ja": "対象範囲", "en": "Scope" }, "required": true, "level": 2 },
+        { "id": "stakeholders", "title": { "ja": "ステークホルダー", "en": "Stakeholders" }, "required": true, "level": 2 },
+        { "id": "requirements", "title": { "ja": "業務要件", "en": "Business Requirements" }, "required": true, "level": 2 },
+        { "id": "non-functional", "title": { "ja": "非機能要件", "en": "Non-functional Requirements" }, "required": true, "level": 2 },
+        { "id": "acceptance", "title": { "ja": "受入条件", "en": "Acceptance Criteria" }, "required": true, "level": 2 },
+        { "id": "assumptions", "title": { "ja": "前提・制約", "en": "Assumptions and Constraints" }, "required": true, "level": 2 },
+        { "id": "open-issues", "title": { "ja": "未決事項", "en": "Open Issues" }, "required": true, "level": 2 }
+      ]
+    },
+    "business-requirements": {
+      "title": { "ja": "業務要件一覧", "en": "Business Requirements Catalogue" },
+      "template": "templates/business-requirements.md",
+      "suggestedPath": "02-spec/01-requirements/REQUIREMENTS-BUSINESS.md",
+      "canonicalLocale": "ja",
+      "variables": {
+        "productName": { "required": true },
+        "documentOwner": { "required": true }
+      },
+      "sections": [
+        { "id": "policy", "title": { "ja": "記述規則", "en": "Authoring Rules" }, "required": true, "level": 2 },
+        { "id": "catalogue", "title": { "ja": "業務要件一覧", "en": "Requirements Catalogue" }, "required": true, "level": 2 },
+        { "id": "traceability", "title": { "ja": "トレーサビリティ", "en": "Traceability" }, "required": true, "level": 2 }
+      ]
+    },
+    "system-requirements": {
+      "title": { "ja": "システム要件仕様書", "en": "System Requirements Specification" },
+      "template": "templates/system-requirements.md",
+      "suggestedPath": "02-spec/01-requirements/REQUIREMENTS-SYSTEM.md",
+      "canonicalLocale": "ja",
+      "variables": {
+        "productName": { "required": true },
+        "documentOwner": { "required": true }
+      },
+      "sections": [
+        { "id": "functional", "title": { "ja": "機能要件", "en": "Functional Requirements" }, "required": true, "level": 2 },
+        { "id": "non-functional", "title": { "ja": "非機能要件", "en": "Non-functional Requirements" }, "required": true, "level": 2 },
+        { "id": "security", "title": { "ja": "セキュリティ要件", "en": "Security Requirements" }, "required": true, "level": 2 },
+        { "id": "interfaces", "title": { "ja": "外部インターフェース", "en": "External Interfaces" }, "required": true, "level": 2 },
+        { "id": "traceability", "title": { "ja": "業務要件との対応", "en": "Business Traceability" }, "required": true, "level": 2 }
+      ]
+    },
+    "architecture": {
+      "title": { "ja": "アーキテクチャ設計書", "en": "Architecture Specification" },
+      "template": "templates/architecture.md",
+      "suggestedPath": "02-spec/02-architecture/ARCHITECTURE.md",
+      "canonicalLocale": "ja",
+      "variables": {
+        "productName": { "required": true },
+        "documentOwner": { "required": true }
+      },
+      "sections": [
+        { "id": "context", "title": { "ja": "システムコンテキスト", "en": "System Context" }, "required": true, "level": 2 },
+        { "id": "decisions", "title": { "ja": "設計方針", "en": "Architecture Decisions" }, "required": true, "level": 2 },
+        { "id": "components", "title": { "ja": "構成要素", "en": "Components" }, "required": true, "level": 2 },
+        { "id": "data", "title": { "ja": "データ設計", "en": "Data Design" }, "required": true, "level": 2 },
+        { "id": "security", "title": { "ja": "セキュリティ設計", "en": "Security Design" }, "required": true, "level": 2 },
+        { "id": "operations", "title": { "ja": "運用設計", "en": "Operational Design" }, "required": true, "level": 2 }
+      ]
+    },
+    "test-plan": {
+      "title": { "ja": "テスト計画書", "en": "Test Plan" },
+      "template": "templates/test-plan.md",
+      "suggestedPath": "02-spec/03-testing/TEST-PLAN.md",
+      "canonicalLocale": "ja",
+      "variables": {
+        "productName": { "required": true },
+        "documentOwner": { "required": true }
+      },
+      "sections": [
+        { "id": "scope", "title": { "ja": "対象範囲", "en": "Scope" }, "required": true, "level": 2 },
+        { "id": "strategy", "title": { "ja": "テスト戦略", "en": "Test Strategy" }, "required": true, "level": 2 },
+        { "id": "environment", "title": { "ja": "環境・データ", "en": "Environment and Data" }, "required": true, "level": 2 },
+        { "id": "entry-exit", "title": { "ja": "開始・終了条件", "en": "Entry and Exit Criteria" }, "required": true, "level": 2 },
+        { "id": "traceability", "title": { "ja": "要件トレーサビリティ", "en": "Requirements Traceability" }, "required": true, "level": 2 }
+      ]
+    }
+  },
+  "terminology": [
+    { "preferred": "G.U. Account", "variants": ["GU Account", "gu-account"] },
+    { "preferred": "Markdown", "variants": ["markdown", "MarkDown"] }
+  ],
+  "ai": {
+    "instructions": [
+      "Do not invent decisions, requirements, evidence, or approval status.",
+      "Keep requirement identifiers stable and make acceptance criteria testable.",
+      "Treat the canonical locale document as authoritative; translations must preserve identifiers and meaning."
+    ],
+    "reviewInstructions": [
+      "Flag ambiguous actors, undefined boundaries, missing failure behavior, and untestable acceptance criteria.",
+      "Check business-to-system-to-test traceability before style improvements."
+    ]
+  }
+}

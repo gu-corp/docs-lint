@@ -1,65 +1,35 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { loadConfig } from '../cli/config.js';
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
+import { loadConfig } from '../node/config.js';
+
+const created: string[] = [];
+function temporaryDirectory(): string {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-lint-config-'));
+  created.push(directory);
+  return directory;
+}
+afterEach(() => { for (const directory of created.splice(0)) fs.rmSync(directory, { recursive: true, force: true }); });
 
 describe('loadConfig', () => {
-  let originalCwd: string;
-  let tmpDir: string;
-
-  beforeEach(() => {
-    originalCwd = process.cwd();
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-lint-config-test-'));
-    process.chdir(tmpDir);
+  it('loads schema v3 and inherits a Standard Pack from lunascape-docs.json', () => {
+    const root = temporaryDirectory();
+    fs.mkdirSync(path.join(root, 'docs'));
+    fs.writeFileSync(path.join(root, 'docs-lint.config.json'), JSON.stringify({ schemaVersion: 3, root: './docs' }));
+    fs.writeFileSync(path.join(root, 'docs', 'lunascape-docs.json'), JSON.stringify({
+      documentStandards: { pack: '../standards/team', profile: 'api-service' },
+    }));
+    const config = loadConfig({ configPath: path.join(root, 'docs-lint.config.json') });
+    expect(config.schemaVersion).toBe(3);
+    expect(config.rootPath).toBe(path.join(root, 'docs'));
+    expect(config.standard).toEqual({ pack: path.join(root, 'standards/team'), profile: 'api-service' });
   });
 
-  afterEach(() => {
-    process.chdir(originalCwd);
-    fs.rmSync(tmpDir, { recursive: true });
-  });
-
-  it('should return default config when no config file exists', async () => {
-    const config = await loadConfig();
-
-    expect(config).toBeDefined();
-    expect(config.docsDir).toBe('./docs');
-    expect(config.rules).toBeDefined();
-  });
-
-  it('should load config from docs-lint.config.json', async () => {
-    fs.writeFileSync(
-      path.join(tmpDir, 'docs-lint.config.json'),
-      JSON.stringify({
-        docsDir: './documentation',
-        rules: { brokenLinks: 'off' },
-      })
-    );
-
-    const config = await loadConfig();
-
-    expect(config.docsDir).toBe('./documentation');
-    expect(config.rules.brokenLinks).toBe('off');
-  });
-
-  it('should override docsDir when provided as parameter', async () => {
-    const config = await loadConfig(undefined, './custom-docs');
-
-    expect(config.docsDir).toBe('./custom-docs');
-  });
-
-  it('should merge rules with defaults', async () => {
-    fs.writeFileSync(
-      path.join(tmpDir, 'docs-lint.config.json'),
-      JSON.stringify({
-        rules: { brokenLinks: 'off' },
-      })
-    );
-
-    const config = await loadConfig();
-
-    expect(config.rules.brokenLinks).toBe('off');
-    // Other rules should still have default values
-    expect(config.rules.headingHierarchy).toBeDefined();
+  it('rejects v2 configurations instead of silently guessing', () => {
+    const root = temporaryDirectory();
+    const configPath = path.join(root, 'docs-lint.config.json');
+    fs.writeFileSync(configPath, JSON.stringify({ docsDir: './docs', rules: {} }));
+    expect(() => loadConfig({ configPath })).toThrow(/requires schemaVersion: 3/);
   });
 });
