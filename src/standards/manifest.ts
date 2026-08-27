@@ -1,4 +1,5 @@
 import type { DocumentStandardPack, ResolvedStandardProfile, StandardProfile } from './types.js';
+import type { RuleSetting, Severity } from '../contracts/rule-setting.js';
 
 const ID_PATTERN = /^[a-z0-9][a-z0-9._/-]*$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
@@ -97,8 +98,30 @@ function mergeProfile(base: StandardProfile, override: StandardProfile): Standar
     documentTypes: unique([...(base.documentTypes || []), ...(override.documentTypes || [])]),
     requiredDocuments: unique([...(base.requiredDocuments || []), ...(override.requiredDocuments || [])]),
     variables: { ...base.variables, ...override.variables },
-    rules: { ...base.rules, ...override.rules },
+    rules: mergeRules(base.rules, override.rules),
   };
+}
+
+function mergeRules(
+  base: Record<string, RuleSetting> | undefined,
+  override: Record<string, RuleSetting> | undefined,
+): Record<string, RuleSetting> {
+  const merged = { ...base };
+  for (const [id, setting] of Object.entries(override || {})) {
+    const inherited = merged[id];
+    merged[id] = inheritProfileRuleSetting(inherited, setting);
+  }
+  return merged;
+}
+
+function inheritProfileRuleSetting(inherited: RuleSetting | undefined, setting: RuleSetting): RuleSetting {
+  if (typeof setting === 'string' || setting.severity !== undefined) return setting;
+  const inheritedSeverity = ruleSeverity(inherited);
+  return inheritedSeverity === undefined ? setting : { severity: inheritedSeverity, options: setting.options };
+}
+
+function ruleSeverity(setting: RuleSetting | undefined): Severity | undefined {
+  return typeof setting === 'string' ? setting : setting?.severity;
 }
 
 function detectCycles(profiles: Record<string, StandardProfile>, issues: string[]): void {
@@ -120,8 +143,26 @@ function validateRules(owner: string, value: unknown, issues: string[]): void {
   if (!isRecord(value)) { issues.push(`${owner}.rules must be an object.`); return; }
   for (const [id, setting] of Object.entries(value)) {
     if (!id.includes('/')) issues.push(`${owner}.rules contains a non-namespaced rule: ${id}`);
-    const severity = typeof setting === 'string' ? setting : isRecord(setting) ? setting.severity : undefined;
-    if (typeof severity !== 'string' || !SEVERITIES.has(severity)) issues.push(`${owner}.rules.${id} has an invalid severity.`);
+    if (typeof setting === 'string') {
+      if (!SEVERITIES.has(setting)) issues.push(`${owner}.rules.${id} has an invalid severity.`);
+      continue;
+    }
+    if (!isRecord(setting)) {
+      issues.push(`${owner}.rules.${id} must be a severity or rule setting object.`);
+      continue;
+    }
+    const keys = Object.keys(setting);
+    if (!keys.length || (setting.severity === undefined && setting.options === undefined)
+      || keys.some(key => key !== 'severity' && key !== 'options')) {
+      issues.push(`${owner}.rules.${id} must contain severity and/or options only.`);
+      continue;
+    }
+    if (setting.severity !== undefined && (typeof setting.severity !== 'string' || !SEVERITIES.has(setting.severity))) {
+      issues.push(`${owner}.rules.${id} has an invalid severity.`);
+    }
+    if (setting.options !== undefined && !isRecord(setting.options)) {
+      issues.push(`${owner}.rules.${id}.options must be an object.`);
+    }
   }
 }
 

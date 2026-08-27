@@ -1,8 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isRuleSetting, optionsOf, severityOf } from '../core/config.js';
+import {
+  optionsOf,
+  resolveRuleSettingLayers,
+  severityOf,
+} from '../core/config.js';
 import { BUILTIN_RULES } from '../core/engine.js';
-import type { LintReport, ResolvedDocsLintConfig, RuleSetting, Severity } from '../core/types.js';
+import type { LintReport, ResolvedDocsLintConfig, Severity } from '../core/types.js';
 import type {
   LoadedStandardPack,
   LocalizedText,
@@ -36,6 +40,7 @@ export interface EffectiveRuleDescription {
   severity: Severity;
   source: EffectiveRuleSource;
   options?: Record<string, unknown>;
+  optionsSource?: Exclude<EffectiveRuleSource, 'default'>;
 }
 
 export interface TemplateDescription {
@@ -202,21 +207,21 @@ function describeRules(
       { setting: profile?.rules?.[rule.id], source: 'profile' as const },
       { setting: pack?.manifest.rules?.[rule.id], source: 'pack' as const },
     ];
-    let setting: RuleSetting | undefined;
-    let source: EffectiveRuleSource = 'default';
-    for (const candidate of candidates) {
-      if (!isRuleSetting(candidate.setting)) continue;
-      setting = candidate.setting;
-      source = candidate.source;
-      break;
-    }
-    const options = optionsOf(setting);
+    const resolved = resolveRuleSettingLayers(candidates.map(candidate => candidate.setting));
+    const severityCandidate = resolved.severity
+      ? { ...resolved.severity, source: candidates[resolved.severity.index].source }
+      : undefined;
+    const optionsCandidate = resolved.options
+      ? { ...resolved.options, source: candidates[resolved.options.index].source }
+      : undefined;
+    const options = optionsOf(optionsCandidate?.setting);
     return {
       id: rule.id,
       description: rule.description,
-      severity: severityOf(setting, rule.defaultSeverity),
-      source,
-      ...(Object.keys(options).length ? { options: structuredClone(options) } : {}),
+      severity: severityOf(severityCandidate?.setting, rule.defaultSeverity),
+      source: severityCandidate?.source ?? 'default',
+      ...(optionsCandidate ? { options: structuredClone(options) } : {}),
+      ...(optionsCandidate ? { optionsSource: optionsCandidate.source } : {}),
     };
   });
 }

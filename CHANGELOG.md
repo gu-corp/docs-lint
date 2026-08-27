@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.0
+
+- Added options-only rule settings so projects can customize rule options without replacing Standard Pack or profile severity.
+- Preserved winner-takes-all compatibility for settings with severity, while allowing an options-only winner to inherit profile, Pack or rule-default severity.
+- Exposed separate severity and options provenance from Editor sessions and aligned config, Standard Pack schemas and CLI behavior.
+
 ## 3.1.1
 
 - Included generated third-party notices and complete license texts for every dependency bundled into the Editor runtime.

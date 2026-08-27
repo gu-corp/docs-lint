@@ -1,6 +1,6 @@
 ---
 documentType: architecture
-version: 3.1.1
+version: 3.2.0
 status: Approved for implementation
 canonicalLocale: ja
 ---
@@ -71,7 +71,7 @@ flowchart LR
   Project --> Effective[Effective setting]
 ```
 
-より右側を優先する。`standard` は `docs-lint.config.json` を優先し、未指定の場合だけ文書ルートの `lunascape-docs.json.documentStandards` を読む。
+より右側を優先する。最上位設定がseverityを持つ場合はその設定だけを採用して下位optionsを継承しない。最上位がoptions-onlyの場合だけ、そのoptionsを保持し、severityをprofile、Pack、rule defaultの順に補う。`standard` は `docs-lint.config.json` を優先し、未指定の場合だけ文書ルートの `lunascape-docs.json.documentStandards` を読む。
 
 ### 診断契約
 

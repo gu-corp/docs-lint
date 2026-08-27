@@ -1,4 +1,4 @@
-import { isRuleSetting, optionsOf, severityOf } from './config.js';
+import { optionsOf, resolveRuleSettingLayers, severityOf } from './config.js';
 import type {
   Diagnostic,
   DocumentFile,
@@ -7,7 +7,6 @@ import type {
   RuleContext,
   RuleDefinition,
   RuleExecution,
-  RuleSetting,
 } from './types.js';
 import type { LoadedStandardPack, ResolvedStandardProfile } from '../standards/types.js';
 import { terminologyRule } from './rules/content.js';
@@ -59,7 +58,7 @@ export class DocsLintEngine {
       if (input.only?.length && !input.only.includes(rule.id)) continue;
       if (input.skip?.includes(rule.id)) continue;
       const setting = resolveRuleSetting(input, rule.id);
-      const severity = severityOf(setting, rule.defaultSeverity);
+      const severity = severityOf(setting.severity?.setting, rule.defaultSeverity);
       if (severity === 'off') continue;
       const context: RuleContext = {
         config: input.config,
@@ -68,7 +67,7 @@ export class DocsLintEngine {
         pathExists: input.pathExists,
         standardPack: input.standardPack,
         standardProfile: input.standardProfile,
-        options: optionsOf(setting),
+        options: optionsOf(setting.options?.setting),
       };
       const started = performance.now();
       let diagnostics: Diagnostic[];
@@ -102,14 +101,12 @@ export class DocsLintEngine {
   }
 }
 
-function resolveRuleSetting(input: EngineInput, ruleId: string): RuleSetting | undefined {
-  const candidates = [
+function resolveRuleSetting(input: EngineInput, ruleId: string) {
+  return resolveRuleSettingLayers([
     input.config.rules[ruleId],
     input.standardProfile?.rules?.[ruleId],
     input.standardPack?.manifest.rules?.[ruleId],
-  ];
-  for (const candidate of candidates) if (isRuleSetting(candidate)) return candidate;
-  return undefined;
+  ]);
 }
 
 function validateRuleSelection(values: string[] | undefined, rules: Map<string, RuleDefinition>, option: string): void {

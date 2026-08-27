@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { loadConfig } from '../node/config.js';
+import { normalizeConfig } from '../core/config.js';
 
 const created: string[] = [];
 function temporaryDirectory(): string {
@@ -31,5 +32,24 @@ describe('loadConfig', () => {
     const configPath = path.join(root, 'docs-lint.config.json');
     fs.writeFileSync(configPath, JSON.stringify({ docsDir: './docs', rules: {} }));
     expect(() => loadConfig({ configPath })).toThrow(/requires schemaVersion: 3/);
+  });
+
+  it('accepts options-only rule objects and rejects empty or malformed objects', () => {
+    expect(normalizeConfig({
+      schemaVersion: 3,
+      root: '.',
+      rules: { 'example/rule': { options: { strict: true } } },
+    }).rules['example/rule']).toEqual({ options: { strict: true } });
+
+    expect(() => normalizeConfig({
+      schemaVersion: 3,
+      root: '.',
+      rules: { 'example/rule': {} },
+    })).toThrow(/Invalid rule setting/);
+    expect(() => normalizeConfig({
+      schemaVersion: 3,
+      root: '.',
+      rules: { 'example/rule': { options: [] } },
+    })).toThrow(/Invalid rule setting/);
   });
 });

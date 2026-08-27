@@ -29,20 +29,7 @@
     },
     "rules": {
       "type": "object",
-      "additionalProperties": {
-        "oneOf": [
-          { "$ref": "#/$defs/severity" },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["severity"],
-            "properties": {
-              "severity": { "$ref": "#/$defs/severity" },
-              "options": { "type": "object" }
-            }
-          }
-        ]
-      }
+      "additionalProperties": { "$ref": "#/$defs/ruleSetting" }
     },
     "terminology": {
       "type": "array",
@@ -70,6 +57,23 @@
     }
   },
   "$defs": {
-    "severity": { "enum": ["off", "info", "warning", "error"] }
+    "severity": { "enum": ["off", "info", "warning", "error"] },
+    "ruleSetting": {
+      "oneOf": [
+        { "$ref": "#/$defs/severity" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "anyOf": [
+            { "required": ["severity"] },
+            { "required": ["options"] }
+          ],
+          "properties": {
+            "severity": { "$ref": "#/$defs/severity" },
+            "options": { "type": "object" }
+          }
+        }
+      ]
+    }
   }
 }

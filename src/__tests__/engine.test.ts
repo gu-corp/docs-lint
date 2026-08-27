@@ -19,20 +19,64 @@ function resolved(root: string, extra = {}): ResolvedDocsLintConfig {
 
 describe('DocsLintEngine', () => {
   it('uses configuration over profile and pack severity defaults', async () => {
+    let receivedOptions: Record<string, unknown> | undefined;
     const rule: RuleDefinition = {
       id: 'test/failure', description: 'test', defaultSeverity: 'info',
-      run: () => [{ ruleId: '', severity: 'warning', message: 'failure' }],
+      run: context => {
+        receivedOptions = context.options;
+        return [{ ruleId: '', severity: 'warning', message: 'failure' }];
+      },
     };
     const pack = loadStandardPack(path.join(bundledPacksRoot(), 'gu-corp-software'));
     pack.manifest.rules = { 'test/failure': 'warning' };
     const profile = resolveStandardProfile(pack.manifest, 'web-application');
-    profile.rules = { 'test/failure': 'error' };
+    profile.rules = { 'test/failure': { severity: 'error', options: { lower: true } } };
     const root = temp();
     const report = await new DocsLintEngine([rule]).lint({
       config: resolved(root, { rules: { 'test/failure': 'info' } }),
       documents: [], pathExists: () => false, standardPack: pack, standardProfile: profile,
     });
     expect(report.diagnostics[0].severity).toBe('info');
+    expect(receivedOptions).toEqual({});
+  });
+
+  it('inherits severity independently while retaining options from configuration', async () => {
+    let receivedOptions: Record<string, unknown> | undefined;
+    const rule: RuleDefinition = {
+      id: 'test/options-only', description: 'test', defaultSeverity: 'info',
+      run: context => {
+        receivedOptions = context.options;
+        return [{ ruleId: '', severity: 'warning', message: 'failure' }];
+      },
+    };
+    const pack = loadStandardPack(path.join(bundledPacksRoot(), 'gu-corp-software'));
+    pack.manifest.rules = { 'test/options-only': 'warning' };
+    const profile = resolveStandardProfile(pack.manifest, 'web-application');
+    profile.rules = { 'test/options-only': 'error' };
+    const report = await new DocsLintEngine([rule]).lint({
+      config: resolved(temp(), { rules: { 'test/options-only': { options: { strict: true } } } }),
+      documents: [], pathExists: () => false, standardPack: pack, standardProfile: profile,
+    });
+
+    expect(report.executions[0].severity).toBe('error');
+    expect(report.diagnostics[0].severity).toBe('error');
+    expect(receivedOptions).toEqual({ strict: true });
+
+    profile.rules = { 'test/options-only': { options: { profile: true } } };
+    const packReport = await new DocsLintEngine([rule]).lint({
+      config: resolved(temp(), { rules: { 'test/options-only': { options: { strict: true } } } }),
+      documents: [], pathExists: () => false, standardPack: pack, standardProfile: profile,
+    });
+    expect(packReport.executions[0].severity).toBe('warning');
+    expect(receivedOptions).toEqual({ strict: true });
+
+    pack.manifest.rules = { 'test/options-only': { options: { pack: true } } };
+    const defaultReport = await new DocsLintEngine([rule]).lint({
+      config: resolved(temp(), { rules: { 'test/options-only': { options: { strict: true } } } }),
+      documents: [], pathExists: () => false, standardPack: pack, standardProfile: profile,
+    });
+    expect(defaultReport.executions[0].severity).toBe('info');
+    expect(receivedOptions).toEqual({ strict: true });
   });
 
   it('rejects unknown rule selectors', async () => {

@@ -43,6 +43,23 @@ describe('Standard Pack loading and rendering', () => {
     expect(() => loadStandardPack(root)).toThrow(/safe relative path|escapes/);
   });
 
+  it('rejects a fixture with a non-namespaced rule ID', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-lint-pack-rule-id-'));
+    created.push(root);
+    fs.writeFileSync(path.join(root, 'pack.json'), JSON.stringify({
+      schemaVersion: 1,
+      id: 'example/rules',
+      version: '1.0.0',
+      title: 'Rules',
+      defaultProfile: 'base',
+      profiles: { base: { title: 'Base', rules: { headings: 'warning' } } },
+      documentTypes: { document: { title: 'Document', template: 'document.md' } },
+    }));
+    fs.writeFileSync(path.join(root, 'document.md'), '# Document\n');
+
+    expect(() => loadStandardPack(root)).toThrow(/non-namespaced rule/);
+  });
+
   it('rejects a pack manifest symlink that escapes the pack root', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-lint-pack-root-'));
     const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-lint-pack-manifest-'));

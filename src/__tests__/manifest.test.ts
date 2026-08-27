@@ -33,4 +33,36 @@ describe('Standard Pack manifest', () => {
     expect(issues.join('\n')).toMatch(/cycle/i);
     expect(issues.join('\n')).toMatch(/missing document type/);
   });
+
+  it('merges options-only profile overrides with inherited severity', () => {
+    const value = pack();
+    value.profiles.base.rules = { 'example/rule': 'error' };
+    value.profiles.child.rules = { 'example/rule': { options: { child: true } } };
+
+    expect(validateStandardPackManifest(value)).toEqual([]);
+    expect(resolveStandardProfile(value, 'child').rules?.['example/rule']).toEqual({
+      severity: 'error',
+      options: { child: true },
+    });
+  });
+
+  it('does not retain parent options when a child profile declares severity', () => {
+    const value = pack();
+    value.profiles.base.rules = { 'example/rule': { severity: 'error', options: { parent: true } } };
+    value.profiles.child.rules = { 'example/rule': { severity: 'warning' } };
+
+    expect(resolveStandardProfile(value, 'child').rules?.['example/rule']).toEqual({ severity: 'warning' });
+  });
+
+  it('rejects empty and malformed Standard Pack rule settings', () => {
+    const value = pack();
+    value.rules = { 'example/empty': {}, 'example/options': { options: [] } };
+    expect(validateStandardPackManifest(value).join('\n')).toMatch(/severity and\/or options only|options must be an object/);
+  });
+
+  it('rejects non-namespaced Standard Pack rule IDs', () => {
+    const value = pack();
+    value.rules = { headings: 'warning' };
+    expect(validateStandardPackManifest(value).join('\n')).toMatch(/non-namespaced rule/);
+  });
 });

@@ -1,6 +1,6 @@
 ---
 documentType: system-requirements
-version: 3.1.1
+version: 3.2.0
 status: Approved for implementation
 canonicalLocale: ja
 ---
@@ -48,6 +48,7 @@ canonicalLocale: ja
 | SR-CFG-001 | v3 設定を明示的に識別する | `schemaVersion: 3` がない v2 設定をエラーにする |
 | SR-CFG-002 | 設定、profile、Pack、rule default の優先順位を固定する | project > profile > Pack > rule default の順になる |
 | SR-CFG-003 | Editor と Standard Pack 選択を共有できる | `lunascape-docs.json.documentStandards` を読める |
+| SR-CFG-004 | severityを変えずにproject固有のrule optionsを設定できる | options-only設定ではseverityをprofile、Pack、rule defaultの順に継承する |
 | SR-PACK-001 | JSON manifest と Markdown template から Pack を構成できる | executable code を Pack に要求しない |
 | SR-PACK-002 | profile の多重継承を解決できる | 参照欠落と循環を検出する |
 | SR-PACK-003 | template の変数を安全に展開できる | eval を使わず、必須・未解決変数を拒否する |

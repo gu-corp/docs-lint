@@ -1,3 +1,5 @@
+import type { RuleSetting } from '../contracts/rule-setting.js';
+
 export type LocalizedText = string | Record<string, string>;
 
 export interface StandardPackVariable {
@@ -31,7 +33,7 @@ export interface StandardProfile {
   documentTypes?: string[];
   requiredDocuments?: string[];
   variables?: Record<string, string>;
-  rules?: Record<string, unknown>;
+  rules?: Record<string, RuleSetting>;
 }
 
 export interface StandardFolderDefinition {
@@ -51,7 +53,7 @@ export interface DocumentStandardPack {
   documentTypes: Record<string, StandardDocumentType>;
   structure?: StandardFolderDefinition[];
   terminology?: Array<{ preferred: string; variants: string[]; locale?: string }>;
-  rules?: Record<string, unknown>;
+  rules?: Record<string, RuleSetting>;
   ai?: { instructions?: string[]; reviewInstructions?: string[] };
 }
 

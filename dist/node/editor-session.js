@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isRuleSetting, optionsOf, severityOf } from '../core/config.js';
+import { optionsOf, resolveRuleSettingLayers, severityOf, } from '../core/config.js';
 import { BUILTIN_RULES } from '../core/engine.js';
 import { loadConfig } from './config.js';
 import { lintWorkspace } from './run.js';
@@ -123,22 +123,21 @@ function describeRules(config, pack, profile) {
             { setting: profile?.rules?.[rule.id], source: 'profile' },
             { setting: pack?.manifest.rules?.[rule.id], source: 'pack' },
         ];
-        let setting;
-        let source = 'default';
-        for (const candidate of candidates) {
-            if (!isRuleSetting(candidate.setting))
-                continue;
-            setting = candidate.setting;
-            source = candidate.source;
-            break;
-        }
-        const options = optionsOf(setting);
+        const resolved = resolveRuleSettingLayers(candidates.map(candidate => candidate.setting));
+        const severityCandidate = resolved.severity
+            ? { ...resolved.severity, source: candidates[resolved.severity.index].source }
+            : undefined;
+        const optionsCandidate = resolved.options
+            ? { ...resolved.options, source: candidates[resolved.options.index].source }
+            : undefined;
+        const options = optionsOf(optionsCandidate?.setting);
         return {
             id: rule.id,
             description: rule.description,
-            severity: severityOf(setting, rule.defaultSeverity),
-            source,
-            ...(Object.keys(options).length ? { options: structuredClone(options) } : {}),
+            severity: severityOf(severityCandidate?.setting, rule.defaultSeverity),
+            source: severityCandidate?.source ?? 'default',
+            ...(optionsCandidate ? { options: structuredClone(options) } : {}),
+            ...(optionsCandidate ? { optionsSource: optionsCandidate.source } : {}),
         };
     });
 }

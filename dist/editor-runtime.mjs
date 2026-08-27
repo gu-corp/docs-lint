@@ -40,22 +40,70 @@ function normalizeConfig(value) {
 }
 function severityOf(setting, fallback) {
 	if (!setting) return fallback;
-	return typeof setting === "string" ? setting : setting.severity;
+	return typeof setting === "string" ? setting : setting.severity ?? fallback;
 }
 function optionsOf(setting) {
 	return typeof setting === "object" && setting.options ? setting.options : {};
 }
 function isRuleSetting(value) {
-	const severity = typeof value === "string" ? value : value && typeof value === "object" && "severity" in value ? value.severity : void 0;
-	return typeof severity === "string" && [
+	if (typeof value === "string") return isSeverity(value);
+	if (!isRecord$2(value)) return false;
+	const keys = Object.keys(value);
+	if (!keys.length || keys.some((key) => key !== "severity" && key !== "options")) return false;
+	if (value.severity === void 0 && value.options === void 0) return false;
+	if (value.severity !== void 0 && !isSeverity(value.severity)) return false;
+	return value.options === void 0 || isRecord$2(value.options);
+}
+function hasRuleSeverity(setting) {
+	return typeof setting === "string" || Boolean(setting && setting.severity !== void 0);
+}
+function hasRuleOptions(setting) {
+	return Boolean(setting && typeof setting === "object" && setting.options !== void 0);
+}
+/**
+* Preserves the pre-3.2 winner-takes-all behavior when the highest-priority
+* setting declares severity. Only an options-only winner inherits severity
+* from a lower layer; its options never come from a lower layer.
+*/
+function resolveRuleSettingLayers(candidates) {
+	const topIndex = candidates.findIndex(isRuleSetting);
+	if (topIndex < 0) return {};
+	const top = candidates[topIndex];
+	if (hasRuleSeverity(top)) return {
+		severity: {
+			setting: top,
+			index: topIndex
+		},
+		...hasRuleOptions(top) ? { options: {
+			setting: top,
+			index: topIndex
+		} } : {}
+	};
+	const inheritedIndex = candidates.findIndex((candidate, index) => index > topIndex && isRuleSetting(candidate) && hasRuleSeverity(candidate));
+	return {
+		...inheritedIndex >= 0 ? { severity: {
+			setting: candidates[inheritedIndex],
+			index: inheritedIndex
+		} } : {},
+		options: {
+			setting: top,
+			index: topIndex
+		}
+	};
+}
+function validateRuleSetting(ruleId, setting) {
+	if (!isRuleSetting(setting)) throw new Error(`Invalid rule setting for ${ruleId}.`);
+}
+function isSeverity(value) {
+	return typeof value === "string" && [
 		"off",
 		"info",
 		"warning",
 		"error"
-	].includes(severity);
+	].includes(value);
 }
-function validateRuleSetting(ruleId, setting) {
-	if (!isRuleSetting(setting)) throw new Error(`Invalid rule setting for ${ruleId}.`);
+function isRecord$2(value) {
+	return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 function arrayOfStrings(value, fallback) {
 	if (value === void 0) return [...fallback];
@@ -1926,7 +1974,7 @@ var DocsLintEngine = class {
 			if (input.only?.length && !input.only.includes(rule.id)) continue;
 			if (input.skip?.includes(rule.id)) continue;
 			const setting = resolveRuleSetting(input, rule.id);
-			const severity = severityOf(setting, rule.defaultSeverity);
+			const severity = severityOf(setting.severity?.setting, rule.defaultSeverity);
 			if (severity === "off") continue;
 			const context = {
 				config: input.config,
@@ -1935,7 +1983,7 @@ var DocsLintEngine = class {
 				pathExists: input.pathExists,
 				standardPack: input.standardPack,
 				standardProfile: input.standardProfile,
-				options: optionsOf(setting)
+				options: optionsOf(setting.options?.setting)
 			};
 			const started = performance.now();
 			let diagnostics;
@@ -1978,12 +2026,11 @@ var DocsLintEngine = class {
 	}
 };
 function resolveRuleSetting(input, ruleId) {
-	const candidates = [
+	return resolveRuleSettingLayers([
 		input.config.rules[ruleId],
 		input.standardProfile?.rules?.[ruleId],
 		input.standardPack?.manifest.rules?.[ruleId]
-	];
-	for (const candidate of candidates) if (isRuleSetting(candidate)) return candidate;
+	]);
 }
 function validateRuleSelection(values, rules, option) {
 	for (const value of values || []) if (!rules.has(value)) throw new Error(`${option} references an unknown rule: ${value}`);
@@ -2179,11 +2226,27 @@ function mergeProfile(base, override) {
 			...base.variables,
 			...override.variables
 		},
-		rules: {
-			...base.rules,
-			...override.rules
-		}
+		rules: mergeRules(base.rules, override.rules)
 	};
+}
+function mergeRules(base, override) {
+	const merged = { ...base };
+	for (const [id, setting] of Object.entries(override || {})) {
+		const inherited = merged[id];
+		merged[id] = inheritProfileRuleSetting(inherited, setting);
+	}
+	return merged;
+}
+function inheritProfileRuleSetting(inherited, setting) {
+	if (typeof setting === "string" || setting.severity !== void 0) return setting;
+	const inheritedSeverity = ruleSeverity(inherited);
+	return inheritedSeverity === void 0 ? setting : {
+		severity: inheritedSeverity,
+		options: setting.options
+	};
+}
+function ruleSeverity(setting) {
+	return typeof setting === "string" ? setting : setting?.severity;
 }
 function detectCycles(profiles, issues) {
 	const done = /* @__PURE__ */ new Set();
@@ -2209,8 +2272,21 @@ function validateRules(owner, value, issues) {
 	}
 	for (const [id, setting] of Object.entries(value)) {
 		if (!id.includes("/")) issues.push(`${owner}.rules contains a non-namespaced rule: ${id}`);
-		const severity = typeof setting === "string" ? setting : isRecord(setting) ? setting.severity : void 0;
-		if (typeof severity !== "string" || !SEVERITIES.has(severity)) issues.push(`${owner}.rules.${id} has an invalid severity.`);
+		if (typeof setting === "string") {
+			if (!SEVERITIES.has(setting)) issues.push(`${owner}.rules.${id} has an invalid severity.`);
+			continue;
+		}
+		if (!isRecord(setting)) {
+			issues.push(`${owner}.rules.${id} must be a severity or rule setting object.`);
+			continue;
+		}
+		const keys = Object.keys(setting);
+		if (!keys.length || setting.severity === void 0 && setting.options === void 0 || keys.some((key) => key !== "severity" && key !== "options")) {
+			issues.push(`${owner}.rules.${id} must contain severity and/or options only.`);
+			continue;
+		}
+		if (setting.severity !== void 0 && (typeof setting.severity !== "string" || !SEVERITIES.has(setting.severity))) issues.push(`${owner}.rules.${id} has an invalid severity.`);
+		if (setting.options !== void 0 && !isRecord(setting.options)) issues.push(`${owner}.rules.${id}.options must be an object.`);
 	}
 }
 function validateVariables(id, value, issues) {
@@ -7124,21 +7200,23 @@ function describeRules(config, pack, profile) {
 				source: "pack"
 			}
 		];
-		let setting;
-		let source = "default";
-		for (const candidate of candidates) {
-			if (!isRuleSetting(candidate.setting)) continue;
-			setting = candidate.setting;
-			source = candidate.source;
-			break;
-		}
-		const options = optionsOf(setting);
+		const resolved = resolveRuleSettingLayers(candidates.map((candidate) => candidate.setting));
+		const severityCandidate = resolved.severity ? {
+			...resolved.severity,
+			source: candidates[resolved.severity.index].source
+		} : void 0;
+		const optionsCandidate = resolved.options ? {
+			...resolved.options,
+			source: candidates[resolved.options.index].source
+		} : void 0;
+		const options = optionsOf(optionsCandidate?.setting);
 		return {
 			id: rule.id,
 			description: rule.description,
-			severity: severityOf(setting, rule.defaultSeverity),
-			source,
-			...Object.keys(options).length ? { options: structuredClone(options) } : {}
+			severity: severityOf(severityCandidate?.setting, rule.defaultSeverity),
+			source: severityCandidate?.source ?? "default",
+			...optionsCandidate ? { options: structuredClone(options) } : {},
+			...optionsCandidate ? { optionsSource: optionsCandidate.source } : {}
 		};
 	});
 }

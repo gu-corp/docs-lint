@@ -3,7 +3,7 @@
 ## 導入
 
 ```bash
-npm install --save-dev github:gu-corp/docs-lint#v3.1.1
+npm install --save-dev github:gu-corp/docs-lint#v3.2.0
 npx docs-lint init --root ./docs --pack builtin:gu-corp-software --profile web-application
 ```
 

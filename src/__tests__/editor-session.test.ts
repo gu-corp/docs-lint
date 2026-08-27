@@ -36,7 +36,10 @@ describe('Node editor session', () => {
         editor: {
           title: 'Editor',
           documentTypes: ['guide'],
-          rules: { 'markdown/headings': 'error' },
+          rules: {
+            'links/internal': 'error',
+            'markdown/headings': { severity: 'error', options: { lower: true } },
+          },
         },
       },
       documentTypes: {
@@ -56,7 +59,8 @@ describe('Node editor session', () => {
       root: './wrong-root',
       standard: { pack: './standard', profile: 'editor' },
       rules: {
-        'links/internal': { severity: 'warning', options: { allowFragments: true } },
+        'links/internal': { options: { allowFragments: true } },
+        'markdown/headings': { severity: 'warning' },
       },
     }));
 
@@ -75,9 +79,11 @@ describe('Node editor session', () => {
       profile: { id: 'editor', title: 'Editor', inheritance: ['editor'] },
     });
     expect(rule(description, 'links/internal')).toMatchObject({
-      severity: 'warning', source: 'config', options: { allowFragments: true },
+      severity: 'error', source: 'profile', options: { allowFragments: true }, optionsSource: 'config',
     });
-    expect(rule(description, 'markdown/headings')).toMatchObject({ severity: 'error', source: 'profile' });
+    expect(rule(description, 'markdown/headings')).toEqual(expect.objectContaining({ severity: 'warning', source: 'config' }));
+    expect(rule(description, 'markdown/headings')).not.toHaveProperty('options');
+    expect(rule(description, 'markdown/headings')).not.toHaveProperty('optionsSource');
     expect(rule(description, 'content/terminology')).toMatchObject({ severity: 'info', source: 'pack' });
     expect(rule(description, 'markdown/code-fence-language')).toMatchObject({ severity: 'warning', source: 'default' });
     expect(JSON.stringify(description)).not.toContain('Secret document body');

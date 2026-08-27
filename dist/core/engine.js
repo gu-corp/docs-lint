@@ -1,4 +1,4 @@
-import { isRuleSetting, optionsOf, severityOf } from './config.js';
+import { optionsOf, resolveRuleSettingLayers, severityOf } from './config.js';
 import { terminologyRule } from './rules/content.js';
 import { codeFenceLanguageRule, headingsRule, internalLinksRule } from './rules/markdown.js';
 import { requiredSectionsRule, standardStructureRule } from './rules/standard.js';
@@ -37,7 +37,7 @@ export class DocsLintEngine {
             if (input.skip?.includes(rule.id))
                 continue;
             const setting = resolveRuleSetting(input, rule.id);
-            const severity = severityOf(setting, rule.defaultSeverity);
+            const severity = severityOf(setting.severity?.setting, rule.defaultSeverity);
             if (severity === 'off')
                 continue;
             const context = {
@@ -47,7 +47,7 @@ export class DocsLintEngine {
                 pathExists: input.pathExists,
                 standardPack: input.standardPack,
                 standardProfile: input.standardProfile,
-                options: optionsOf(setting),
+                options: optionsOf(setting.options?.setting),
             };
             const started = performance.now();
             let diagnostics;
@@ -82,15 +82,11 @@ export class DocsLintEngine {
     }
 }
 function resolveRuleSetting(input, ruleId) {
-    const candidates = [
+    return resolveRuleSettingLayers([
         input.config.rules[ruleId],
         input.standardProfile?.rules?.[ruleId],
         input.standardPack?.manifest.rules?.[ruleId],
-    ];
-    for (const candidate of candidates)
-        if (isRuleSetting(candidate))
-            return candidate;
-    return undefined;
+    ]);
 }
 function validateRuleSelection(values, rules, option) {
     for (const value of values || [])

@@ -13,6 +13,7 @@ try {
     schemaVersion: 3,
     root: './docs',
     standard: { pack: 'builtin:gu-corp-software', profile: 'web-application' },
+    rules: { 'links/internal': { options: { smoke: true } } },
   }));
 
   run(['pack', 'list', '--json']);
@@ -31,6 +32,10 @@ try {
   const report = await session.lint({ only: ['links/internal'] });
   if (report.root !== path.join(root, 'docs') || report.filesChecked === 0) {
     throw new Error('Editor runtime did not lint the requested documentation root.');
+  }
+  const cliReport = JSON.parse(run(['lint', '--config', configPath, '--only', 'links/internal', '--json']).stdout);
+  if (cliReport.executions[0]?.severity !== 'error') {
+    throw new Error('CLI did not inherit default severity for an options-only rule setting.');
   }
 
   const runtime = readFileSync(path.resolve('dist/editor-runtime.mjs'), 'utf8');

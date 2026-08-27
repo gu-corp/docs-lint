@@ -21,7 +21,7 @@ v3 は v2 の互換改修ではなく、設計を再構築したメジャーバ�
 このパッケージは private repository から利用します。
 
 ```bash
-npm install --save-dev github:gu-corp/docs-lint#v3.1.1
+npm install --save-dev github:gu-corp/docs-lint#v3.2.0
 ```
 
 ## 最短の利用方法
@@ -69,8 +69,7 @@ npx docs-lint create customer-requirements \
     "links/internal": "error",
     "document/required-sections": "warning",
     "traceability/requirements-tests": {
-      "severity": "error",
-      "options": {}
+      "severity": "error"
     }
   },
   "traceability": {
@@ -104,7 +103,9 @@ Standard Pack の選択は、文書ルートにある Lunascape Docs の `lunasc
 | `document/required-sections` | warning | 文書種別ごとの必須見出し |
 | `traceability/requirements-tests` | warning | テストから参照されない要件 ID とカバレッジ |
 
-設定値は `off`、`info`、`warning`、`error` のいずれかです。profile、Pack、ルール既定値の順で標準値を決め、プロジェクト設定が常に最優先されます。
+設定値は `off`、`info`、`warning`、`error`、または `severity` と `options` の少なくとも一方を持つオブジェクトです。最上位の設定がseverityを持つ場合は、その設定だけを採用します。最上位がoptions-onlyの場合だけ、そのoptionsを保持してprofile、Pack、ルール既定値の順にseverityを補います。
+
+`options`は登録したcustom ruleへ渡すための継承基盤です。現行のbuilt-in rulesには公開済みのoptionsはありません。custom rule側が契約を定義した場合に限り、たとえば`{"rules":{"company/house-style":{"options":{"dictionary":"company.json"}}}}`のように指定します。
 
 ## Programmatic API
 
@@ -141,7 +142,7 @@ const draft = session.renderTemplate('customer-requirements', {
 });
 ```
 
-設定ファイルは`docsRoot`から`workspaceRoot`まで上方向に探索します。設定内の`root`に関係なく、検査対象は引数の`docsRoot`へ固定されます。設定がなければ`docsRoot`を`.`とする既定設定を使用します。ローカルStandard Packも`workspaceRoot`内に限定し、シンボリックリンクによる逸脱を拒否します。`describe()`は文書本文を読み込まず、Editor UIへ渡せるシリアライズ可能なメタデータだけを返します。
+設定ファイルは`docsRoot`から`workspaceRoot`まで上方向に探索します。設定内の`root`に関係なく、検査対象は引数の`docsRoot`へ固定されます。設定がなければ`docsRoot`を`.`とする既定設定を使用します。ローカルStandard Packも`workspaceRoot`内に限定し、シンボリックリンクによる逸脱を拒否します。`describe()`は文書本文を読み込まず、Editor UIへ渡せるシリアライズ可能なメタデータだけを返します。有効ルールの`source`はseverityの出所、`optionsSource`はoptionsの出所を表します。
 
 ## 文書
 

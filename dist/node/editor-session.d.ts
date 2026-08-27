@@ -16,6 +16,7 @@ export interface EffectiveRuleDescription {
     severity: Severity;
     source: EffectiveRuleSource;
     options?: Record<string, unknown>;
+    optionsSource?: Exclude<EffectiveRuleSource, 'default'>;
 }
 export interface TemplateDescription {
     id: string;

@@ -1,13 +1,7 @@
 import type { LoadedStandardPack, ResolvedStandardProfile } from '../standards/types.js';
+import type { RuleSetting, Severity } from '../contracts/rule-setting.js';
 
-export type Severity = 'off' | 'info' | 'warning' | 'error';
-
-export interface RuleSettingObject {
-  severity: Severity;
-  options?: Record<string, unknown>;
-}
-
-export type RuleSetting = Severity | RuleSettingObject;
+export type { RuleSetting, RuleSettingObject, Severity } from '../contracts/rule-setting.js';
 
 export interface StandardSelection {
   pack: string;

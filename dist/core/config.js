@@ -36,22 +36,63 @@ export function normalizeConfig(value) {
 export function severityOf(setting, fallback) {
     if (!setting)
         return fallback;
-    return typeof setting === 'string' ? setting : setting.severity;
+    return typeof setting === 'string' ? setting : setting.severity ?? fallback;
 }
 export function optionsOf(setting) {
     return typeof setting === 'object' && setting.options ? setting.options : {};
 }
 export function isRuleSetting(value) {
-    const severity = typeof value === 'string'
-        ? value
-        : value && typeof value === 'object' && 'severity' in value
-            ? value.severity
-            : undefined;
-    return typeof severity === 'string' && ['off', 'info', 'warning', 'error'].includes(severity);
+    if (typeof value === 'string')
+        return isSeverity(value);
+    if (!isRecord(value))
+        return false;
+    const keys = Object.keys(value);
+    if (!keys.length || keys.some(key => key !== 'severity' && key !== 'options'))
+        return false;
+    if (value.severity === undefined && value.options === undefined)
+        return false;
+    if (value.severity !== undefined && !isSeverity(value.severity))
+        return false;
+    return value.options === undefined || isRecord(value.options);
+}
+export function hasRuleSeverity(setting) {
+    return typeof setting === 'string' || Boolean(setting && setting.severity !== undefined);
+}
+export function hasRuleOptions(setting) {
+    return Boolean(setting && typeof setting === 'object' && setting.options !== undefined);
+}
+/**
+ * Preserves the pre-3.2 winner-takes-all behavior when the highest-priority
+ * setting declares severity. Only an options-only winner inherits severity
+ * from a lower layer; its options never come from a lower layer.
+ */
+export function resolveRuleSettingLayers(candidates) {
+    const topIndex = candidates.findIndex(isRuleSetting);
+    if (topIndex < 0)
+        return {};
+    const top = candidates[topIndex];
+    if (hasRuleSeverity(top)) {
+        return {
+            severity: { setting: top, index: topIndex },
+            ...(hasRuleOptions(top) ? { options: { setting: top, index: topIndex } } : {}),
+        };
+    }
+    const inheritedIndex = candidates.findIndex((candidate, index) => index > topIndex
+        && isRuleSetting(candidate) && hasRuleSeverity(candidate));
+    return {
+        ...(inheritedIndex >= 0 ? { severity: { setting: candidates[inheritedIndex], index: inheritedIndex } } : {}),
+        options: { setting: top, index: topIndex },
+    };
 }
 function validateRuleSetting(ruleId, setting) {
     if (!isRuleSetting(setting))
         throw new Error(`Invalid rule setting for ${ruleId}.`);
+}
+function isSeverity(value) {
+    return typeof value === 'string' && ['off', 'info', 'warning', 'error'].includes(value);
+}
+function isRecord(value) {
+    return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 function arrayOfStrings(value, fallback) {
     if (value === undefined)
