@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0
+
+- Added a filesystem-backed Editor session API for linting, effective-rule provenance, Standard Pack metadata and safe template rendering.
+- Added a self-contained Node ESM Editor runtime built with Rolldown and covered by package smoke tests.
+- Bounded discovered configuration and local Standard Pack paths to the Editor workspace and rejected unsafe built-in Pack names.
+
 ## 3.0.0
 
 - Replaced the branch-heavy v2 linter with a namespaced rule registry and stable diagnostic report.

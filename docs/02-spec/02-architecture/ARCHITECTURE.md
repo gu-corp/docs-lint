@@ -1,6 +1,6 @@
 ---
 documentType: architecture
-version: 3.0.0
+version: 3.1.0
 status: Approved for implementation
 canonicalLocale: ja
 ---

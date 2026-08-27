@@ -3,9 +3,8 @@ import path from 'path';
 import { DocsLintEngine } from '../core/engine.js';
 import { loadConfiguredStandard } from './standard-pack.js';
 import { loadDocuments, securePath } from './workspace.js';
-export async function lintWorkspace(config, options = {}) {
+export async function lintWorkspace(config, options = {}, standard = loadConfiguredStandard(config)) {
     const documents = await loadDocuments(config);
-    const standard = loadConfiguredStandard(config);
     const engine = new DocsLintEngine();
     return engine.lint({
         config,

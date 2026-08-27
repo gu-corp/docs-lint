@@ -10,9 +10,12 @@ export interface RunOptions {
   skip?: string[];
 }
 
-export async function lintWorkspace(config: ResolvedDocsLintConfig, options: RunOptions = {}): Promise<LintReport> {
+export async function lintWorkspace(
+  config: ResolvedDocsLintConfig,
+  options: RunOptions = {},
+  standard = loadConfiguredStandard(config),
+): Promise<LintReport> {
   const documents = await loadDocuments(config);
-  const standard = loadConfiguredStandard(config);
   const engine = new DocsLintEngine();
   return engine.lint({
     config,

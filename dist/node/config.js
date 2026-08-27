@@ -6,7 +6,11 @@ const DOCS_CONFIG_FILENAME = 'lunascape-docs.json';
 const CONFIG_KEYS = new Set(['$schema', 'schemaVersion', 'root', 'include', 'exclude', 'standard', 'rules', 'terminology', 'traceability']);
 export function loadConfig(options = {}) {
     const cwd = path.resolve(options.cwd || process.cwd());
-    const configPath = options.configPath ? path.resolve(cwd, options.configPath) : findUp(cwd, CONFIG_FILENAME);
+    const configPath = options.configPath
+        ? path.resolve(cwd, options.configPath)
+        : options.search === false
+            ? undefined
+            : findUp(cwd, CONFIG_FILENAME);
     let value = {};
     let configDirectory = cwd;
     if (configPath) {

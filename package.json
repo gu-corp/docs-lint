@@ -1,6 +1,6 @@
 {
   "name": "@gu-corp/docs-lint",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Standard Pack based documentation validation and authoring toolkit",
   "type": "module",
   "main": "./dist/index.js",
@@ -10,6 +10,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./editor-runtime": {
+      "types": "./dist/node/editor-session.d.ts",
+      "import": "./dist/editor-runtime.mjs"
+    },
     "./schemas/docs-lint": "./schemas/docs-lint-v3.schema.json",
     "./schemas/standard-pack": "./schemas/standard-pack.schema.json"
   },
@@ -17,7 +21,7 @@
     "docs-lint": "./dist/cli.js"
   },
   "scripts": {
-    "build": "node ./scripts/clean.mjs && tsc && node ./scripts/postbuild.mjs",
+    "build": "node ./scripts/clean.mjs && tsc && node ./scripts/postbuild.mjs && node ./scripts/build-editor-runtime.mjs",
     "check": "tsc --noEmit",
     "dev": "tsc --watch",
     "test": "vitest run --dir src",
@@ -45,6 +49,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
+    "rolldown": "^1.2.6",
     "typescript": "^5.7.2",
     "vitest": "^4.0.0"
   },

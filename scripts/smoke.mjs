@@ -1,7 +1,9 @@
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { builtinModules } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createNodeDocsLintSession } from '@gu-corp/docs-lint/editor-runtime';
 
 const root = mkdtempSync(path.join(tmpdir(), 'docs-lint-cli-'));
 try {
@@ -21,6 +23,24 @@ try {
   const duplicate = execute(['create', 'customer-requirements', '--config', configPath, '--var', 'productName=Smoke Product', 'documentOwner=Smoke Owner']);
   if (duplicate.status === 0 || !duplicate.stderr.includes('already exists')) throw new Error('create did not refuse to overwrite an existing document.');
 
+  const session = createNodeDocsLintSession({ workspaceRoot: root, docsRoot: path.join(root, 'docs') });
+  const description = session.describe();
+  if (description.standard?.id !== 'gu-corp/software-standard' || description.templates.length === 0) {
+    throw new Error('Editor runtime did not load its configured Standard Pack.');
+  }
+  const report = await session.lint({ only: ['links/internal'] });
+  if (report.root !== path.join(root, 'docs') || report.filesChecked === 0) {
+    throw new Error('Editor runtime did not lint the requested documentation root.');
+  }
+
+  const runtime = readFileSync(path.resolve('dist/editor-runtime.mjs'), 'utf8');
+  const imports = [...runtime.matchAll(/(?:from\s+|import\s*\(\s*)['"]([^'"]+)['"]/g)].map(match => match[1]);
+  const builtins = new Set(builtinModules.flatMap(name => [name, `node:${name}`]));
+  const thirdPartyImports = imports.filter(source => !source.startsWith('.') && !builtins.has(source));
+  if (thirdPartyImports.length) {
+    throw new Error(`Editor runtime contains unbundled third-party imports: ${thirdPartyImports.join(', ')}`);
+  }
+
   const v2Path = path.join(root, 'v2.json');
   const v3Path = path.join(root, 'v3.json');
   writeFileSync(v2Path, JSON.stringify({ docsDir: './docs', rules: { brokenLinks: 'error', headingHierarchy: 'warn' } }));
@@ -29,7 +49,7 @@ try {
   if (migrated.schemaVersion !== 3 || migrated.root !== './docs' || migrated.rules['markdown/headings'] !== 'warning') {
     throw new Error('migrate did not produce the expected v3 configuration.');
   }
-  console.log('CLI smoke test passed.');
+  console.log('CLI and editor runtime smoke tests passed.');
 } finally {
   rmSync(root, { recursive: true, force: true });
 }

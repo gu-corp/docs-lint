@@ -75,7 +75,15 @@ export function renderTemplate(
 }
 
 export function bundledPacksRoot(): string {
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'packs');
+  const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
+  // Source and TypeScript output live at src|dist/node/*.js. The editor bundle
+  // lives directly in dist/. Resolve by layout so an unrelated parent packs/
+  // directory can never shadow the package's bundled packs.
+  const parentName = path.basename(path.dirname(moduleDirectory));
+  const packageRoot = path.basename(moduleDirectory) === 'node' && (parentName === 'src' || parentName === 'dist')
+    ? path.resolve(moduleDirectory, '..', '..')
+    : path.resolve(moduleDirectory, '..');
+  return path.join(packageRoot, 'packs');
 }
 
 export function listBundledPacks(): LoadedStandardPack[] {
@@ -87,7 +95,13 @@ export function listBundledPacks(): LoadedStandardPack[] {
 }
 
 function resolvePackSource(source: string, configDirectory: string): string {
-  if (source.startsWith('builtin:')) return path.join(bundledPacksRoot(), source.slice('builtin:'.length));
+  if (source.startsWith('builtin:')) {
+    const packName = source.slice('builtin:'.length);
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(packName) || packName === '.' || packName === '..') {
+      throw new Error(`Invalid built-in standard pack name: ${packName || '(empty)'}`);
+    }
+    return securePath(bundledPacksRoot(), packName, false);
+  }
   if (!path.isAbsolute(source) && /^[a-z][a-z0-9+.-]*:/i.test(source)) throw new Error(`Unsupported standard pack source: ${source}. v3 accepts builtin: or local paths.`);
   return path.resolve(configDirectory, source);
 }

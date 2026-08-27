@@ -11,11 +11,17 @@ export interface LoadConfigOptions {
   cwd?: string;
   configPath?: string;
   root?: string;
+  /** Disable upward configuration discovery when the caller has already resolved scope. */
+  search?: boolean;
 }
 
 export function loadConfig(options: LoadConfigOptions = {}): ResolvedDocsLintConfig {
   const cwd = path.resolve(options.cwd || process.cwd());
-  const configPath = options.configPath ? path.resolve(cwd, options.configPath) : findUp(cwd, CONFIG_FILENAME);
+  const configPath = options.configPath
+    ? path.resolve(cwd, options.configPath)
+    : options.search === false
+      ? undefined
+      : findUp(cwd, CONFIG_FILENAME);
   let value: Partial<DocsLintConfig> = {};
   let configDirectory = cwd;
   if (configPath) {

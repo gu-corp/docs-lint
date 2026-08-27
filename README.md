@@ -21,7 +21,7 @@ v3 は v2 の互換改修ではなく、設計を再構築したメジャーバ�
 このパッケージは private repository から利用します。
 
 ```bash
-npm install --save-dev github:gu-corp/docs-lint#v3.0.0
+npm install --save-dev github:gu-corp/docs-lint#v3.1.0
 ```
 
 ## 最短の利用方法
@@ -117,6 +117,29 @@ if (!report.passed) process.exitCode = 1;
 ```
 
 独自ルールは `DocsLintEngine#register()` で登録できます。Rule ID は `domain/name` 形式にします。
+
+### Editor runtime
+
+VS Code ExtensionなどのEditorホストでは、依存関係を同梱したNode ESMランタイムを利用できます。Node組み込みモジュールだけを外部参照に保つため、ホスト側でdocs-lintの依存パッケージを個別に解決する必要はありません。
+
+```ts
+import { createNodeDocsLintSession } from '@gu-corp/docs-lint/editor-runtime';
+
+const session = createNodeDocsLintSession({
+  workspaceRoot: '/workspace/product',
+  docsRoot: '/workspace/product/docs',
+});
+
+const metadata = session.describe(); // 設定、ルールの出所、Pack、profile、テンプレート
+const report = await session.lint();
+const templates = session.listTemplates();
+const draft = session.renderTemplate('customer-requirements', {
+  productName: 'Example Product',
+  documentOwner: 'Product Owner',
+});
+```
+
+設定ファイルは`docsRoot`から`workspaceRoot`まで上方向に探索します。設定内の`root`に関係なく、検査対象は引数の`docsRoot`へ固定されます。設定がなければ`docsRoot`を`.`とする既定設定を使用します。ローカルStandard Packも`workspaceRoot`内に限定し、シンボリックリンクによる逸脱を拒否します。`describe()`は文書本文を読み込まず、Editor UIへ渡せるシリアライズ可能なメタデータだけを返します。
 
 ## 文書
 
