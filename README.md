@@ -21,7 +21,7 @@ v3 は v2 の互換改修ではなく、設計を再構築したメジャーバ�
 このパッケージは private repository から利用します。
 
 ```bash
-npm install --save-dev github:gu-corp/docs-lint#v3.1.0
+npm install --save-dev github:gu-corp/docs-lint#v3.1.1
 ```
 
 ## 最短の利用方法
@@ -121,6 +121,8 @@ if (!report.passed) process.exitCode = 1;
 ### Editor runtime
 
 VS Code ExtensionなどのEditorホストでは、依存関係を同梱したNode ESMランタイムを利用できます。Node組み込みモジュールだけを外部参照に保つため、ホスト側でdocs-lintの依存パッケージを個別に解決する必要はありません。
+
+同梱した第三者コードの通知とライセンス原文は、それぞれ `dist/THIRD-PARTY-NOTICES.md` と `dist/third-party-licenses/` に収録します。
 
 ```ts
 import { createNodeDocsLintSession } from '@gu-corp/docs-lint/editor-runtime';

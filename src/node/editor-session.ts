@@ -17,6 +17,7 @@ import {
 } from './standard-pack.js';
 
 const CONFIG_FILENAME = 'docs-lint.config.json';
+const DOCS_CONFIG_FILENAME = 'lunascape-docs.json';
 
 export interface NodeDocsLintSessionOptions {
   /** Absolute path, or a path relative to the current process, for the editor workspace. */
@@ -86,6 +87,7 @@ export interface NodeDocsLintSession {
  */
 export function createNodeDocsLintSession(options: NodeDocsLintSessionOptions): NodeDocsLintSession {
   const { workspaceRoot, docsRoot } = resolveSessionRoots(options);
+  assertOptionalFileWithinWorkspace(workspaceRoot, path.join(docsRoot, DOCS_CONFIG_FILENAME), DOCS_CONFIG_FILENAME);
   const configPath = resolveSessionConfigPath(options, workspaceRoot, docsRoot);
   const config = loadSessionConfig(docsRoot, configPath);
   assertLocalStandardWithinWorkspace(workspaceRoot, config);
@@ -120,6 +122,12 @@ export function createNodeDocsLintSession(options: NodeDocsLintSessionOptions): 
       return renderStandardTemplate(standard.standardPack, standard.standardProfile, templateId, variables);
     },
   };
+}
+
+function assertOptionalFileWithinWorkspace(workspaceRoot: string, candidate: string, label: string): void {
+  if (!fs.existsSync(candidate)) return;
+  assertPathWithin(workspaceRoot, candidate, label);
+  if (!fs.statSync(candidate).isFile()) throw new Error(`${label} is not a file: ${candidate}`);
 }
 
 function resolveSessionRoots(options: NodeDocsLintSessionOptions): { workspaceRoot: string; docsRoot: string } {

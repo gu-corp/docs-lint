@@ -21,13 +21,17 @@ export function loadConfiguredStandard(config: ResolvedDocsLintConfig): {
 export function loadStandardPack(source: string): LoadedStandardPack {
   const candidate = path.resolve(source);
   if (!fs.existsSync(candidate)) throw new Error(`Standard pack source was not found: ${candidate}`);
-  const manifestPath = fs.statSync(candidate).isDirectory() ? path.join(candidate, 'pack.json') : candidate;
-  if (!fs.existsSync(manifestPath) || !fs.statSync(manifestPath).isFile()) {
-    throw new Error(`Standard pack manifest was not found: ${manifestPath}`);
+  const sourceIsDirectory = fs.statSync(candidate).isDirectory();
+  const rootPath = sourceIsDirectory ? candidate : path.dirname(candidate);
+  const manifestName = sourceIsDirectory ? 'pack.json' : path.basename(candidate);
+  const manifestPath = sourceIsDirectory ? path.join(candidate, 'pack.json') : candidate;
+  let verifiedManifestPath: string;
+  try { verifiedManifestPath = securePackFile(rootPath, manifestName); }
+  catch (error) {
+    throw new Error(`Standard pack manifest was not found or is unsafe: ${candidate}: ${error instanceof Error ? error.message : String(error)}`);
   }
-  const rootPath = path.dirname(manifestPath);
   let manifest: DocumentStandardPack;
-  try { manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as DocumentStandardPack; }
+  try { manifest = JSON.parse(fs.readFileSync(verifiedManifestPath, 'utf8')) as DocumentStandardPack; }
   catch (error) { throw new Error(`Standard pack manifest is not valid JSON: ${error instanceof Error ? error.message : String(error)}`); }
   const issues = validateStandardPackManifest(manifest);
   for (const [id, type] of Object.entries(manifest.documentTypes || {})) {

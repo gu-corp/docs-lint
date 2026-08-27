@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -39,6 +39,25 @@ try {
   const thirdPartyImports = imports.filter(source => !source.startsWith('.') && !builtins.has(source));
   if (thirdPartyImports.length) {
     throw new Error(`Editor runtime contains unbundled third-party imports: ${thirdPartyImports.join(', ')}`);
+  }
+
+  const notices = readFileSync(path.resolve('dist/THIRD-PARTY-NOTICES.md'), 'utf8');
+  const bundledPackages = new Set([...runtime.matchAll(/\/\/#region\s+node_modules\/((?:@[^/\s]+\/)?[^/\s]+)/g)]
+    .map(match => match[1]));
+  if (!bundledPackages.size) throw new Error('Editor runtime did not expose any bundled package regions for license verification.');
+  for (const packageName of bundledPackages) {
+    if (!notices.includes(`### ${packageName}@`)) {
+      throw new Error(`Third-party notices do not include bundled package: ${packageName}`);
+    }
+  }
+  const licenseFiles = new Set([...notices.matchAll(/\(third-party-licenses\/([A-Za-z0-9._-]+\.txt)\)/g)]
+    .map(match => match[1]));
+  if (!licenseFiles.size) throw new Error('Third-party notices do not reference any license texts.');
+  for (const filename of licenseFiles) {
+    const licensePath = path.resolve('dist/third-party-licenses', filename);
+    if (!existsSync(licensePath) || !readFileSync(licensePath, 'utf8').trim()) {
+      throw new Error(`Third-party license text is missing or empty: ${filename}`);
+    }
   }
 
   const v2Path = path.join(root, 'v2.json');

@@ -15,14 +15,20 @@ export function loadStandardPack(source) {
     const candidate = path.resolve(source);
     if (!fs.existsSync(candidate))
         throw new Error(`Standard pack source was not found: ${candidate}`);
-    const manifestPath = fs.statSync(candidate).isDirectory() ? path.join(candidate, 'pack.json') : candidate;
-    if (!fs.existsSync(manifestPath) || !fs.statSync(manifestPath).isFile()) {
-        throw new Error(`Standard pack manifest was not found: ${manifestPath}`);
+    const sourceIsDirectory = fs.statSync(candidate).isDirectory();
+    const rootPath = sourceIsDirectory ? candidate : path.dirname(candidate);
+    const manifestName = sourceIsDirectory ? 'pack.json' : path.basename(candidate);
+    const manifestPath = sourceIsDirectory ? path.join(candidate, 'pack.json') : candidate;
+    let verifiedManifestPath;
+    try {
+        verifiedManifestPath = securePackFile(rootPath, manifestName);
     }
-    const rootPath = path.dirname(manifestPath);
+    catch (error) {
+        throw new Error(`Standard pack manifest was not found or is unsafe: ${candidate}: ${error instanceof Error ? error.message : String(error)}`);
+    }
     let manifest;
     try {
-        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        manifest = JSON.parse(fs.readFileSync(verifiedManifestPath, 'utf8'));
     }
     catch (error) {
         throw new Error(`Standard pack manifest is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);

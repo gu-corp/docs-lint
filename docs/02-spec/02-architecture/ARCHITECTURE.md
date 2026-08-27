@@ -1,6 +1,6 @@
 ---
 documentType: architecture
-version: 3.1.0
+version: 3.1.1
 status: Approved for implementation
 canonicalLocale: ja
 ---
@@ -85,6 +85,7 @@ Pack は `pack.json` と Markdown template からなる。profile は複数 prof
 
 - project 文書 path と Pack template path は root からの相対パスとして解決する。
 - `..`、absolute path、root 外 symlink を拒否する。
+- Editor session は `lunascape-docs.json` の実体を workspace 内、Pack manifest と template の実体を Pack root 内に限定する。
 - `{{variable}}` の置換だけを許し、式や JavaScript を評価しない。
 - 文書作成は exclusive create を既定とし、上書きは明示的な `--force` に限定する。
 - v3 コアは network API を呼ばず、秘密情報を要求しない。
@@ -92,6 +93,7 @@ Pack は `pack.json` と Markdown template からなる。profile は複数 prof
 ## 運用設計
 
 - CI は `npm run check`、`npm test`、`npm run build`、`npm audit --omit=dev` を実行する。
+- Editor runtime build は Rolldown の出力 module 集合から第三者依存を確定し、通知と各ライセンス原文を `dist` に生成する。
 - Pack と docs-lint package は独立して version を持つ。
 - breaking change は config schema または report schema の version 更新として扱う。
 - v2 は Git tag と履歴で保全し、v3 の作業ツリー、build、test、package files に互換コードを置かない。

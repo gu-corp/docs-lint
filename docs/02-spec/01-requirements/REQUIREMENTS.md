@@ -1,6 +1,6 @@
 ---
 documentType: system-requirements
-version: 3.1.0
+version: 3.1.1
 status: Approved for implementation
 canonicalLocale: ja
 ---
@@ -75,6 +75,7 @@ canonicalLocale: ja
 | SR-NFR-004 | Maintainability | CLI command、rule、filesystem adapter を分離する | architecture boundary review |
 | SR-NFR-005 | Dependency | runtime dependency の既知脆弱性を残さない | `npm audit --omit=dev` |
 | SR-NFR-006 | Compatibility | v3 の schema と report を version field で識別する | schema validation test |
+| SR-NFR-007 | Distribution | Editor runtime に同梱する第三者コードの通知とライセンス原文を package に収録する | build smoke と package dry-run |
 
 ## セキュリティ要件
 
@@ -85,6 +86,7 @@ canonicalLocale: ja
 | SR-SEC-003 | template 展開で式評価、shell 実行、任意 module load を行わない |
 | SR-SEC-004 | AI 連携をコアへ内蔵せず、外部送信は将来 adapter で明示する |
 | SR-SEC-005 | 診断に環境変数や文書本文全体を暗黙に含めない |
+| SR-SEC-006 | Editor session が読む設定と Pack 参照ファイルは、symlink の実体を workspace または Pack の許可境界内に限定する |
 
 ## 外部インターフェース
 

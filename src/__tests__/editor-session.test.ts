@@ -155,6 +155,23 @@ describe('Node editor session', () => {
     expect(() => createNodeDocsLintSession({ workspaceRoot, docsRoot: 'docs' })).toThrow(/configPath symlink must resolve inside/);
   });
 
+  it('rejects a lunascape-docs.json symlink that escapes workspaceRoot', () => {
+    const workspaceRoot = temporaryDirectory();
+    const outsideRoot = temporaryDirectory();
+    const docsRoot = path.join(workspaceRoot, 'docs');
+    fs.mkdirSync(docsRoot);
+    fs.writeFileSync(path.join(outsideRoot, 'lunascape-docs.json'), JSON.stringify({
+      documentStandards: { pack: 'builtin:gu-corp-software' },
+    }));
+    fs.symlinkSync(
+      path.join(outsideRoot, 'lunascape-docs.json'),
+      path.join(docsRoot, 'lunascape-docs.json'),
+      'file',
+    );
+
+    expect(() => createNodeDocsLintSession({ workspaceRoot, docsRoot })).toThrow(/lunascape-docs\.json symlink must resolve inside/);
+  });
+
   it('rejects local Standard Packs outside workspaceRoot and unsafe built-in names', () => {
     const workspaceRoot = temporaryDirectory();
     const outsideRoot = temporaryDirectory();

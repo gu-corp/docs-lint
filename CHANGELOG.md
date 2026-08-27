@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.1.1
+
+- Included generated third-party notices and complete license texts for every dependency bundled into the Editor runtime.
+- Rejected `lunascape-docs.json`, Standard Pack manifest and template symlinks that resolve outside their allowed workspace or Pack boundary.
+
 ## 3.1.0
 
 - Added a filesystem-backed Editor session API for linting, effective-rule provenance, Standard Pack metadata and safe template rendering.

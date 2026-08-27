@@ -1991,7 +1991,7 @@ function validateRuleSelection(values, rules, option) {
 //#endregion
 //#region dist/node/config.js
 const CONFIG_FILENAME$1 = "docs-lint.config.json";
-const DOCS_CONFIG_FILENAME = "lunascape-docs.json";
+const DOCS_CONFIG_FILENAME$1 = "lunascape-docs.json";
 const CONFIG_KEYS = /* @__PURE__ */ new Set([
 	"$schema",
 	"schemaVersion",
@@ -2030,7 +2030,7 @@ function loadConfig(options = {}) {
 	};
 }
 function readLunascapeStandard(rootPath) {
-	const configPath = path$1.join(rootPath, DOCS_CONFIG_FILENAME);
+	const configPath = path$1.join(rootPath, DOCS_CONFIG_FILENAME$1);
 	if (!fs$1.existsSync(configPath)) return void 0;
 	const value = readJson(configPath);
 	if (!isRecord$1(value) || !isRecord$1(value.documentStandards)) return void 0;
@@ -6903,12 +6903,19 @@ function loadConfiguredStandard(config) {
 function loadStandardPack(source) {
 	const candidate = path$1.resolve(source);
 	if (!fs$1.existsSync(candidate)) throw new Error(`Standard pack source was not found: ${candidate}`);
-	const manifestPath = fs$1.statSync(candidate).isDirectory() ? path$1.join(candidate, "pack.json") : candidate;
-	if (!fs$1.existsSync(manifestPath) || !fs$1.statSync(manifestPath).isFile()) throw new Error(`Standard pack manifest was not found: ${manifestPath}`);
-	const rootPath = path$1.dirname(manifestPath);
+	const sourceIsDirectory = fs$1.statSync(candidate).isDirectory();
+	const rootPath = sourceIsDirectory ? candidate : path$1.dirname(candidate);
+	const manifestName = sourceIsDirectory ? "pack.json" : path$1.basename(candidate);
+	const manifestPath = sourceIsDirectory ? path$1.join(candidate, "pack.json") : candidate;
+	let verifiedManifestPath;
+	try {
+		verifiedManifestPath = securePackFile(rootPath, manifestName);
+	} catch (error) {
+		throw new Error(`Standard pack manifest was not found or is unsafe: ${candidate}: ${error instanceof Error ? error.message : String(error)}`);
+	}
 	let manifest;
 	try {
-		manifest = JSON.parse(fs$1.readFileSync(manifestPath, "utf8"));
+		manifest = JSON.parse(fs$1.readFileSync(verifiedManifestPath, "utf8"));
 	} catch (error) {
 		throw new Error(`Standard pack manifest is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
 	}
@@ -6997,6 +7004,7 @@ async function lintWorkspace(config, options = {}, standard = loadConfiguredStan
 //#endregion
 //#region dist/node/editor-session.js
 const CONFIG_FILENAME = "docs-lint.config.json";
+const DOCS_CONFIG_FILENAME = "lunascape-docs.json";
 /**
 * Creates the filesystem-backed API used by editor hosts.
 *
@@ -7006,6 +7014,7 @@ const CONFIG_FILENAME = "docs-lint.config.json";
 */
 function createNodeDocsLintSession(options) {
 	const { workspaceRoot, docsRoot } = resolveSessionRoots(options);
+	assertOptionalFileWithinWorkspace(workspaceRoot, path.join(docsRoot, DOCS_CONFIG_FILENAME), DOCS_CONFIG_FILENAME);
 	const config = loadSessionConfig(docsRoot, resolveSessionConfigPath(options, workspaceRoot, docsRoot));
 	assertLocalStandardWithinWorkspace(workspaceRoot, config);
 	const standard = loadConfiguredStandard(config);
@@ -7036,6 +7045,11 @@ function createNodeDocsLintSession(options) {
 			return renderTemplate(standard.standardPack, standard.standardProfile, templateId, variables);
 		}
 	};
+}
+function assertOptionalFileWithinWorkspace(workspaceRoot, candidate, label) {
+	if (!fs.existsSync(candidate)) return;
+	assertPathWithin(workspaceRoot, candidate, label);
+	if (!fs.statSync(candidate).isFile()) throw new Error(`${label} is not a file: ${candidate}`);
 }
 function resolveSessionRoots(options) {
 	const workspaceValue = nonEmptyPath(options.workspaceRoot, "workspaceRoot");

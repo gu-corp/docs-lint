@@ -42,4 +42,42 @@ describe('Standard Pack loading and rendering', () => {
     }));
     expect(() => loadStandardPack(root)).toThrow(/safe relative path|escapes/);
   });
+
+  it('rejects a pack manifest symlink that escapes the pack root', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-lint-pack-root-'));
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-lint-pack-manifest-'));
+    created.push(root, outside);
+    fs.writeFileSync(path.join(outside, 'pack.json'), JSON.stringify({
+      schemaVersion: 1,
+      id: 'example/external-manifest',
+      version: '1.0.0',
+      title: 'External manifest',
+      defaultProfile: 'base',
+      profiles: { base: { title: 'Base', documentTypes: [] } },
+      documentTypes: {},
+    }));
+    fs.symlinkSync(path.join(outside, 'pack.json'), path.join(root, 'pack.json'), 'file');
+
+    expect(() => loadStandardPack(root)).toThrow(/manifest.*unsafe|symlink escapes/i);
+  });
+
+  it('rejects a template symlink that escapes the pack root', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-lint-pack-root-'));
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-lint-pack-template-'));
+    created.push(root, outside);
+    fs.mkdirSync(path.join(root, 'templates'));
+    fs.writeFileSync(path.join(outside, 'document.md'), '# External template\n');
+    fs.symlinkSync(path.join(outside, 'document.md'), path.join(root, 'templates', 'document.md'), 'file');
+    fs.writeFileSync(path.join(root, 'pack.json'), JSON.stringify({
+      schemaVersion: 1,
+      id: 'example/external-template',
+      version: '1.0.0',
+      title: 'External template',
+      defaultProfile: 'base',
+      profiles: { base: { title: 'Base', documentTypes: ['document'] } },
+      documentTypes: { document: { title: 'Document', template: 'templates/document.md' } },
+    }));
+
+    expect(() => loadStandardPack(root)).toThrow(/template|symlink escapes/i);
+  });
 });
