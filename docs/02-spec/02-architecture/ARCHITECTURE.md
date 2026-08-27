@@ -13,7 +13,7 @@ canonicalLocale: ja
 flowchart LR
   Author[文書作成者] --> CLI[docs-lint CLI]
   CI[CI] --> CLI
-  Editor[Lunascape Doc Editor] --> API[v3 TypeScript API]
+  Editor[Lunascape Docs] --> API[v3 TypeScript API]
   CLI --> Node[Node Adapter]
   API --> Engine[Rule Engine]
   Node --> Engine

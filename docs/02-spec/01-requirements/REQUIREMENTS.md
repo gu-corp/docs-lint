@@ -9,7 +9,7 @@ canonicalLocale: ja
 
 ## 目的
 
-複数プロダクトの Markdown/MDX 文書を、プロダクト固有の事情と組織共通の文書標準を分離したまま検証・生成できる仕組みを提供する。CI、Lunascape Doc Editor、将来の AI review が同じ設定と診断契約を利用できる状態を作る。
+複数プロダクトの Markdown/MDX 文書を、プロダクト固有の事情と組織共通の文書標準を分離したまま検証・生成できる仕組みを提供する。CI、Lunascape Docs、将来の AI review が同じ設定と診断契約を利用できる状態を作る。
 
 ## 対象範囲
 
@@ -19,7 +19,7 @@ canonicalLocale: ja
 - 登録型ルールエンジンによる決定的な検証
 - Document Standard Pack の読込、profile 継承、テンプレート生成
 - CLI と TypeScript API
-- Lunascape Doc Editor と共有できる Standard Pack 選択
+- Lunascape Docs と共有できる Standard Pack 選択
 
 ### 対象外
 

@@ -79,7 +79,7 @@ npx docs-lint create customer-requirements \
 }
 ```
 
-Standard Pack の選択は、文書ルートにある Lunascape Doc Editor の `lunascape-docs.json` でも共有できます。
+Standard Pack の選択は、文書ルートにある Lunascape Docs の `lunascape-docs.json` でも共有できます。
 
 ```json
 {
