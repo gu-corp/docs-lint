@@ -99,6 +99,48 @@ describe('workspace lint', () => {
     expect(report.diagnostics.some(item => item.file === '02-spec/01-requirements/REQUIREMENTS.md')).toBe(true);
   });
 
+  it('anchors untested requirements at their definition so editors can open them', async () => {
+    const root = temp();
+    fs.writeFileSync(path.join(root, 'REQUIREMENTS.md'), [
+      '---',
+      'title: Requirements',
+      '---',
+      '# Requirements',
+      '',
+      '- FR-DOC-001 is covered',
+      '- FR-DOC-002 is not covered, and FR-DOC-002 repeats',
+      '',
+    ].join('\n'));
+    fs.writeFileSync(path.join(root, 'TEST-PLAN.md'), '# Tests\n\n- TC-001 verifies FR-DOC-001\n');
+    const config = resolved(root, { rules: { 'traceability/requirements-tests': 'warning' } });
+    const report = await lintWorkspace(config, { only: ['traceability/requirements-tests'] });
+    expect(report.diagnostics).toEqual([{
+      ruleId: 'traceability/requirements-tests',
+      severity: 'warning',
+      message: 'Requirement has no test reference: FR-DOC-002',
+      file: 'REQUIREMENTS.md',
+      location: { line: 7, column: 3 },
+      data: { requirementId: 'FR-DOC-002' },
+    }]);
+  });
+
+  it('keeps root-wide traceability diagnostics without a file', async () => {
+    const root = temp();
+    fs.writeFileSync(path.join(root, 'REQUIREMENTS.md'), '# Requirements\n\n- FR-DOC-001\n');
+    const config = resolved(root, {
+      rules: { 'traceability/requirements-tests': 'warning' },
+      traceability: { requiredCoverage: 1 },
+    });
+    const report = await lintWorkspace(config, { only: ['traceability/requirements-tests'] });
+    const rootWide = report.diagnostics.filter(item => item.file === undefined);
+    expect(rootWide.map(item => item.message)).toEqual([
+      'Requirements exist but no test case IDs were found.',
+      'Requirement test coverage is 0.0%; required 100.0%.',
+    ]);
+    expect(rootWide.every(item => item.location === undefined)).toBe(true);
+    expect(report.diagnostics.find(item => item.file === 'REQUIREMENTS.md')?.location).toEqual({ line: 3, column: 3 });
+  });
+
   it('accepts a complete generated standard document set', async () => {
     const root = temp();
     const loaded = loadStandardPack(path.join(bundledPacksRoot(), 'gu-corp-software'));

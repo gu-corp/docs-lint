@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Anchored `traceability/requirements-tests` diagnostics for untested requirements at the requirement definition (file, line and column, including front matter offset) so editors can open the document instead of a location-less, root-wide report. Root-wide diagnostics such as missing test case IDs or insufficient coverage remain without a file.
+
 ## 3.2.0
 
 - Added options-only rule settings so projects can customize rule options without replacing Standard Pack or profile severity.
