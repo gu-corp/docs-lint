@@ -101,7 +101,9 @@ Standard Pack の選択は、文書ルートにある Lunascape Docs の `lunasc
 | `content/terminology` | warning | Pack または設定で定義した非推奨語 |
 | `structure/standard-pack` | error | 必須フォルダ・必須文書 |
 | `document/required-sections` | warning | 文書種別ごとの必須見出し |
-| `traceability/requirements-tests` | warning | テストから参照されない要件 ID とカバレッジ |
+| `traceability/requirements-tests` | warning | テストから参照されない要件 ID とカバレッジ。TC-D（後回し）は info、TC-X（対象外）は分母から除外。ID の無い要件文書・テスト文書、テスト文書の欠落も報告 |
+| `traceability/requirement-ids` | warning | 命名規則に合わない要件 ID（`FR001`, `fr-001`, `FR_003` など）と、表の行頭・見出しでの重複定義 |
+| `traceability/requirement-references` | warning | 設計・テスト・状況表などが参照する要件 ID が要件文書に存在しない |
 
 設定値は `off`、`info`、`warning`、`error`、または `severity` と `options` の少なくとも一方を持つオブジェクトです。最上位の設定がseverityを持つ場合は、その設定だけを採用します。最上位がoptions-onlyの場合だけ、そのoptionsを保持してprofile、Pack、ルール既定値の順にseverityを補います。
 

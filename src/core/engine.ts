@@ -12,7 +12,7 @@ import type { LoadedStandardPack, ResolvedStandardProfile } from '../standards/t
 import { terminologyRule } from './rules/content.js';
 import { codeFenceLanguageRule, headingsRule, internalLinksRule } from './rules/markdown.js';
 import { requiredSectionsRule, standardStructureRule } from './rules/standard.js';
-import { requirementsTestsRule } from './rules/traceability.js';
+import { requirementIdsRule, requirementReferencesRule, requirementsTestsRule } from './rules/traceability.js';
 
 export const BUILTIN_RULES: RuleDefinition[] = [
   internalLinksRule,
@@ -22,6 +22,8 @@ export const BUILTIN_RULES: RuleDefinition[] = [
   standardStructureRule,
   requiredSectionsRule,
   requirementsTestsRule,
+  requirementIdsRule,
+  requirementReferencesRule,
 ];
 
 export interface EngineInput {
@@ -76,10 +78,13 @@ export class DocsLintEngine {
       } catch (error) {
         diagnostics = [{ ruleId: rule.id, severity: 'error', message: `Rule failed: ${error instanceof Error ? error.message : String(error)}` }];
       }
+      // The configured severity applies to violations. A rule may still emit
+      // informational notes (for example a requirement that is deferred rather
+      // than untested); those keep their own level instead of being promoted.
       diagnostics = diagnostics.map(diagnostic => ({
         ...diagnostic,
         ruleId: rule.id,
-        severity: severity === 'info' ? 'info' : severity,
+        severity: diagnostic.severity === 'info' || severity === 'info' ? 'info' : severity,
       }));
       executions.push({ ruleId: rule.id, severity, durationMs: performance.now() - started, diagnostics });
     }

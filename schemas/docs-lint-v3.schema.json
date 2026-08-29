@@ -4,73 +4,208 @@
   "title": "docs-lint v3 configuration",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "root"],
+  "required": [
+    "schemaVersion",
+    "root"
+  ],
   "properties": {
-    "$schema": { "type": "string" },
-    "schemaVersion": { "const": 3 },
-    "root": { "type": "string", "minLength": 1, "default": "./docs" },
+    "$schema": {
+      "type": "string",
+      "description": "この設定ファイルの JSON Schema。エディタの補完と検証に使います。"
+    },
+    "schemaVersion": {
+      "const": 3,
+      "description": "設定形式のバージョン。v3 では常に 3 です。"
+    },
+    "root": {
+      "type": "string",
+      "minLength": 1,
+      "default": "./docs",
+      "description": "この設定ファイルから見た文書ルートの相対パス。ここより外の文書は検証しません。"
+    },
     "include": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
-      "default": ["**/*.md", "**/*.mdx"]
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": [
+        "**/*.md",
+        "**/*.mdx"
+      ],
+      "description": "検証対象にする glob パターン（root 基準）。省略時は Markdown/MDX 全体です。"
     },
     "exclude": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "検証対象から外す glob パターン（root 基準）。生成物やアーカイブを指定します。"
     },
     "standard": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["pack"],
+      "required": [
+        "pack"
+      ],
       "properties": {
-        "pack": { "type": "string", "minLength": 1 },
-        "profile": { "type": "string", "minLength": 1 }
-      }
+        "pack": {
+          "type": "string",
+          "minLength": 1,
+          "description": "\"builtin:<name>\"（同梱 Pack）または文書ルートからの相対パス。"
+        },
+        "profile": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Pack が定義する Profile 名。対象システムの文書集合と厳格度を選びます。"
+        }
+      },
+      "description": "適用する Document Standard Pack と Profile。必須フォルダー・必須文書・必須章・用語・雛形はここから決まります。lunascape-docs.json の documentStandards と共有できます。"
     },
     "rules": {
       "type": "object",
-      "additionalProperties": { "$ref": "#/$defs/ruleSetting" }
+      "additionalProperties": {
+        "$ref": "#/$defs/ruleSetting"
+      },
+      "description": "ルールごとの上書き。空なら Pack / Profile / ルール既定値がそのまま使われます。値は \"off\" | \"info\" | \"warning\" | \"error\"、または { \"severity\", \"options\" }。"
     },
     "terminology": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["preferred", "variants"],
+        "required": [
+          "preferred",
+          "variants"
+        ],
         "properties": {
-          "preferred": { "type": "string", "minLength": 1 },
-          "variants": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
-          "locale": { "type": "string" }
+          "preferred": {
+            "type": "string",
+            "minLength": 1,
+            "description": "推奨する表記。"
+          },
+          "variants": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "避ける表記の一覧。"
+          },
+          "locale": {
+            "type": "string",
+            "description": "この用語規則を適用する言語（省略時は全言語）。"
+          }
         }
-      }
+      },
+      "description": "用語の統一。variants に挙げた表記を見つけたら preferred への統一を促します。"
     },
     "traceability": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "requirementPattern": { "type": "string" },
-        "testCasePattern": { "type": "string" },
-        "requirementFiles": { "type": "array", "items": { "type": "string" } },
-        "testFiles": { "type": "array", "items": { "type": "string" } },
-        "requiredCoverage": { "type": "number", "minimum": 0, "maximum": 1 }
-      }
+        "requirementPattern": {
+          "type": "string",
+          "description": "要件 ID の正規表現。省略時は requirementPrefixes から \"\\\\b(?:BR|FR|SR|NFR)-[A-Z0-9]+(?:-[0-9]+)?\\\\b\" を組み立てます。"
+        },
+        "testCasePattern": {
+          "type": "string",
+          "description": "テストケース ID の正規表現（既定 \"\\\\bTC-[A-Z0-9]+(?:-[0-9]+)?\\\\b\"）。"
+        },
+        "requirementFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "要件文書とみなす glob（既定 **/*REQUIREMENTS*.md, **/01-requirements/**/*.md）。"
+        },
+        "testFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "テスト文書とみなす glob（既定 **/*TEST*.md, **/*-TESTS.md, **/03-testing/**/*.md, **/05-testing/**/*.md）。"
+        },
+        "requiredCoverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "必要なテスト対応率（0〜1）。下回ると warning を出します。"
+        },
+        "requirementPrefixes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "要件 ID の接頭辞（既定 BR, FR, SR, NFR）。requirementPattern を省略したときの ID 形式と、命名規則違反（FR001, fr-001 など）の検出に使います。"
+        },
+        "deferredTestCasePattern": {
+          "type": "string",
+          "description": "「後回し」を表すテストケース ID の正規表現（既定 TC-D…）。これだけが対応する要件は warning ではなく info になります。"
+        },
+        "excludedTestCasePattern": {
+          "type": "string",
+          "description": "「対象外」を表すテストケース ID の正規表現（既定 TC-X…）。これだけが対応する要件はカバレッジの分母から除外します。"
+        },
+        "requireTestFile": {
+          "type": "boolean",
+          "description": "要件があるのにテスト文書が 1 つも無いとき警告するか（既定 true）。"
+        },
+        "requireRequirementIds": {
+          "type": "boolean",
+          "description": "要件文書に要件 ID が 1 つも無いとき警告するか（既定 true）。"
+        },
+        "requireTestCaseIds": {
+          "type": "boolean",
+          "description": "テスト文書にテストケース ID が 1 つも無いとき警告するか（既定 true）。"
+        },
+        "requireUniqueRequirementIds": {
+          "type": "boolean",
+          "description": "表の行頭や見出しで同じ要件 ID が複数回定義されたとき警告するか（既定 true）。"
+        }
+      },
+      "description": "要件 ID とテストケース ID の対応検査（traceability/* ルール）の設定。"
     }
   },
   "$defs": {
-    "severity": { "enum": ["off", "info", "warning", "error"] },
+    "severity": {
+      "enum": [
+        "off",
+        "info",
+        "warning",
+        "error"
+      ]
+    },
     "ruleSetting": {
       "oneOf": [
-        { "$ref": "#/$defs/severity" },
+        {
+          "$ref": "#/$defs/severity"
+        },
         {
           "type": "object",
           "additionalProperties": false,
           "anyOf": [
-            { "required": ["severity"] },
-            { "required": ["options"] }
+            {
+              "required": [
+                "severity"
+              ]
+            },
+            {
+              "required": [
+                "options"
+              ]
+            }
           ],
           "properties": {
-            "severity": { "$ref": "#/$defs/severity" },
-            "options": { "type": "object" }
+            "severity": {
+              "$ref": "#/$defs/severity"
+            },
+            "options": {
+              "type": "object"
+            }
           }
         }
       ]

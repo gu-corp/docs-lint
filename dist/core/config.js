@@ -6,6 +6,8 @@ export const DEFAULT_RULES = {
     'structure/standard-pack': 'error',
     'document/required-sections': 'warning',
     'traceability/requirements-tests': 'warning',
+    'traceability/requirement-ids': 'warning',
+    'traceability/requirement-references': 'warning',
 };
 export const DEFAULT_CONFIG = {
     schemaVersion: 3,

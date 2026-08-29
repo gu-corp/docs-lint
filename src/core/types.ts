@@ -10,10 +10,17 @@ export interface StandardSelection {
 
 export interface TraceabilityConfig {
   requirementPattern?: string;
+  requirementPrefixes?: string[];
   testCasePattern?: string;
+  deferredTestCasePattern?: string;
+  excludedTestCasePattern?: string;
   requirementFiles?: string[];
   testFiles?: string[];
   requiredCoverage?: number;
+  requireTestFile?: boolean;
+  requireRequirementIds?: boolean;
+  requireTestCaseIds?: boolean;
+  requireUniqueRequirementIds?: boolean;
 }
 
 export interface DocsLintConfig {
