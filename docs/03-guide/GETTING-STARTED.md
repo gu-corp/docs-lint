@@ -1,3 +1,8 @@
+---
+navigation:
+  order: 100
+---
+
 # Getting Started
 
 ## 導入
