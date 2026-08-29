@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gu-corp.github.io/docs-lint/schemas/docs-lint-v3.schema.json",
-  "title": "docs-lint v3 configuration",
+  "title": "docs-lint v3 設定",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,17 +11,25 @@
   "properties": {
     "$schema": {
       "type": "string",
-      "description": "この設定ファイルの JSON Schema。エディタの補完と検証に使います。"
+      "description": "この設定の JSON Schema。VS Code では拡張が自動で関連付けるため省略可。",
+      "markdownDescription": "この設定の JSON Schema の場所。\n\nVS Code の Lunascape Docs 拡張は `docs-lint.config.json` というファイル名に同梱スキーマを自動で関連付けるので、通常は**省略してかまいません**。CLI 単体で補完を得たい場合は次を指定します。\n\n```json\n\"$schema\": \"./node_modules/@gu-corp/docs-lint/schemas/docs-lint-v3.schema.json\"\n```"
     },
     "schemaVersion": {
       "const": 3,
-      "description": "設定形式のバージョン。v3 では常に 3 です。"
+      "description": "設定形式のバージョン。v3 では常に 3。",
+      "markdownDescription": "設定形式のバージョン。v3 では **常に `3`** です。\n\nv2 形式（`docsDir`、severity `warn` など）のファイルを読み込むと docs-lint は停止します。`npx docs-lint migrate --from docs-lint.config.json --to docs-lint.v3.config.json` でレビュー用の変換結果を生成してください。",
+      "default": 3
     },
     "root": {
       "type": "string",
       "minLength": 1,
       "default": "./docs",
-      "description": "この設定ファイルから見た文書ルートの相対パス。ここより外の文書は検証しません。"
+      "description": "この設定ファイルから見た文書ルートの相対パス。",
+      "markdownDescription": "この設定ファイルの場所から見た**文書ルート**の相対パス。\n\n- CLI の既定は `./docs`。\n- Lunascape Docs が文書ルート直下に生成する設定では `.`（設定ファイル自身が文書ルートにある）。\n- ルートの外にある文書は検証されず、内部リンクの解決先にもなりません。",
+      "examples": [
+        ".",
+        "./docs"
+      ]
     },
     "include": {
       "type": "array",
@@ -33,7 +41,8 @@
         "**/*.md",
         "**/*.mdx"
       ],
-      "description": "検証対象にする glob パターン（root 基準）。省略時は Markdown/MDX 全体です。"
+      "description": "検証対象にする glob（root 基準）。既定は Markdown/MDX 全体。",
+      "markdownDescription": "検証対象にする glob パターン（`root` 基準）。\n\n既定: `[\"**/*.md\", \"**/*.mdx\"]`\n\n指定すると既定を**置き換え**ます。"
     },
     "exclude": {
       "type": "array",
@@ -41,7 +50,16 @@
         "type": "string",
         "minLength": 1
       },
-      "description": "検証対象から外す glob パターン（root 基準）。生成物やアーカイブを指定します。"
+      "description": "検証対象から外す glob（root 基準）。指定すると既定を置き換える。",
+      "markdownDescription": "検証対象から外す glob パターン（`root` 基準）。\n\n既定: `node_modules`, `.git`, `.next`, `dist`, `build`, `**/99-archive/**`\n\n指定すると既定を**置き換える**ので、追加したいときは既定分も一緒に書きます。生成物、アーカイブ、外部から取り込んだ参照文書（例: `**/API-REFERENCE-*.md`）を外す用途です。",
+      "examples": [
+        [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/99-archive/**",
+          "**/API-REFERENCE-*.md"
+        ]
+      ]
     },
     "standard": {
       "type": "object",
@@ -53,22 +71,99 @@
         "pack": {
           "type": "string",
           "minLength": 1,
-          "description": "\"builtin:<name>\"（同梱 Pack）または文書ルートからの相対パス。"
+          "description": "\"builtin:<name>\"（同梱 Pack）または文書ルートからの相対パス。",
+          "markdownDescription": "`builtin:<name>`（同梱 Pack）か、Pack フォルダーへの相対パス（`pack.json` を含むフォルダー。この設定ファイル基準）。\n\nURL からのダウンロードは行いません。",
+          "examples": [
+            "builtin:gu-corp-software",
+            "./standards/company-pack"
+          ]
         },
         "profile": {
           "type": "string",
           "minLength": 1,
-          "description": "Pack が定義する Profile 名。対象システムの文書集合と厳格度を選びます。"
+          "description": "Pack が定義する Profile 名。対象システムの文書集合と厳格度を選ぶ。",
+          "markdownDescription": "Pack が定義する **Profile** 名。対象システムの種類に応じて、必要な文書の集合と厳格度が変わります。\n\n`builtin:gu-corp-software` の Profile:\n\n| Profile | 想定 |\n| --- | --- |\n| `base` | 最小構成 |\n| `web-application` | Web アプリケーション |\n| `api-service` | API / バックエンド |\n| `regulated-financial-product` | 規制対象の金融プロダクト |\n| `smart-contract` | スマートコントラクト |",
+          "examples": [
+            "web-application"
+          ]
         }
       },
-      "description": "適用する Document Standard Pack と Profile。必須フォルダー・必須文書・必須章・用語・雛形はここから決まります。lunascape-docs.json の documentStandards と共有できます。"
+      "description": "適用する Document Standard Pack と Profile。",
+      "markdownDescription": "適用する **Document Standard Pack** と **Profile**。\n\nここから「必須フォルダー」「必須文書」「文書種別ごとの必須章」「用語」「文書の雛形」と、ルールの既定 severity が決まります。\n\n- 省略時は、文書ルートの `lunascape-docs.json` にある `documentStandards` を使います（両方あればこちらが優先）。\n- Pack を選ばないと `structure/standard-pack` と `document/required-sections` は何も検査しません。\n\n同梱 Pack: `builtin:gu-corp-software`（Profile: `base` / `web-application` / `api-service` / `regulated-financial-product` / `smart-contract`）",
+      "examples": [
+        {
+          "pack": "builtin:gu-corp-software",
+          "profile": "web-application"
+        }
+      ]
     },
     "rules": {
       "type": "object",
       "additionalProperties": {
         "$ref": "#/$defs/ruleSetting"
       },
-      "description": "ルールごとの上書き。空なら Pack / Profile / ルール既定値がそのまま使われます。値は \"off\" | \"info\" | \"warning\" | \"error\"、または { \"severity\", \"options\" }。"
+      "description": "ルールごとの上書き。空なら Pack / Profile / ルール既定値がそのまま使われる。",
+      "markdownDescription": "ルールごとの上書き。**空 = すべて標準どおり**です。変えたい項目だけ書きます。\n\n値は次のどちらかです。\n\n```json\n\"links/internal\": \"error\"\n\"traceability/requirements-tests\": { \"severity\": \"warning\", \"options\": {} }\n```\n\nseverity は `off` / `info` / `warning` / `error`。解決順は **この設定 → Profile → Pack → ルール既定値**（`options` だけを書いた場合は severity を上位から引き継ぎます）。\n\nルール ID を入力すると候補と説明が表示されます。",
+      "examples": [
+        {
+          "links/internal": "error",
+          "markdown/code-fence-language": "off",
+          "traceability/requirements-tests": {
+            "severity": "error"
+          }
+        }
+      ],
+      "properties": {
+        "links/internal": {
+          "$ref": "#/$defs/ruleSetting",
+          "description": "内部 Markdown リンクの切れ（既定 error）",
+          "markdownDescription": "内部リンク（`[text](./path.md#anchor)`）の**リンク先が存在するか**、**文書ルートの外へ出ていないか**を検査します。\n\n既定: `error`"
+        },
+        "markdown/headings": {
+          "$ref": "#/$defs/ruleSetting",
+          "description": "H1 の欠落・重複と見出し階層の飛び（既定 warning）",
+          "markdownDescription": "H1 が 1 つあり、見出しレベルが飛んでいない（H2 → H4 など）ことを検査します。\n\n既定: `warning`"
+        },
+        "markdown/code-fence-language": {
+          "$ref": "#/$defs/ruleSetting",
+          "description": "言語指定のないコードブロック（既定 warning）",
+          "markdownDescription": "```` ``` ```` だけで言語名のないコードブロックを検査します（`text` でも可）。\n\n既定: `warning`"
+        },
+        "content/terminology": {
+          "$ref": "#/$defs/ruleSetting",
+          "description": "避ける表記の検出と推奨用語への統一（既定 warning）",
+          "markdownDescription": "`terminology`（この設定）と Pack の用語集に挙げた「避ける表記」を検出し、推奨用語への統一を促します。\n\n既定: `warning`"
+        },
+        "structure/standard-pack": {
+          "$ref": "#/$defs/ruleSetting",
+          "description": "Pack/Profile が要求するフォルダーと文書の存在（既定 error）",
+          "markdownDescription": "選択した Pack / Profile が要求する**必須フォルダー**と**必須文書**が揃っているかを検査します。Pack 未選択なら何もしません。\n\n既定: `error`"
+        },
+        "document/required-sections": {
+          "$ref": "#/$defs/ruleSetting",
+          "description": "文書種別ごとの必須見出し（既定 warning）",
+          "markdownDescription": "Pack の文書種別（front matter の `documentType`、または Pack の `suggestedPath` で判定）ごとに、**必須の章見出し**があるかを検査します。Pack 未選択なら何もしません。\n\n既定: `warning`"
+        },
+        "traceability/requirements-tests": {
+          "$ref": "#/$defs/ruleSetting",
+          "description": "要件 ID がテスト文書から参照されているか（既定 warning）",
+          "markdownDescription": "要件文書の各要件 ID が、テスト文書のどこかで参照されているかを検査します。\n\n- `TC-D…`（後回し）だけが対応する要件は **info**\n- `TC-X…`（対象外）だけが対応する要件はカバレッジの分母から除外\n- 要件 ID の無い要件文書、テストケース ID の無いテスト文書、テスト文書そのものの欠落も報告（`traceability.require*` で個別に off）\n- `traceability.requiredCoverage` を下回るとカバレッジ警告\n\n既定: `warning`"
+        },
+        "traceability/requirement-ids": {
+          "$ref": "#/$defs/ruleSetting",
+          "description": "要件 ID の命名規則違反と重複定義（既定 warning）",
+          "markdownDescription": "要件文書で、`FR001` / `fr-001` / `FR_003` / `FR-doc-4` のように**命名規則に合わない ID** と、表の行頭や見出しで**二重に定義された ID** を報告します。規則は `traceability.requirementPattern` / `requirementPrefixes` で決まります。\n\n既定: `warning`"
+        },
+        "traceability/requirement-references": {
+          "$ref": "#/$defs/ruleSetting",
+          "description": "要件文書以外が参照する未定義の要件 ID（既定 warning）",
+          "markdownDescription": "設計書・テスト文書・状況表などが参照している要件 ID が、**どの要件文書にも定義されていない**場合に報告します（文書ごとに初出 1 回）。\n\n既定: `warning`"
+        }
+      },
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]*/[a-z][a-z0-9-]*$",
+        "description": "ルール ID は \"分類/名前\" の形式です。"
+      }
     },
     "terminology": {
       "type": "array",
@@ -83,7 +178,8 @@
           "preferred": {
             "type": "string",
             "minLength": 1,
-            "description": "推奨する表記。"
+            "description": "推奨する表記。",
+            "markdownDescription": "推奨する表記。診断メッセージで「この表記に統一してください」と案内されます。"
           },
           "variants": {
             "type": "array",
@@ -92,15 +188,28 @@
               "type": "string",
               "minLength": 1
             },
-            "description": "避ける表記の一覧。"
+            "description": "避ける表記の一覧。",
+            "markdownDescription": "避ける表記の一覧。本文中に見つかると診断になります（コードブロックは対象外）。"
           },
           "locale": {
             "type": "string",
-            "description": "この用語規則を適用する言語（省略時は全言語）。"
+            "description": "この用語規則を適用する言語（省略時は全言語）。",
+            "markdownDescription": "この用語規則を適用する言語（BCP 47、例 `ja` / `en`）。省略時はすべての言語の文書に適用します。"
           }
         }
       },
-      "description": "用語の統一。variants に挙げた表記を見つけたら preferred への統一を促します。"
+      "description": "用語の統一。variants の表記を見つけたら preferred への統一を促す。",
+      "markdownDescription": "用語の統一規則の一覧。`variants` に挙げた表記を本文で見つけると、`preferred` への統一を促します（`content/terminology`）。Pack の用語集と併用できます。\n\n```json\n\"terminology\": [\n  { \"preferred\": \"ドキュメント\", \"variants\": [\"文書\", \"ドキュメンテーション\"] },\n  { \"preferred\": \"API\", \"variants\": [\"Api\", \"api\"] },\n  { \"preferred\": \"user\", \"variants\": [\"end-user\"], \"locale\": \"en\" }\n]\n```",
+      "examples": [
+        [
+          {
+            "preferred": "ドキュメント",
+            "variants": [
+              "文書"
+            ]
+          }
+        ]
+      ]
     },
     "traceability": {
       "type": "object",
@@ -108,31 +217,57 @@
       "properties": {
         "requirementPattern": {
           "type": "string",
-          "description": "要件 ID の正規表現。省略時は requirementPrefixes から \"\\\\b(?:BR|FR|SR|NFR)-[A-Z0-9]+(?:-[0-9]+)?\\\\b\" を組み立てます。"
+          "description": "要件 ID の正規表現。省略時は requirementPrefixes から組み立てる。",
+          "markdownDescription": "要件 ID の正規表現（JavaScript 構文、単語境界 `\\\\b` を推奨）。省略時は `requirementPrefixes` から\n\n```text\n\\b(?:BR|FR|SR|NFR)-[A-Z0-9]+(?:-[0-9]+)?\\b\n```\n\nを組み立てます。独自の体系（例 `REQ-\\d{4}`）を使う場合だけ指定します。",
+          "examples": [
+            "\\\\bREQ-[0-9]{4}\\\\b"
+          ]
         },
         "testCasePattern": {
           "type": "string",
-          "description": "テストケース ID の正規表現（既定 \"\\\\bTC-[A-Z0-9]+(?:-[0-9]+)?\\\\b\"）。"
+          "description": "テストケース ID の正規表現。",
+          "markdownDescription": "テストケース ID の正規表現。既定 `\\bTC-[A-Z0-9]+(?:-[0-9]+)?\\b`（`TC-U001`, `TC-API-012` など）。",
+          "examples": [
+            "\\\\bTC-[UIEPSDX][0-9]{3}\\\\b"
+          ]
         },
         "requirementFiles": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "要件文書とみなす glob（既定 **/*REQUIREMENTS*.md, **/01-requirements/**/*.md）。"
+          "description": "要件文書とみなす glob。",
+          "markdownDescription": "要件文書とみなす glob（`root` 基準、大文字小文字を区別しない）。\n\n既定: `[\"**/*REQUIREMENTS*.md\", \"**/01-requirements/**/*.md\"]`",
+          "examples": [
+            [
+              "**/REQUIREMENTS*.md"
+            ]
+          ]
         },
         "testFiles": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "テスト文書とみなす glob（既定 **/*TEST*.md, **/*-TESTS.md, **/03-testing/**/*.md, **/05-testing/**/*.md）。"
+          "description": "テスト文書とみなす glob。",
+          "markdownDescription": "テスト文書とみなす glob（`root` 基準）。要件文書に一致したファイルは除きます。\n\n既定: `[\"**/*TEST*.md\", \"**/*-TESTS.md\", \"**/03-testing/**/*.md\", \"**/05-testing/**/*.md\"]`",
+          "examples": [
+            [
+              "**/TEST-PLAN.md",
+              "**/TEST-CASES.md"
+            ]
+          ]
         },
         "requiredCoverage": {
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "必要なテスト対応率（0〜1）。下回ると warning を出します。"
+          "description": "必要なテスト対応率（0〜1）。下回ると warning。",
+          "markdownDescription": "必要なテスト対応率（0〜1）。`対応済み ÷ (要件数 − 対象外)` がこの値を下回ると warning を出します。省略時はカバレッジ警告を出しません。",
+          "examples": [
+            1,
+            0.8
+          ]
         },
         "requirementPrefixes": {
           "type": "array",
@@ -140,34 +275,52 @@
             "type": "string",
             "minLength": 1
           },
-          "description": "要件 ID の接頭辞（既定 BR, FR, SR, NFR）。requirementPattern を省略したときの ID 形式と、命名規則違反（FR001, fr-001 など）の検出に使います。"
+          "description": "要件 ID の接頭辞（既定 BR, FR, SR, NFR）。",
+          "markdownDescription": "要件 ID の接頭辞。既定は `[\"BR\", \"FR\", \"SR\", \"NFR\"]`。\n\n`requirementPattern` を省略したときの ID 形式 `<接頭辞>-<英数字>(-<数字>)?` の組み立てと、`traceability/requirement-ids` の命名規則違反（`FR001`, `fr-001` など）の検出に使います。",
+          "examples": [
+            [
+              "FR",
+              "NFR"
+            ]
+          ]
         },
         "deferredTestCasePattern": {
           "type": "string",
-          "description": "「後回し」を表すテストケース ID の正規表現（既定 TC-D…）。これだけが対応する要件は warning ではなく info になります。"
+          "description": "「後回し」を表すテストケース ID（既定 TC-D…）。",
+          "markdownDescription": "「後回し（将来のリリースで検証）」を表すテストケース ID の正規表現。既定 `\\bTC-D[0-9][0-9A-Z-]*\\b`。\n\nこれだけが対応する要件は warning ではなく **info** として報告され、カバレッジにも数えません。"
         },
         "excludedTestCasePattern": {
           "type": "string",
-          "description": "「対象外」を表すテストケース ID の正規表現（既定 TC-X…）。これだけが対応する要件はカバレッジの分母から除外します。"
+          "description": "「対象外」を表すテストケース ID（既定 TC-X…）。",
+          "markdownDescription": "「対象外（テストしないと決めた）」を表すテストケース ID の正規表現。既定 `\\bTC-X[0-9][0-9A-Z-]*\\b`。\n\nこれだけが対応する要件は報告されず、カバレッジの**分母から除外**します。"
         },
         "requireTestFile": {
           "type": "boolean",
-          "description": "要件があるのにテスト文書が 1 つも無いとき警告するか（既定 true）。"
+          "description": "要件があるのにテスト文書が無いとき警告する（既定 true）。",
+          "markdownDescription": "要件が 1 つでもあるのに、テスト文書が 1 つも見つからないときに警告します。既定 `true`。\n\nテスト文書をまだ書いていない段階で警告を止めたいときに `false` にします。",
+          "default": true
         },
         "requireRequirementIds": {
           "type": "boolean",
-          "description": "要件文書に要件 ID が 1 つも無いとき警告するか（既定 true）。"
+          "description": "要件文書に要件 ID が無いとき警告する（既定 true）。",
+          "markdownDescription": "要件文書（`requirementFiles`）なのに要件 ID が 1 つも無いファイルを警告します。既定 `true`。",
+          "default": true
         },
         "requireTestCaseIds": {
           "type": "boolean",
-          "description": "テスト文書にテストケース ID が 1 つも無いとき警告するか（既定 true）。"
+          "description": "テスト文書にテストケース ID が無いとき警告する（既定 true）。",
+          "markdownDescription": "テスト文書（`testFiles`）なのにテストケース ID が 1 つも無いファイルを警告します。既定 `true`。",
+          "default": true
         },
         "requireUniqueRequirementIds": {
           "type": "boolean",
-          "description": "表の行頭や見出しで同じ要件 ID が複数回定義されたとき警告するか（既定 true）。"
+          "description": "同じ要件 ID の重複定義を警告する（既定 true）。",
+          "markdownDescription": "表の行頭（`| FR-001 |`）や見出し（`## FR-001`）で同じ要件 ID が複数回**定義**されたときに警告します。本文中の言及は定義に数えません。既定 `true`。",
+          "default": true
         }
       },
-      "description": "要件 ID とテストケース ID の対応検査（traceability/* ルール）の設定。"
+      "description": "要件 ID とテストケース ID の対応検査（traceability/* ルール）の設定。",
+      "markdownDescription": "要件トレーサビリティ（`traceability/*` の 3 ルール）の設定です。\n\n何も書かなければ次の既定で動きます。\n\n- 要件 ID: `BR-…` / `FR-…` / `SR-…` / `NFR-…`（例 `FR-DOC-001`）\n- テストケース ID: `TC-…`（`TC-D…` は後回し、`TC-X…` は対象外）\n- 要件文書: `**/*REQUIREMENTS*.md`, `**/01-requirements/**/*.md`\n- テスト文書: `**/*TEST*.md`, `**/*-TESTS.md`, `**/03-testing/**/*.md`, `**/05-testing/**/*.md`\n\n```json\n\"traceability\": {\n  \"requirementPrefixes\": [\"FR\", \"NFR\"],\n  \"requiredCoverage\": 1,\n  \"requireTestFile\": false\n}\n```"
     }
   },
   "$defs": {
@@ -177,6 +330,14 @@
         "info",
         "warning",
         "error"
+      ],
+      "description": "ルールの通知レベル。",
+      "markdownDescription": "ルールの通知レベル。\n\n| 値 | 意味 |\n| --- | --- |\n| `off` | 検査しない |\n| `info` | 情報。CI は失敗しない |\n| `warning` | 警告。CI は失敗しない |\n| `error` | エラー。`docs-lint lint` が終了コード 1 を返す |",
+      "markdownEnumDescriptions": [
+        "検査しない",
+        "情報。CI は失敗しない",
+        "警告。CI は失敗しない",
+        "エラー。`docs-lint lint` が終了コード 1 を返す"
       ]
     },
     "ruleSetting": {
@@ -201,14 +362,67 @@
           ],
           "properties": {
             "severity": {
-              "$ref": "#/$defs/severity"
+              "$ref": "#/$defs/severity",
+              "markdownDescription": "このルールの通知レベル。省略時は Profile → Pack → ルール既定値の順に引き継ぎます。"
             },
             "options": {
-              "type": "object"
+              "type": "object",
+              "markdownDescription": "ルール固有のオプション。カスタムルールが契約を定義した場合に使います。"
             }
           }
         }
-      ]
+      ],
+      "markdownDescription": "severity の文字列、または `{ \"severity\", \"options\" }`。`options` はルール固有の設定（現行の組み込みルールは `traceability` 節などトップレベルで受け取るため、通常は不要）。"
     }
-  }
+  },
+  "markdownDescription": "`docs-lint.config.json` — 文書ルートの検査設定です。\n\n- **空の `rules` は「標準どおり」**を意味します。変えたい項目だけ書きます。\n- 既定は「ルール既定値 → Standard Pack → Profile → この設定」の順に上書きされます。\n- Pack / Profile は `standard`、または文書ルートの `lunascape-docs.json` の `documentStandards` で選びます。\n- 各項目にカーソルを置くと説明が表示されます。",
+  "defaultSnippets": [
+    {
+      "label": "Lunascape Docs 向けの基本設定",
+      "description": "Pack/Profile を選び、標準どおりに検査する最小構成",
+      "body": {
+        "schemaVersion": 3,
+        "root": ".",
+        "standard": {
+          "pack": "builtin:gu-corp-software",
+          "profile": "${1|base,web-application,api-service,regulated-financial-product,smart-contract|}"
+        },
+        "rules": {}
+      }
+    },
+    {
+      "label": "ルール上書きとトレーサビリティ付き",
+      "description": "severity の上書き、用語、要件↔テスト対応の閾値を含む例",
+      "body": {
+        "schemaVersion": 3,
+        "root": ".",
+        "standard": {
+          "pack": "builtin:gu-corp-software",
+          "profile": "web-application"
+        },
+        "rules": {
+          "links/internal": "error",
+          "markdown/code-fence-language": "warning",
+          "traceability/requirements-tests": {
+            "severity": "error"
+          }
+        },
+        "terminology": [
+          {
+            "preferred": "ドキュメント",
+            "variants": [
+              "文書"
+            ]
+          }
+        ],
+        "traceability": {
+          "requirementPrefixes": [
+            "FR",
+            "NFR"
+          ],
+          "requiredCoverage": 1
+        }
+      }
+    }
+  ]
 }

@@ -6,7 +6,7 @@
 - Added `traceability/requirement-ids`, which reports requirement IDs that do not follow the configured pattern (`FR001`, `fr-001`, `FR_001`, …) and IDs defined more than once at table rows or headings.
 - Added `traceability/requirement-references`, which reports requirement IDs referenced by other documents that no requirement document defines.
 - Rules may emit `info` diagnostics that keep their level instead of being promoted to the configured severity.
-- Added Japanese descriptions to every `docs-lint.config.json` schema property so editors show help on hover.
+- Documented `docs-lint.config.json` inside its JSON Schema: every property carries a Japanese `description` and a Markdown `markdownDescription` with defaults and examples, every built-in rule ID is listed under `rules` with its meaning so editors complete and explain rule names, severities carry per-value descriptions, and two `defaultSnippets` insert starter configurations.
 - Anchored `traceability/requirements-tests` diagnostics for untested requirements at the requirement definition (file, line and column, including front matter offset) so editors can open the document instead of a location-less, root-wide report. Root-wide diagnostics such as missing test case IDs or insufficient coverage remain without a file.
 
 ## 3.2.0
