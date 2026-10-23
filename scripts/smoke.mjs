@@ -47,7 +47,8 @@ try {
   }
 
   const notices = readFileSync(path.resolve('dist/THIRD-PARTY-NOTICES.md'), 'utf8');
-  const bundledPackages = new Set([...runtime.matchAll(/\/\/#region\s+node_modules\/((?:@[^/\s]+\/)?[^/\s]+)/g)]
+  // Rolldown emits either region markers or plain module-path comments.
+  const bundledPackages = new Set([...runtime.matchAll(/^\/\/(?:#region)?[ \t]+node_modules\/((?:@[^/\s]+\/)?[^/\s]+)/gm)]
     .map(match => match[1]));
   if (!bundledPackages.size) throw new Error('Editor runtime did not expose any bundled package regions for license verification.');
   for (const packageName of bundledPackages) {

@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 3.3.0
+
+- Updated brace-expansion, source-map-js, Vite and Vitest to patched releases, rebuilt the Editor runtime and refreshed bundled license texts.
+- Made the package smoke test recognize both Rolldown region markers and plain module-path comments while retaining bundled-license verification.
 
 - Restored v2 requirement traceability (see `docs/01-plan/V3-RESTORATION.md`, Phase 1): `traceability/requirements-tests` now recognises deferred (`TC-D…`) and excluded (`TC-X…`) test cases, reports requirement documents without IDs, test documents without IDs and missing test documents (`requireRequirementIds`, `requireTestCaseIds`, `requireTestFile`), widens the default requirement/test document globs and ignores identifiers inside code.
 - Added `traceability/requirement-ids`, which reports requirement IDs that do not follow the configured pattern (`FR001`, `fr-001`, `FR_001`, …) and IDs defined more than once at table rows or headings.

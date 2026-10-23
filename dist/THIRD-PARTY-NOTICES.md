@@ -12,20 +12,20 @@ The full license text for each package is included in `dist/third-party-licenses
 - License: MIT
 - License text: [balanced-match-4.0.4.txt](third-party-licenses/balanced-match-4.0.4.txt)
 
-### brace-expansion@5.0.9
+### brace-expansion@5.0.12
 
 - License: MIT
-- License text: [brace-expansion-5.0.9.txt](third-party-licenses/brace-expansion-5.0.9.txt)
+- License text: [brace-expansion-5.0.12.txt](third-party-licenses/brace-expansion-5.0.12.txt)
 
 ### glob@11.1.0
 
 - License: BlueOak-1.0.0
 - License text: [glob-11.1.0.txt](third-party-licenses/glob-11.1.0.txt)
 
-### lru-cache@11.5.2
+### lru-cache@11.2.4
 
 - License: BlueOak-1.0.0
-- License text: [lru-cache-11.5.2.txt](third-party-licenses/lru-cache-11.5.2.txt)
+- License text: [lru-cache-11.2.4.txt](third-party-licenses/lru-cache-11.2.4.txt)
 
 ### minimatch@10.2.6
 
